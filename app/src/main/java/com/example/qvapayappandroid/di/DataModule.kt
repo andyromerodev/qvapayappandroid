@@ -16,7 +16,7 @@ val dataModule = module {
     // DataSources
     single<LoginDataSource> { LoginDataSourceImpl(get()) }
     single<SessionLocalDataSource> { SessionLocalDataSourceImpl(get(), get()) }
-    single<P2PDataSource> { P2PDataSourceImpl(get(), get()) }
+    single<P2PDataSource> { P2PDataSourceImpl(get()) }
     
     // Repositories
     single<SessionRepository> { SessionRepositoryImpl(get()) }

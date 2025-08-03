@@ -4,24 +4,22 @@ import android.util.Log
 import com.example.qvapayappandroid.data.model.P2PFilterRequest
 import com.example.qvapayappandroid.data.model.P2POfferResponse
 import com.example.qvapayappandroid.data.network.ApiConfig
-import com.example.qvapayappandroid.domain.repository.SessionRepository
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
 import io.ktor.http.*
 
 class P2PDataSourceImpl(
-    private val httpClient: HttpClient,
-    private val sessionRepository: SessionRepository
+    private val httpClient: HttpClient
 ) : P2PDataSource {
     
-    override suspend fun getP2POffers(filters: P2PFilterRequest): Result<P2POfferResponse> {
+    override suspend fun getP2POffers(
+        filters: P2PFilterRequest,
+        accessToken: String?
+    ): Result<P2POfferResponse> {
         return try {
             Log.d("P2PDataSource", "Getting P2P offers with filters: $filters")
-            
-            // Get access token from session
-            val accessToken = sessionRepository.getAccessToken()
-            Log.d("P2PDataSource", "Access token available: ${accessToken != null}")
+            Log.d("P2PDataSource", "Access token provided: ${accessToken != null}")
             
             val fullUrl = "${ApiConfig.BASE_URL}${ApiConfig.Endpoints.P2P_INDEX}"
             Log.d("P2PDataSource", "Full URL: $fullUrl")
