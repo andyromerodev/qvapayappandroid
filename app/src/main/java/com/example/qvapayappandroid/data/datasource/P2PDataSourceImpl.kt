@@ -13,11 +13,28 @@ class P2PDataSourceImpl(
     private val httpClient: HttpClient
 ) : P2PDataSource {
     
+    companion object {
+        private var lastRequestTime = 0L
+        private const val MIN_REQUEST_INTERVAL = 2000L // 2 seconds between requests
+    }
+    
     override suspend fun getP2POffers(
         filters: P2PFilterRequest,
         accessToken: String?
     ): Result<P2POfferResponse> {
         return try {
+            // Rate limiting: ensure minimum interval between requests
+            val currentTime = System.currentTimeMillis()
+            val timeSinceLastRequest = currentTime - lastRequestTime
+            
+            if (timeSinceLastRequest < MIN_REQUEST_INTERVAL) {
+                val waitTime = MIN_REQUEST_INTERVAL - timeSinceLastRequest
+                Log.d("P2PDataSource", "Rate limiting: waiting ${waitTime}ms before request")
+                kotlinx.coroutines.delay(waitTime)
+            }
+            
+            lastRequestTime = System.currentTimeMillis()
+            
             Log.d("P2PDataSource", "Getting P2P offers with filters: $filters")
             Log.d("P2PDataSource", "Access token provided: ${accessToken != null}")
             
@@ -40,6 +57,7 @@ class P2PDataSourceImpl(
                 filters.my?.let { if (it) parameter("my", "1") }
                 filters.vip?.let { if (it) parameter("vip", "1") }
                 filters.page?.let { parameter("page", it.toString()) }
+                filters.perPage?.let { parameter("per_page", it.toString()) }
             }
             
             Log.d("P2PDataSource", "Response status: ${response.status}")
