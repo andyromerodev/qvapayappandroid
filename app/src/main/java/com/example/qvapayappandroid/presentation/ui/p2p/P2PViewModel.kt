@@ -6,6 +6,8 @@ import androidx.lifecycle.viewModelScope
 import com.example.qvapayappandroid.data.model.P2PFilterRequest
 import com.example.qvapayappandroid.data.model.P2POffer
 import com.example.qvapayappandroid.domain.usecase.GetP2POffersUseCase
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -24,12 +26,20 @@ class P2PViewModel(
     private val _effect = MutableSharedFlow<P2PEffect>()
     val effect: SharedFlow<P2PEffect> = _effect.asSharedFlow()
     
+    private var loadDataJob: Job? = null
+    
     init {
         loadP2PData()
     }
     
-    private fun loadP2PData() {
-        viewModelScope.launch {
+    private fun loadP2PDataDebounced() {
+        // Cancel previous request if still running
+        loadDataJob?.cancel()
+        
+        loadDataJob = viewModelScope.launch {
+            // Add small delay to prevent rapid successive calls
+            delay(300)
+            
             _uiState.value = _uiState.value.copy(isLoading = true)
             
             try {
@@ -72,6 +82,10 @@ class P2PViewModel(
                 Log.e("P2PViewModel", "Unexpected error loading P2P data", e)
             }
         }
+    }
+    
+    private fun loadP2PData() {
+        loadP2PDataDebounced()
     }
     
     fun onSendMoney() {
@@ -127,6 +141,12 @@ class P2PViewModel(
     }
     
     fun onNextPage() {
+        // Prevent navigation if already loading
+        if (_uiState.value.isLoading) {
+            Log.d("P2PViewModel", "Next page blocked - already loading")
+            return
+        }
+        
         val currentPage = _uiState.value.currentPage
         val totalPages = _uiState.value.totalPages
         if (currentPage < totalPages) {
@@ -135,6 +155,12 @@ class P2PViewModel(
     }
     
     fun onPreviousPage() {
+        // Prevent navigation if already loading
+        if (_uiState.value.isLoading) {
+            Log.d("P2PViewModel", "Previous page blocked - already loading")
+            return
+        }
+        
         val currentPage = _uiState.value.currentPage
         if (currentPage > 1) {
             onPageChanged(currentPage - 1)
