@@ -105,6 +105,7 @@ fun P2PScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun P2PContent(
     uiState: P2PUiState,
@@ -465,7 +466,11 @@ private fun P2POfferItem(
                     shape = MaterialTheme.shapes.small
                 ) {
                     Text(
-                        text = if (offer.type == "buy") "COMPRA" else "VENTA",
+                        text = when (offer.type) {
+                            "buy" -> "COMPRA"
+                            "sell" -> "VENTA"
+                            else -> "N/A"
+                        },
                         style = MaterialTheme.typography.labelSmall,
                         color = if (offer.type == "buy") 
                             MaterialTheme.colorScheme.onPrimary 
@@ -477,7 +482,7 @@ private fun P2POfferItem(
                 
                 // Coin
                 Text(
-                    text = offer.coin,
+                    text = offer.coin ?: "N/A",
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold
                 )
@@ -496,7 +501,7 @@ private fun P2POfferItem(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        text = "${offer.amount}",
+                        text = offer.amount ?: "N/A",
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Medium
                     )
@@ -511,7 +516,7 @@ private fun P2POfferItem(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        text = "${offer.receive}",
+                        text = offer.receive ?: "N/A",
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Medium
                     )
@@ -526,7 +531,7 @@ private fun P2POfferItem(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Usuario: ${offer.userId}",
+                    text = "Usuario: ${offer.userId ?: "N/A"}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
