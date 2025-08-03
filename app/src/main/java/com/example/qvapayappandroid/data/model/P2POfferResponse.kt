@@ -63,5 +63,6 @@ data class P2PFilterRequest(
     val coin: String? = null,
     val my: Boolean? = null,
     val vip: Boolean? = null,
-    val page: Int? = null
+    val page: Int? = null,
+    val perPage: Int? = 15 // Default 15 items per page to avoid rate limiting
 )
