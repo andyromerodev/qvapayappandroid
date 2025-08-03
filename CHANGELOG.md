@@ -1,5 +1,119 @@
 # Changelog - QvaPay Android App
 
+## ✅ v2.0.0 - Sistema P2P Completo (2024-01-XX)
+
+### 🎯 Funcionalidades P2P Implementadas
+
+#### 📊 Arquitectura P2P con Clean Architecture
+- **Data Layer**:
+  - `P2PDataSource` interface y `P2PDataSourceImpl` con Ktor HTTP client
+  - `P2PRepository` interface y `P2PRepositoryImpl` para gestión de ofertas
+  - Modelos de datos: `P2POfferResponse`, `P2POffer`, `P2PFilterRequest`
+  - Rate limiting automático (2 segundos mínimo entre peticiones)
+  
+- **Domain Layer**:
+  - `GetP2POffersUseCase` para coordinar repositorios
+  - Separación correcta: SessionRepository + P2PRepository
+  - Arquitectura sin violaciones de dependencias
+
+- **Presentation Layer**:
+  - `P2PViewModel` con StateFlow/SharedFlow reactivo
+  - `P2PScreen` completamente rediseñada con ofertas reales
+
+#### 🔥 Funcionalidades de Usuario
+- **Sistema de filtros avanzado**:
+  - FilterChips para tipo de oferta (Todas/Compra/Venta)
+  - Dropdown con 19 monedas soportadas: SOL, SBERBANK, BANK_CUP, ZELLE, TROPIPAY, ETECSA, USDCASH, CLASICA, BANK_MLC, NEOMOON, USDT, BANK_EUR, QVAPAY, BANDECPREPAGO, CUPCASH, WISE, EURCASH, USDTBSC, BOLSATM
+  
+- **Lista de ofertas P2P real**:
+  - Cards con información detallada: tipo, moneda, monto, usuario
+  - Badges para COMPRA/VENTA con colores distintivos
+  - Indicadores KYC cuando aplica
+  - LazyColumn para rendimiento optimizado
+
+- **Paginación completa**:
+  - Navegación anterior/siguiente con IconButtons
+  - Indicador "Página X de Y"
+  - 15 elementos por página para evitar rate limiting
+  - Loading states que previenen múltiples peticiones
+
+- **Gestión de errores robusta**:
+  - Manejo de HTTP 429 "Too Many Attempts"
+  - Campos opcionales para API responses incompletas
+  - Estados de error con mensajes descriptivos y botón "Dismiss"
+
+#### 🛡️ Optimizaciones de Rendimiento y Estabilidad
+- **Rate Limiting multi-capa**:
+  - Data Source: 2 segundos mínimo entre peticiones API
+  - ViewModel: Debouncing de 300ms para prevenir calls rápidos
+  - UI: Botones bloqueados durante loading states
+  
+- **Request management avanzado**:
+  - Cancelación de peticiones pendientes con Job cancellation
+  - Logging detallado para debugging de API calls
+  - Manejo robusto de respuestas malformadas
+
+- **Arquitectura resiliente**:
+  - Todos los campos P2POffer opcionales con fallbacks "N/A"
+  - JSON parsing tolerante a campos faltantes
+  - Clean Architecture sin violaciones de dependencias
+
+### 🔧 Dependencias y Configuración
+- **Base de datos completa**:
+  - Room entities: `UserEntity`, `SessionEntity`
+  - DAOs: `UserDao`, `SessionDao` con operaciones CRUD
+  - `AppDatabase` con singleton pattern
+
+- **Session Management**:
+  - `SessionRepository` para persistencia local
+  - `SessionLocalDataSource` con Flow support
+  - Use cases: `CheckSessionUseCase`, `GetCurrentUserUseCase`, `LogoutUseCase`
+
+- **Dependency Injection actualizada**:
+  - `DatabaseModule` para Room setup
+  - Todos los módulos integrados: Network, Database, Data, Domain, Presentation
+
+### 📁 Estructura de Archivos Agregados
+```
+├── data/
+│   ├── database/
+│   │   ├── AppDatabase.kt
+│   │   ├── dao/
+│   │   │   ├── SessionDao.kt
+│   │   │   └── UserDao.kt
+│   │   └── entities/
+│   │       ├── SessionEntity.kt
+│   │       └── UserEntity.kt
+│   ├── datasource/
+│   │   ├── P2PDataSource.kt
+│   │   ├── P2PDataSourceImpl.kt (con rate limiting)
+│   │   ├── SessionLocalDataSource.kt
+│   │   └── SessionLocalDataSourceImpl.kt
+│   ├── model/
+│   │   └── P2POfferResponse.kt (modelos P2P)
+│   └── repository/
+│       ├── P2PRepositoryImpl.kt
+│       └── SessionRepositoryImpl.kt
+├── domain/
+│   ├── repository/
+│   │   ├── P2PRepository.kt
+│   │   └── SessionRepository.kt
+│   └── usecase/
+│       ├── CheckSessionUseCase.kt
+│       ├── GetCurrentUserUseCase.kt
+│       ├── GetP2POffersUseCase.kt
+│       └── LogoutUseCase.kt
+├── di/
+│   └── DatabaseModule.kt
+└── CLAUDE.md (documentación del proyecto)
+```
+
+### 🐛 Bugs Corregidos
+- **HTTP 429 "Too Many Attempts"**: Solucionado con rate limiting multi-capa
+- **JsonConvertException**: Campos opcionales en modelos P2P
+- **Multiple simultaneous requests**: Debouncing y job cancellation
+- **UI crashes con datos incompletos**: Null safety y fallbacks
+
 ## 🚀 Cambios Pendientes de Commit
 
 ### ✨ Nuevas Funcionalidades
