@@ -1,0 +1,88 @@
+package com.example.qvapayappandroid.presentation.ui.components
+
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountBox
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.outlined.AccountBox
+import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material3.Icon
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.navigation.NavController
+import com.example.qvapayappandroid.navigation.AppDestinations
+
+@Composable
+fun BottomNavigationBar(
+    navController: NavController,
+    currentRoute: String?
+) {
+    val items = listOf(
+        BottomNavItem.Home,
+        BottomNavItem.P2P,
+        BottomNavItem.Settings
+    )
+    
+    NavigationBar {
+        items.forEach { item ->
+            val isSelected = currentRoute == item.route
+            
+            NavigationBarItem(
+                icon = {
+                    Icon(
+                        imageVector = if (isSelected) item.selectedIcon else item.unselectedIcon,
+                        contentDescription = item.title
+                    )
+                },
+                label = { Text(item.title) },
+                selected = isSelected,
+                onClick = {
+                    if (currentRoute != item.route) {
+                        navController.navigate(item.route) {
+                            // Pop up to the start destination to avoid building up a large stack
+                            popUpTo(navController.graph.startDestinationId) {
+                                saveState = true
+                            }
+                            // Avoid multiple copies of the same destination
+                            launchSingleTop = true
+                            // Restore state when re-selecting a previously selected item
+                            restoreState = true
+                        }
+                    }
+                }
+            )
+        }
+    }
+}
+
+sealed class BottomNavItem(
+    val route: String,
+    val title: String,
+    val selectedIcon: ImageVector,
+    val unselectedIcon: ImageVector
+) {
+    object Home : BottomNavItem(
+        route = AppDestinations.Home.route,
+        title = "Inicio",
+        selectedIcon = Icons.Filled.Home,
+        unselectedIcon = Icons.Outlined.Home
+    )
+    
+    object P2P : BottomNavItem(
+        route = AppDestinations.P2P.route,
+        title = "P2P",
+        selectedIcon = Icons.Filled.AccountBox,
+        unselectedIcon = Icons.Outlined.AccountBox
+    )
+    
+    object Settings : BottomNavItem(
+        route = AppDestinations.Settings.route,
+        title = "Ajustes",
+        selectedIcon = Icons.Filled.Settings,
+        unselectedIcon = Icons.Outlined.Settings
+    )
+}
