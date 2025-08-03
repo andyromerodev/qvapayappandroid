@@ -23,5 +23,5 @@ val dataModule = module {
     // Repositories
     single<SessionRepository> { SessionRepositoryImpl(get()) }
     single<AuthRepository> { AuthRepositoryImpl(get(), get()) }
-    single<P2PRepository> { P2PRepositoryImpl(get(), get()) }
+    single<P2PRepository> { P2PRepositoryImpl(get()) }
 }
