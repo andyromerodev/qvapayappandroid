@@ -46,15 +46,19 @@ class P2PDataSourceImpl(
             
             // Get raw response body first
             val rawResponseBody = response.body<String>()
-            Log.d("P2PDataSource", "Raw response body (first 500 chars): ${rawResponseBody.take(500)}")
+            Log.d("P2PDataSource", "Raw response body: $rawResponseBody")
             
             // Handle non-success HTTP status codes
             if (response.status.value !in 200..299) {
                 return Result.failure(Exception("HTTP ${response.status.value}: $rawResponseBody"))
             }
             
-            // Parse as P2POfferResponse
-            val responseBody = response.body<P2POfferResponse>()
+            // Try to parse as P2POfferResponse with better error handling
+            val json = kotlinx.serialization.json.Json { 
+                ignoreUnknownKeys = true 
+                isLenient = true 
+            }
+            val responseBody = json.decodeFromString<P2POfferResponse>(rawResponseBody)
             Log.d("P2PDataSource", "Parsed response - Total offers: ${responseBody.total}, Current page: ${responseBody.currentPage}")
             
             Result.success(responseBody)
