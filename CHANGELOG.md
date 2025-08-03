@@ -8,7 +8,7 @@
 - **Reorganización del directorio `presentation/ui/`**:
   ```
   presentation/ui/
-  ├── components/
+  ├── components//
   │   └── BottomNavigationBar.kt
   ├── home/
   │   ├── HomeScreen.kt
