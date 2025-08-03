@@ -29,23 +29,23 @@ data class P2POfferResponse(
 
 @Serializable
 data class P2POffer(
-    val uuid: String,
+    val uuid: String? = null,
     @SerialName("user_id")
-    val userId: Int,
-    val type: String, // "buy" or "sell"
-    val coin: String,
+    val userId: Int? = null,
+    val type: String? = null, // "buy" or "sell"
+    val coin: String? = null,
     @SerialName("peer_id")
-    val peerId: Int,
-    val amount: String,
-    val receive: String,
+    val peerId: Int? = null,
+    val amount: String? = null,
+    val receive: String? = null,
     @SerialName("only_kyc")
-    val onlyKyc: Int,
-    val private: Int,
-    val status: String,
+    val onlyKyc: Int? = null,
+    val private: Int? = null,
+    val status: String? = null,
     @SerialName("created_at")
-    val createdAt: String,
+    val createdAt: String? = null,
     @SerialName("updated_at")
-    val updatedAt: String
+    val updatedAt: String? = null
 )
 
 @Serializable
