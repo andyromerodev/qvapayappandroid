@@ -10,5 +10,6 @@ object ApiConfig {
         const val USER_PROFILE = "/user/profile"
         const val TRANSACTIONS = "/transactions"
         const val BALANCE = "/balance"
+        const val P2P_INDEX = "/p2p/index"
     }
 }
