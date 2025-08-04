@@ -5,6 +5,8 @@ sealed class AppDestinations(val route: String) {
     object Main : AppDestinations("main")
     object Home : AppDestinations("home")
     object P2P : AppDestinations("p2p")
+    object P2POfferDetail : AppDestinations("p2p_offer_detail")
+    object P2PFilters : AppDestinations("p2p_filters")
     object Settings : AppDestinations("settings")
     
     companion object {
