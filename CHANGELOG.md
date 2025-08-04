@@ -114,6 +114,100 @@
 - **Multiple simultaneous requests**: Debouncing y job cancellation
 - **UI crashes con datos incompletos**: Null safety y fallbacks
 
+## 🚀 v2.1.0 - Sistema de Filtros P2P Avanzado (2025-01-XX)
+
+### ✨ Refactorización Completa del Sistema P2P
+
+#### 🔧 Separación de Componentes (SOLID Principles)
+- **P2PScreen refactorizado** con separación de responsabilidades:
+  - `P2PActionButton.kt` - Botón reutilizable para acciones P2P
+  - `P2PFiltersCard.kt` - Card de filtros con toggles y dropdown
+  - `P2POfferCard.kt` - Card clickeable para mostrar ofertas individuales
+  - `P2PStatsCard.kt` - Card de estadísticas P2P
+  - `P2POfferDetailScreen.kt` - Pantalla completa de detalles de oferta
+
+#### 🎯 Sistema de Filtros Avanzado
+- **Pantalla de filtros independiente** (`P2PFiltersScreen`):
+  - Acceso mediante ícono de filtro en TopAppBar
+  - **Toggles para múltiples monedas** en lugar de dropdown
+  - **Filtrado manual** con botón "Filtrar Ofertas"
+  - **Persistencia de selección** al navegar entre pantallas
+  - Botón "Limpiar Filtros" para reset rápido
+  
+- **Navegación mejorada**:
+  - Nueva ruta `P2PFilters` en `AppDestinations`
+  - Navegación fluida entre P2P → Filtros → P2P
+  - **Instancia compartida del ViewModel** para evitar cancelaciones
+
+#### 🚀 Manejo de Múltiples Monedas
+- **Peticiones paralelas** usando `async` y `awaitAll()`
+- **Una petición por moneda seleccionada**:
+  - ETECSA + BANK_CUP = 2 peticiones simultáneas
+  - 3 monedas = 3 peticiones paralelas
+- **Combinación y deduplicación** de resultados por UUID
+- **Mejor rendimiento** con peticiones concurrentes
+
+#### 📱 UI/UX Mejoradas
+- **Cards de ofertas individuales**:
+  - Elevación de 4dp con sombras sutiles
+  - Bordes redondeados automáticos (Material3)
+  - Color `surface` para mejor contraste
+  - **Clickeables** para navegar a pantalla de detalles
+  
+- **Pantalla de detalles de oferta**:
+  - Información completa del usuario (username, nombre, rating)
+  - **Badges de verificación** (KYC, Gold, VIP)
+  - **Mensaje del usuario** si está disponible
+  - Botones de acción: "Contactar" y "Aceptar Oferta"
+  
+- **Paginación optimizada**:
+  - **Siempre visible** en la parte inferior
+  - **Menos separación** (8dp en lugar de 16dp)
+  - Mejor lógica para casos edge (sin páginas, página única)
+
+#### 🛠️ Modelos de Datos Actualizados
+- **P2POffer completo** con todos los campos del JSON real:
+  - `message`, `onlyVip`, `valid`, `coinData`, `owner`
+  - **Modelo Owner** con información completa del usuario
+  - **Modelo CoinData** con detalles técnicos de la moneda
+  
+- **P2PUiState extendido**:
+  - `selectedCoins: List<String>` para múltiples monedas
+  - Persistencia de filtros entre navegaciones
+
+#### 🔄 ViewModel Mejorado
+- **Método `applyFilters()`** para filtros múltiples
+- **`loadP2PDataImmediate()`** sin debouncing para filtros
+- **Manejo de instancia compartida** entre pantallas
+- **Logging detallado** para debugging de múltiples peticiones
+
+### 🐛 Bugs Corregidos
+- **Job cancelation al navegar**: Instancia compartida del ViewModel evita cancelaciones
+- **Filtros no persistentes**: LaunchedEffect sincroniza estado entre pantallas  
+- **Una sola moneda en múltiples selecciones**: Peticiones paralelas por cada moneda
+- **UI inconsistente**: Cards individuales con diseño unificado
+
+### 📁 Archivos Nuevos
+```
+presentation/ui/p2p/
+├── P2PFiltersScreen.kt (pantalla completa de filtros)
+├── P2POfferDetailScreen.kt (detalles de oferta)
+└── components/
+    ├── P2PActionButton.kt
+    ├── P2PFiltersCard.kt
+    ├── P2POfferCard.kt
+    └── P2PStatsCard.kt
+```
+
+### 📁 Archivos Modificados
+```
+├── navigation/AppDestinations.kt (nueva ruta P2PFilters)
+├── presentation/ui/main/MainScreen.kt (instancia compartida ViewModel)
+├── presentation/ui/p2p/P2PScreen.kt (refactorizado con componentes)
+├── presentation/ui/p2p/P2PViewModel.kt (filtros múltiples)
+└── data/model/P2POfferResponse.kt (modelos completos)
+```
+
 ## 🚀 Cambios Pendientes de Commit
 
 ### ✨ Nuevas Funcionalidades
