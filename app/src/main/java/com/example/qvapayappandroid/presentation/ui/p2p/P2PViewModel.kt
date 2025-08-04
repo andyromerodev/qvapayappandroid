@@ -264,6 +264,15 @@ class P2PViewModel(
             onPageChanged(currentPage - 1)
         }
     }
+
+    fun onSortByChanged(sortBy: String) {
+        _uiState.value = _uiState.value.copy(sortBy = sortBy)
+    }
+
+    fun onSortOrderToggled() {
+        _uiState.value = _uiState.value.copy(sortAsc = !_uiState.value.sortAsc)
+    }
+
 }
 
 data class P2PUiState(
@@ -280,7 +289,9 @@ data class P2PUiState(
         "SOL", "SBERBANK", "BANK_CUP", "ZELLE", "TROPIPAY", "ETECSA", 
         "USDCASH", "CLASICA", "BANK_MLC", "NEOMOON", "USDT", "BANK_EUR", 
         "QVAPAY", "BANDECPREPAGO", "CUPCASH", "WISE", "EURCASH", "USDTBSC", "BOLSATM"
-    )
+    ),
+    val sortBy: String = "ratio",    // "ratio" o "nombre"
+    val sortAsc: Boolean = false
 )
 
 sealed class P2PEffect {
