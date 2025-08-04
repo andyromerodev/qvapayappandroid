@@ -15,6 +15,8 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 
 class P2PViewModel(
     private val getP2POffersUseCase: GetP2POffersUseCase
@@ -133,10 +135,106 @@ class P2PViewModel(
         loadP2PData()
     }
     
+    fun applyFilters(offerType: String, coins: List<String>) {
+        _uiState.value = _uiState.value.copy(
+            selectedOfferType = offerType,
+            selectedCoins = coins,
+            selectedCoin = if (coins.isEmpty()) "all" else coins.firstOrNull() ?: "all",
+            currentPage = 1
+        )
+        loadP2PDataImmediate()
+    }
+    
+    private fun loadP2PDataImmediate() {
+        // Cancel previous request if still running
+        loadDataJob?.cancel()
+        
+        loadDataJob = viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true)
+            
+            try {
+                val currentState = _uiState.value
+                val coinsToQuery = currentState.selectedCoins.ifEmpty {
+                    listOf("all") // Si no hay monedas seleccionadas, buscar todas
+                }
+                
+                Log.d("P2PViewModel", "Loading P2P offers for coins: $coinsToQuery")
+                
+                // Hacer peticiones paralelas para cada moneda
+                val deferredResults = coinsToQuery.map { coin ->
+                    async {
+                        val filters = P2PFilterRequest(
+                            type = if (currentState.selectedOfferType == "all") null else currentState.selectedOfferType,
+                            coin = if (coin == "all") null else coin,
+                            page = currentState.currentPage
+                        )
+                        
+                        Log.d("P2PViewModel", "Loading P2P offers with filters: $filters")
+                        getP2POffersUseCase(filters)
+                    }
+                }
+                
+                // Esperar a que todas las peticiones se completen
+                val results = deferredResults.awaitAll()
+                
+                // Combinar resultados exitosos
+                val allOffers = mutableListOf<P2POffer>()
+                var totalOffersCount = 0
+                var maxPages = 1
+                var hasError = false
+                var errorMessage = ""
+                
+                results.forEach { result ->
+                    result.fold(
+                        onSuccess = { response ->
+                            allOffers.addAll(response.data)
+                            totalOffersCount += response.total
+                            maxPages = maxOf(maxPages, response.lastPage)
+                        },
+                        onFailure = { error ->
+                            hasError = true
+                            errorMessage = "Error loading P2P offers: ${error.message}"
+                            Log.e("P2PViewModel", "Error loading P2P offers", error)
+                        }
+                    )
+                }
+                
+                if (hasError && allOffers.isEmpty()) {
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        errorMessage = errorMessage,
+                        offers = emptyList()
+                    )
+                } else {
+                    // Deduplicar ofertas por UUID
+                    val uniqueOffers = allOffers.distinctBy { it.uuid }
+                    
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        errorMessage = null,
+                        offers = uniqueOffers,
+                        currentPage = currentState.currentPage,
+                        totalPages = maxPages,
+                        totalOffers = uniqueOffers.size
+                    )
+                    Log.d("P2PViewModel", "P2P offers loaded: ${uniqueOffers.size} unique offers from ${coinsToQuery.size} coin(s)")
+                }
+                
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    errorMessage = "Error loading P2P offers: ${e.message}",
+                    offers = emptyList()
+                )
+                Log.e("P2PViewModel", "Error loading P2P offers", e)
+            }
+        }
+    }
+    
     fun onPageChanged(page: Int) {
         if (page in 1.._uiState.value.totalPages) {
             _uiState.value = _uiState.value.copy(currentPage = page)
-            loadP2PData()
+            loadP2PDataImmediate()
         }
     }
     
@@ -174,6 +272,7 @@ data class P2PUiState(
     val offers: List<P2POffer> = emptyList(),
     val selectedOfferType: String = "all", // "all", "buy", "sell"
     val selectedCoin: String = "all", // "all" or specific coin
+    val selectedCoins: List<String> = emptyList(), // Lista de monedas seleccionadas
     val currentPage: Int = 1,
     val totalPages: Int = 1,
     val totalOffers: Int = 0,
