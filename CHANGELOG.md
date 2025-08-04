@@ -307,6 +307,102 @@ presentation/ui/p2p/
 4. **UI se actualiza** → Material 3 aplica tema inmediatamente
 5. **Persistencia garantizada** → Configuración sobrevive entre sesiones
 
+## 🚀 v2.3.0 - P2P Offer Detail Access System (2025-08-04)
+
+### ✨ Individual P2P Offer Access Implementation
+
+#### 🔍 New API Integration
+- **P2P Offer by ID endpoint**: `/p2p/{uuid}` implementation
+  - Direct access to specific P2P offers using UUID
+  - Complete offer data including `details`, `tx_id`, and `peer` information
+  - Rate limiting maintained (2 seconds between requests)
+  - Bearer token authentication for secure access
+
+#### 🏗️ Clean Architecture Extension
+
+##### **Data Layer**
+- **P2PDataSource interface updated**: Added `getP2POfferById(offerId, accessToken)` method
+- **P2PDataSourceImpl enhanced**: Full HTTP client implementation with JSON parsing
+- **P2PRepository interface extended**: New method for individual offer retrieval
+- **P2PRepositoryImpl updated**: Repository pattern implementation with error handling
+- **P2POffer model extended**: Added `details`, `txId`, and `peer` fields from API response
+- **New Peer model**: Complete peer information structure
+
+##### **Domain Layer**
+- **GetP2POfferByIdUseCase**: Business logic for retrieving individual offers
+  - SessionRepository integration for access token management
+  - Result pattern for success/failure handling
+  - Comprehensive logging for debugging
+
+##### **Presentation Layer**
+- **P2POfferDetailViewModel**: Dedicated ViewModel for offer detail management
+  - StateFlow/SharedFlow reactive pattern
+  - Loading, success, and error states
+  - Navigation effects handling
+- **Navigation with parameters**: UUID-based route navigation
+  - `AppDestinations.P2POfferDetail.createRoute(uuid)` implementation
+  - Parameter extraction from navigation backstack
+  - Type-safe navigation pattern
+
+#### 🚀 User Experience Enhancements
+- **Clickable P2P offer cards**: Direct navigation to detailed view
+- **Loading states**: Visual feedback during API calls
+- **Error handling**: Comprehensive error messages and recovery options
+- **Back navigation**: Seamless return to P2P list
+- **Real-time data**: Fresh offer details fetched from server
+
+#### 🔧 Technical Implementation
+- **Dependency Injection updated**: 
+  - `GetP2POfferByIdUseCase` registered in `DomainModule`
+  - `P2POfferDetailViewModel` added to `PresentationModule`
+- **API Configuration**: New `P2P_OFFER` endpoint constant
+- **Navigation flow**: P2P List → Click Offer → Detail Screen → API Call → Display
+
+### 📁 New Files Created
+```
+├── domain/usecase/
+│   └── GetP2POfferByIdUseCase.kt
+└── presentation/ui/p2p/
+    └── P2POfferDetailViewModel.kt
+```
+
+### 📁 Files Modified
+```
+├── data/
+│   ├── datasource/
+│   │   ├── P2PDataSource.kt (new method)
+│   │   └── P2PDataSourceImpl.kt (implementation)
+│   ├── model/
+│   │   └── P2POfferResponse.kt (extended models)
+│   ├── network/
+│   │   └── ApiConfig.kt (new endpoint)
+│   └── repository/
+│       └── P2PRepositoryImpl.kt (new method)
+├── domain/repository/
+│   └── P2PRepository.kt (interface update)
+├── navigation/
+│   └── AppDestinations.kt (parameterized route)
+├── presentation/ui/main/
+│   └── MainScreen.kt (navigation implementation)
+└── di/
+    ├── DomainModule.kt (use case registration)
+    └── PresentationModule.kt (ViewModel registration)
+```
+
+### 🐛 Resolved Issues
+- **Navigation state management**: Proper parameter passing between screens
+- **API data mapping**: Complete JSON deserialization with new fields
+- **Error boundary handling**: Graceful fallbacks for missing offer IDs
+- **Memory efficiency**: ViewModel-based state management over static offer storage
+
+### 🎯 Feature Flow
+1. **User clicks P2P offer card** → Extract UUID from offer
+2. **Navigate with parameters** → Route to `/p2p_offer_detail/{uuid}`
+3. **ViewModel initialization** → Call `GetP2POfferByIdUseCase`
+4. **API request** → GET `/p2p/{uuid}` with Bearer token
+5. **Data presentation** → Complete offer details displayed
+6. **User actions** → Contact/Accept offer buttons ready for implementation
+
 ## 🚀 Cambios Pendientes de Commit
 
 ### ✨ Nuevas Funcionalidades

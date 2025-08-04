@@ -1,9 +1,16 @@
 package com.example.qvapayappandroid.presentation.ui.main
 
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -16,8 +23,8 @@ import com.example.qvapayappandroid.presentation.ui.p2p.P2PScreen
 import com.example.qvapayappandroid.presentation.ui.p2p.P2POfferDetailScreen
 import com.example.qvapayappandroid.presentation.ui.p2p.P2PFiltersScreen
 import com.example.qvapayappandroid.presentation.ui.p2p.P2PViewModel
+import com.example.qvapayappandroid.presentation.ui.p2p.P2POfferDetailViewModel
 import com.example.qvapayappandroid.presentation.ui.settings.SettingsScreen
-import com.example.qvapayappandroid.data.model.P2POffer
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
@@ -28,7 +35,6 @@ fun MainScreen(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
     
-    var selectedOffer by remember { mutableStateOf<P2POffer?>(null) }
     
     // Instancia compartida del ViewModel P2P
     val sharedP2PViewModel: P2PViewModel = koinViewModel()
@@ -56,8 +62,9 @@ fun MainScreen(
                 P2PScreen(
                     viewModel = sharedP2PViewModel,
                     onOfferClick = { offer ->
-                        selectedOffer = offer
-                        navController.navigate(AppDestinations.P2POfferDetail.route)
+                        offer.uuid?.let { uuid ->
+                            navController.navigate(AppDestinations.P2POfferDetail.createRoute(uuid))
+                        }
                     },
                     onShowFilters = {
                         navController.navigate(AppDestinations.P2PFilters.route)
@@ -65,20 +72,95 @@ fun MainScreen(
                 )
             }
             
-            composable(AppDestinations.P2POfferDetail.route) {
-                selectedOffer?.let { offer ->
-                    P2POfferDetailScreen(
-                        offer = offer,
-                        onBackClick = {
-                            navController.popBackStack()
-                        },
-                        onContactUser = {
-                            // TODO: Implementar contacto con usuario
-                        },
-                        onAcceptOffer = {
-                            // TODO: Implementar aceptación de oferta
+            composable(AppDestinations.P2POfferDetail.route) { backStackEntry ->
+                val offerId = backStackEntry.arguments?.getString("offerId")
+                
+                if (offerId != null) {
+                    val offerDetailViewModel: P2POfferDetailViewModel = koinViewModel()
+                    val uiState by offerDetailViewModel.uiState.collectAsState()
+                    
+                    LaunchedEffect(offerId) {
+                        offerDetailViewModel.loadOffer(offerId)
+                    }
+                    
+                    LaunchedEffect(Unit) {
+                        offerDetailViewModel.effect.collect { effect ->
+                            when (effect) {
+                                is P2POfferDetailViewModel.Effect.NavigateBack -> {
+                                    navController.popBackStack()
+                                }
+                                is P2POfferDetailViewModel.Effect.ShowError -> {
+                                    // Error handling is done in the UI state
+                                }
+                            }
                         }
-                    )
+                    }
+                    
+                    when {
+                        uiState.isLoading -> {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator()
+                            }
+                        }
+                        uiState.offer != null -> {
+                            P2POfferDetailScreen(
+                                offer = uiState.offer!!,
+                                onBackClick = offerDetailViewModel::onBackClick,
+                                onContactUser = offerDetailViewModel::onContactUser,
+                                onAcceptOffer = offerDetailViewModel::onAcceptOffer
+                            )
+                        }
+                        uiState.errorMessage != null -> {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Text(
+                                        text = "Error al cargar la oferta",
+                                        style = MaterialTheme.typography.headlineSmall
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(
+                                        text = uiState.errorMessage!!,
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
+                                    Spacer(modifier = Modifier.height(16.dp))
+                                    Button(
+                                        onClick = { navController.popBackStack() }
+                                    ) {
+                                        Text("Volver")
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    // Handle missing offerId parameter
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = "ID de oferta no válido",
+                                style = MaterialTheme.typography.headlineSmall
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Button(
+                                onClick = { navController.popBackStack() }
+                            ) {
+                                Text("Volver")
+                            }
+                        }
+                    }
                 }
             }
             

@@ -36,6 +36,7 @@ data class P2POffer(
     val peerId: Int? = null,
     val amount: String? = null,
     val receive: String? = null,
+    val details: String? = null,
     val message: String? = null,
     @SerialName("only_kyc")
     val onlyKyc: Int? = null,
@@ -43,6 +44,8 @@ data class P2POffer(
     @SerialName("only_vip")
     val onlyVip: Int? = null,
     val status: String? = null,
+    @SerialName("tx_id")
+    val txId: String? = null,
     @SerialName("created_at")
     val createdAt: String? = null,
     @SerialName("updated_at")
@@ -50,7 +53,8 @@ data class P2POffer(
     val valid: Int? = null,
     @SerialName("coin_data")
     val coinData: CoinData? = null,
-    val owner: Owner? = null
+    val owner: Owner? = null,
+    val peer: Peer? = null
 )
 
 @Serializable
@@ -88,6 +92,19 @@ data class Owner(
     val canBuy: Int? = null,
     @SerialName("can_sell")
     val canSell: Int? = null,
+    @SerialName("name_verified")
+    val nameVerified: String? = null,
+    @SerialName("cover_photo_url")
+    val coverPhotoUrl: String? = null,
+    @SerialName("profile_photo_url")
+    val profilePhotoUrl: String? = null,
+    @SerialName("average_rating")
+    val averageRating: String? = null
+)
+
+@Serializable
+data class Peer(
+    val uuid: String? = null,
     @SerialName("name_verified")
     val nameVerified: String? = null,
     @SerialName("cover_photo_url")
