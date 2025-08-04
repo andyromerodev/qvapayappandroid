@@ -208,6 +208,105 @@ presentation/ui/p2p/
 └── data/model/P2POfferResponse.kt (modelos completos)
 ```
 
+## 🚀 v2.2.0 - Sistema de Temas Dinámico Completo (2025-08-04)
+
+### ✨ Sistema de Configuraciones Persistentes
+
+#### 🎨 Implementación de Temas Dinámicos
+- **Diálogo de selección de tema** en SettingsScreen:
+  - RadioButtons para "Claro", "Oscuro", "Sistema"
+  - Material 3 AlertDialog con diseño consistente
+  - Selección persistente entre sesiones de la app
+  - Cambio instantáneo de tema al seleccionar
+
+- **AppTheme dinámico**:
+  - Observa cambios de configuración en tiempo real usando Flow
+  - Soporte para Dynamic Colors en Android 12+ (Material You)
+  - Tema "Sistema" respeta configuración del dispositivo
+  - Aplicación automática de temas claro/oscuro
+
+#### 🏗️ Arquitectura Completa de Settings
+
+##### **Data Layer**
+- **SettingsEntity**: Entity de Room para persistir configuraciones
+- **SettingsDao**: DAO con operaciones CRUD y queries específicas
+- **SettingsLocalDataSource**: Interface y implementación para gestión local
+- **SettingsRepositoryImpl**: Repository con mapeo entity ↔ domain model
+
+##### **Domain Layer**  
+- **SettingsRepository**: Interface del repositorio de configuraciones
+- **Use Cases especializados**:
+  - `GetSettingsUseCase` - Obtener configuraciones con Flow reactivo
+  - `InitializeSettingsUseCase` - Inicializar valores por defecto
+  - `UpdateThemeUseCase` - Persistir selección de tema
+  - `UpdateNotificationsUseCase` - Configurar notificaciones
+  - `UpdateBiometricUseCase` - Configurar autenticación biométrica
+
+##### **Presentation Layer**
+- **SettingsViewModel actualizado**: Integración completa con use cases reales
+- **Manejo de estado reactivo**: Cambios se reflejan inmediatamente en UI
+- **Gestión de errores**: Try-catch con mensajes descriptivos al usuario
+
+#### 🛠️ Base de Datos Actualizada
+- **AppDatabase v2**: Migración automática de versión 1 → 2
+- **Migración SQL**: Creación de tabla `settings` con campos completos
+- **Persistencia robusta**: Configuraciones sobreviven reinstalaciones
+
+#### 🔧 Dependency Injection Completo
+- **DatabaseModule**: SettingsDao agregado al grafo de dependencias
+- **DataModule**: SettingsLocalDataSource y Repository configurados
+- **DomainModule**: Todos los use cases de settings registrados  
+- **PresentationModule**: ViewModel actualizado con 5 dependencias
+
+### 🐛 Fixes de UI
+- **P2PScreen optimización**: Reducción de espaciado excesivo con bottom navigation
+- **SettingsScreen diálogo**: Corrección de scope de variables y ubicación correcta
+
+### 📁 Archivos Nuevos
+```
+├── data/
+│   ├── database/
+│   │   ├── dao/SettingsDao.kt
+│   │   └── entities/SettingsEntity.kt
+│   ├── datasource/
+│   │   ├── SettingsLocalDataSource.kt
+│   │   └── SettingsLocalDataSourceImpl.kt
+│   └── repository/
+│       └── SettingsRepositoryImpl.kt
+├── domain/
+│   ├── repository/SettingsRepository.kt
+│   └── usecase/
+│       ├── GetSettingsUseCase.kt
+│       ├── InitializeSettingsUseCase.kt
+│       ├── UpdateBiometricUseCase.kt
+│       ├── UpdateNotificationsUseCase.kt
+│       └── UpdateThemeUseCase.kt
+└── presentation/ui/theme/
+    └── AppTheme.kt
+```
+
+### 📁 Archivos Modificados
+```
+├── MainActivity.kt (AppTheme integrado)
+├── data/database/AppDatabase.kt (v2 + migración + SettingsDao)
+├── presentation/ui/settings/
+│   ├── SettingsScreen.kt (diálogo de tema + ThemeSelectionDialog)
+│   └── SettingsViewModel.kt (use cases reales integrados)
+├── presentation/ui/p2p/P2PScreen.kt (espaciado optimizado)
+└── di/ (todos los módulos actualizados con settings)
+    ├── DatabaseModule.kt
+    ├── DataModule.kt  
+    ├── DomainModule.kt
+    └── PresentationModule.kt
+```
+
+### 🎯 Funcionalidad Completa
+1. **Usuario selecciona tema** → Diálogo se abre
+2. **Selecciona opción** → UpdateThemeUseCase persiste en BD
+3. **AppTheme observa cambio** → Flow emite nueva configuración  
+4. **UI se actualiza** → Material 3 aplica tema inmediatamente
+5. **Persistencia garantizada** → Configuración sobrevive entre sesiones
+
 ## 🚀 Cambios Pendientes de Commit
 
 ### ✨ Nuevas Funcionalidades

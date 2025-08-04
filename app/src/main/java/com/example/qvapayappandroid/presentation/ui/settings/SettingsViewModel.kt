@@ -3,7 +3,11 @@ package com.example.qvapayappandroid.presentation.ui.settings
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.qvapayappandroid.domain.usecase.GetSettingsUseCase
 import com.example.qvapayappandroid.domain.usecase.LogoutUseCase
+import com.example.qvapayappandroid.domain.usecase.UpdateBiometricUseCase
+import com.example.qvapayappandroid.domain.usecase.UpdateNotificationsUseCase
+import com.example.qvapayappandroid.domain.usecase.UpdateThemeUseCase
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -13,6 +17,10 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class SettingsViewModel(
+    private val getSettingsUseCase: GetSettingsUseCase,
+    private val updateThemeUseCase: UpdateThemeUseCase,
+    private val updateNotificationsUseCase: UpdateNotificationsUseCase,
+    private val updateBiometricUseCase: UpdateBiometricUseCase,
     private val logoutUseCase: LogoutUseCase
 ) : ViewModel() {
     
@@ -31,15 +39,7 @@ class SettingsViewModel(
             _uiState.value = _uiState.value.copy(isLoading = true)
             
             try {
-                // Simular carga de configuraciones
-                kotlinx.coroutines.delay(500)
-                
-                val userSettings = UserSettings(
-                    notificationsEnabled = true,
-                    biometricEnabled = false,
-                    theme = "Sistema",
-                    language = "Español"
-                )
+                val userSettings = getSettingsUseCase()
                 
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
@@ -59,34 +59,52 @@ class SettingsViewModel(
     
     fun toggleNotifications(enabled: Boolean) {
         viewModelScope.launch {
-            val currentSettings = _uiState.value.userSettings
-            _uiState.value = _uiState.value.copy(
-                userSettings = currentSettings.copy(notificationsEnabled = enabled)
-            )
-            Log.d("SettingsViewModel", "Notifications toggled: $enabled")
-            _effect.emit(SettingsEffect.ShowMessage("Notificaciones ${if (enabled) "activadas" else "desactivadas"}"))
+            try {
+                updateNotificationsUseCase(enabled)
+                val currentSettings = _uiState.value.userSettings
+                _uiState.value = _uiState.value.copy(
+                    userSettings = currentSettings.copy(notificationsEnabled = enabled)
+                )
+                Log.d("SettingsViewModel", "Notifications toggled: $enabled")
+                _effect.emit(SettingsEffect.ShowMessage("Notificaciones ${if (enabled) "activadas" else "desactivadas"}"))
+            } catch (e: Exception) {
+                Log.e("SettingsViewModel", "Error updating notifications", e)
+                _effect.emit(SettingsEffect.ShowMessage("Error al actualizar notificaciones"))
+            }
         }
     }
     
     fun toggleBiometric(enabled: Boolean) {
         viewModelScope.launch {
-            val currentSettings = _uiState.value.userSettings
-            _uiState.value = _uiState.value.copy(
-                userSettings = currentSettings.copy(biometricEnabled = enabled)
-            )
-            Log.d("SettingsViewModel", "Biometric authentication toggled: $enabled")
-            _effect.emit(SettingsEffect.ShowMessage("Autenticación biométrica ${if (enabled) "activada" else "desactivada"}"))
+            try {
+                updateBiometricUseCase(enabled)
+                val currentSettings = _uiState.value.userSettings
+                _uiState.value = _uiState.value.copy(
+                    userSettings = currentSettings.copy(biometricEnabled = enabled)
+                )
+                Log.d("SettingsViewModel", "Biometric authentication toggled: $enabled")
+                _effect.emit(SettingsEffect.ShowMessage("Autenticación biométrica ${if (enabled) "activada" else "desactivada"}"))
+            } catch (e: Exception) {
+                Log.e("SettingsViewModel", "Error updating biometric", e)
+                _effect.emit(SettingsEffect.ShowMessage("Error al actualizar autenticación biométrica"))
+            }
         }
     }
     
     fun changeTheme(theme: String) {
         viewModelScope.launch {
-            val currentSettings = _uiState.value.userSettings
-            _uiState.value = _uiState.value.copy(
-                userSettings = currentSettings.copy(theme = theme)
-            )
-            Log.d("SettingsViewModel", "Theme changed to: $theme")
-            _effect.emit(SettingsEffect.ShowMessage("Tema cambiado a $theme"))
+            try {
+                updateThemeUseCase(theme)
+                val currentSettings = _uiState.value.userSettings
+                _uiState.value = _uiState.value.copy(
+                    userSettings = currentSettings.copy(theme = theme)
+                )
+                Log.d("SettingsViewModel", "Theme changed to: $theme")
+                _effect.emit(SettingsEffect.ShowMessage("Tema cambiado a $theme"))
+            } catch (e: Exception) {
+                Log.e("SettingsViewModel", "Error updating theme", e)
+                _effect.emit(SettingsEffect.ShowMessage("Error al actualizar tema"))
+            }
         }
     }
     

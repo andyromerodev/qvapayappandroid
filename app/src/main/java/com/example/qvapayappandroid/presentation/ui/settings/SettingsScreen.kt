@@ -127,6 +127,8 @@ private fun SettingsContent(
     onLogout: () -> Unit,
     isLoggingOut: Boolean
 ) {
+    var showThemeDialog by remember { mutableStateOf(false) }
+    
     Column(
         modifier = modifier.fillMaxSize()
     ) {
@@ -178,7 +180,7 @@ private fun SettingsContent(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 },
-                onClick = { onThemeChange("Sistema") }
+                onClick = { showThemeDialog = true }
             )
             
             SettingsItem(
@@ -260,6 +262,17 @@ private fun SettingsContent(
                 )
             }
         }
+    }
+    
+    if (showThemeDialog) {
+        ThemeSelectionDialog(
+            currentTheme = userSettings.theme,
+            onThemeSelected = { theme ->
+                onThemeChange(theme)
+                showThemeDialog = false
+            },
+            onDismiss = { showThemeDialog = false }
+        )
     }
 }
 
@@ -388,4 +401,50 @@ private fun SettingsSwitchItem(
             )
         }
     }
+}
+
+@Composable
+private fun ThemeSelectionDialog(
+    currentTheme: String,
+    onThemeSelected: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    val themeOptions = listOf("Claro", "Oscuro", "Sistema")
+    
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = "Seleccionar Tema",
+                style = MaterialTheme.typography.titleLarge
+            )
+        },
+        text = {
+            Column {
+                themeOptions.forEach { theme ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(
+                            selected = currentTheme == theme,
+                            onClick = { onThemeSelected(theme) }
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(
+                            text = theme,
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancelar")
+            }
+        }
+    )
 }

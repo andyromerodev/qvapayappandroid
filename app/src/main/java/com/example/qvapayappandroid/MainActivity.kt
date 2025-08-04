@@ -15,11 +15,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.qvapayappandroid.di.allModules
 import com.example.qvapayappandroid.navigation.AppNavigation
+import com.example.qvapayappandroid.presentation.ui.theme.AppTheme
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import org.koin.core.context.startKoin
 
 class MainActivity : ComponentActivity() {
+    
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
@@ -33,7 +35,7 @@ class MainActivity : ComponentActivity() {
         }
         
         setContent {
-            MaterialTheme {
+            AppTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background

@@ -14,5 +14,5 @@ val presentationModule = module {
     viewModel { MainViewModel(get()) }
     viewModel { HomeViewModel(get(), get()) }
     viewModel { P2PViewModel(get()) }
-    viewModel { SettingsViewModel(get()) }
+    viewModel { SettingsViewModel(get(), get(), get(), get(), get()) }
 }

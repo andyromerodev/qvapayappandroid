@@ -8,4 +8,5 @@ val databaseModule = module {
     single { AppDatabase.getDatabase(androidContext()) }
     single { get<AppDatabase>().userDao() }
     single { get<AppDatabase>().sessionDao() }
+    single { get<AppDatabase>().settingsDao() }
 }

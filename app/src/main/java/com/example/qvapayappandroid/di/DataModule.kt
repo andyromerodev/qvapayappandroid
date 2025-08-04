@@ -6,12 +6,16 @@ import com.example.qvapayappandroid.data.datasource.P2PDataSource
 import com.example.qvapayappandroid.data.datasource.P2PDataSourceImpl
 import com.example.qvapayappandroid.data.datasource.SessionLocalDataSource
 import com.example.qvapayappandroid.data.datasource.SessionLocalDataSourceImpl
+import com.example.qvapayappandroid.data.datasource.SettingsLocalDataSource
+import com.example.qvapayappandroid.data.datasource.SettingsLocalDataSourceImpl
 import com.example.qvapayappandroid.data.repository.AuthRepositoryImpl
 import com.example.qvapayappandroid.data.repository.P2PRepositoryImpl
 import com.example.qvapayappandroid.data.repository.SessionRepositoryImpl
+import com.example.qvapayappandroid.data.repository.SettingsRepositoryImpl
 import com.example.qvapayappandroid.domain.repository.AuthRepository
 import com.example.qvapayappandroid.domain.repository.P2PRepository
 import com.example.qvapayappandroid.domain.repository.SessionRepository
+import com.example.qvapayappandroid.domain.repository.SettingsRepository
 import org.koin.dsl.module
 
 val dataModule = module {
@@ -19,9 +23,11 @@ val dataModule = module {
     single<LoginDataSource> { LoginDataSourceImpl(get()) }
     single<SessionLocalDataSource> { SessionLocalDataSourceImpl(get(), get()) }
     single<P2PDataSource> { P2PDataSourceImpl(get()) }
+    single<SettingsLocalDataSource> { SettingsLocalDataSourceImpl(get()) }
     
     // Repositories
     single<SessionRepository> { SessionRepositoryImpl(get()) }
     single<AuthRepository> { AuthRepositoryImpl(get(), get()) }
     single<P2PRepository> { P2PRepositoryImpl(get()) }
+    single<SettingsRepository> { SettingsRepositoryImpl(get()) }
 }
