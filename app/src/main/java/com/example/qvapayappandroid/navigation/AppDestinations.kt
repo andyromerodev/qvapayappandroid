@@ -9,6 +9,7 @@ sealed class AppDestinations(val route: String) {
         fun createRoute(offerId: String) = "p2p_offer_detail/$offerId"
     }
     object P2PFilters : AppDestinations("p2p_filters")
+    object CreateP2POffer : AppDestinations("create_p2p_offer")
     object Settings : AppDestinations("settings")
     
     companion object {
