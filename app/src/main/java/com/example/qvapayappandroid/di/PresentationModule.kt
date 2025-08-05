@@ -3,6 +3,7 @@ package com.example.qvapayappandroid.di
 import com.example.qvapayappandroid.presentation.ui.home.HomeViewModel
 import com.example.qvapayappandroid.presentation.ui.login.LoginViewModel
 import com.example.qvapayappandroid.presentation.ui.main.MainViewModel
+import com.example.qvapayappandroid.presentation.ui.p2p.CreateP2POfferViewModel
 import com.example.qvapayappandroid.presentation.ui.p2p.P2POfferDetailViewModel
 import com.example.qvapayappandroid.presentation.ui.p2p.P2PViewModel
 import com.example.qvapayappandroid.presentation.ui.settings.SettingsViewModel
@@ -15,6 +16,7 @@ val presentationModule = module {
     viewModel { MainViewModel(get()) }
     viewModel { HomeViewModel(get(), get()) }
     viewModel { P2PViewModel(get()) }
-    viewModel { P2POfferDetailViewModel(get()) }
+    viewModel { P2POfferDetailViewModel(get(), get()) }
+    viewModel { CreateP2POfferViewModel(get()) }
     viewModel { SettingsViewModel(get(), get(), get(), get(), get()) }
 }
