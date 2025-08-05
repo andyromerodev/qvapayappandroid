@@ -56,7 +56,6 @@ fun MainScreen(
         ) {
             composable(AppDestinations.Home.route) {
                 HomeScreen(
-                    onLogout = onLogout,
                     onCreateOffer = {
                         navController.navigate(AppDestinations.CreateP2POffer.route)
                     }
