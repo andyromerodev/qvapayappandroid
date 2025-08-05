@@ -23,6 +23,8 @@ fun P2POfferDetailScreen(
     onBackClick: () -> Unit,
     onContactUser: () -> Unit = {},
     onAcceptOffer: () -> Unit = {},
+    isApplying: Boolean = false,
+    applicationSuccessMessage: String? = null,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -311,11 +313,22 @@ fun P2POfferDetailScreen(
                 
                 Button(
                     onClick = onAcceptOffer,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
+                    enabled = !isApplying
                 ) {
-                    Icon(Icons.Default.Check, contentDescription = null)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Aceptar Oferta")
+                    if (isApplying) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(16.dp),
+                            strokeWidth = 2.dp,
+                            color = MaterialTheme.colorScheme.onPrimary
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Aplicando...")
+                    } else {
+                        Icon(Icons.Default.Check, contentDescription = null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Aceptar Oferta")
+                    }
                 }
             }
         }
