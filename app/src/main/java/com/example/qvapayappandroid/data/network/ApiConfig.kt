@@ -11,5 +11,8 @@ object ApiConfig {
         const val TRANSACTIONS = "/transactions"
         const val BALANCE = "/balance"
         const val P2P_INDEX = "/p2p/index"
+        const val P2P_OFFER = "/p2p"
+        const val P2P_APPLY = "/p2p"
+        const val P2P_CREATE = "/p2p/create"
     }
 }

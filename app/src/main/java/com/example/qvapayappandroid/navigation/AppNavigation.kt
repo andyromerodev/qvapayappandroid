@@ -1,79 +1,143 @@
 package com.example.qvapayappandroid.navigation
 
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
+import androidx.compose.animation.*
+import androidx.compose.animation.core.tween
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.qvapayappandroid.presentation.ui.login.LoginScreen
 import com.example.qvapayappandroid.presentation.ui.main.MainScreen
-import com.example.qvapayappandroid.presentation.ui.main.MainViewModel
-import org.koin.androidx.compose.koinViewModel
+import com.example.qvapayappandroid.presentation.ui.splash.SplashScreen
 
+@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun AppNavigation(
-    navController: NavHostController = rememberNavController(),
-    mainViewModel: MainViewModel = koinViewModel()
+    navController: NavHostController = rememberNavController()
 ) {
-    val uiState by mainViewModel.uiState.collectAsState()
-    
-    when {
-        uiState.isLoading -> {
-            // Loading screen mientras se verifica la sesión
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    CircularProgressIndicator()
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text("Verificando sesión...")
-                }
+    NavHost(
+        navController = navController,
+        startDestination = AppDestinations.START_DESTINATION,
+        enterTransition = {
+            fadeIn(
+                animationSpec = tween(durationMillis = 400)
+            ) + slideInHorizontally(
+                initialOffsetX = { it / 4 },
+                animationSpec = tween(durationMillis = 400)
+            )
+        },
+        exitTransition = {
+            fadeOut(
+                animationSpec = tween(durationMillis = 400)
+            ) + slideOutHorizontally(
+                targetOffsetX = { -it / 4 },
+                animationSpec = tween(durationMillis = 400)
+            )
+        },
+        popEnterTransition = {
+            fadeIn(
+                animationSpec = tween(durationMillis = 400)
+            ) + slideInHorizontally(
+                initialOffsetX = { -it / 4 },
+                animationSpec = tween(durationMillis = 400)
+            )
+        },
+        popExitTransition = {
+            fadeOut(
+                animationSpec = tween(durationMillis = 400)
+            ) + slideOutHorizontally(
+                targetOffsetX = { it / 4 },
+                animationSpec = tween(durationMillis = 400)
+            )
+        }
+    ) {
+        composable(
+            route = AppDestinations.Splash.route,
+            enterTransition = {
+                fadeIn(animationSpec = tween(durationMillis = 300))
+            },
+            exitTransition = {
+                fadeOut(animationSpec = tween(durationMillis = 300)) + 
+                scaleOut(
+                    targetScale = 0.95f,
+                    animationSpec = tween(durationMillis = 300)
+                )
             }
+        ) {
+            SplashScreen(
+                onNavigationReady = { destination ->
+                    navController.navigate(destination) {
+                        popUpTo(AppDestinations.Splash.route) { 
+                            inclusive = true 
+                        }
+                    }
+                }
+            )
         }
         
-        uiState.isInitialized -> {
-            val startDestination = if (uiState.isLoggedIn) {
-                AppDestinations.Main.route
-            } else {
-                AppDestinations.Login.route
-            }
-            
-            NavHost(
-                navController = navController,
-                startDestination = startDestination
-            ) {
-                composable(AppDestinations.Login.route) {
-                    LoginScreen(
-                        onLoginSuccess = {
-                            navController.navigate(AppDestinations.Main.route) {
-                                popUpTo(AppDestinations.Login.route) { 
-                                    inclusive = true 
-                                }
-                            }
-                        }
-                    )
-                }
-                
-                composable(AppDestinations.Main.route) {
-                    MainScreen(
-                        onLogout = {
-                            navController.navigate(AppDestinations.Login.route) {
-                                popUpTo(AppDestinations.Main.route) { 
-                                    inclusive = true 
-                                }
-                            }
-                        }
-                    )
+        composable(
+            route = AppDestinations.Login.route,
+            enterTransition = {
+                when (initialState.destination.route) {
+                    AppDestinations.Splash.route -> {
+                        fadeIn(animationSpec = tween(durationMillis = 500)) +
+                        scaleIn(
+                            initialScale = 0.95f,
+                            animationSpec = tween(durationMillis = 500)
+                        )
+                    }
+                    else -> {
+                        fadeIn(animationSpec = tween(durationMillis = 400)) +
+                        slideInHorizontally(
+                            initialOffsetX = { it / 4 },
+                            animationSpec = tween(durationMillis = 400)
+                        )
+                    }
                 }
             }
+        ) {
+            LoginScreen(
+                onLoginSuccess = {
+                    navController.navigate(AppDestinations.Main.route) {
+                        popUpTo(AppDestinations.Login.route) { 
+                            inclusive = true 
+                        }
+                    }
+                }
+            )
+        }
+        
+        composable(
+            route = AppDestinations.Main.route,
+            enterTransition = {
+                when (initialState.destination.route) {
+                    AppDestinations.Splash.route -> {
+                        fadeIn(animationSpec = tween(durationMillis = 500)) +
+                        scaleIn(
+                            initialScale = 0.95f,
+                            animationSpec = tween(durationMillis = 500)
+                        )
+                    }
+                    else -> {
+                        fadeIn(animationSpec = tween(durationMillis = 400)) +
+                        slideInHorizontally(
+                            initialOffsetX = { it / 4 },
+                            animationSpec = tween(durationMillis = 400)
+                        )
+                    }
+                }
+            }
+        ) {
+            MainScreen(
+                onLogout = {
+                    navController.navigate(AppDestinations.Login.route) {
+                        popUpTo(AppDestinations.Main.route) { 
+                            inclusive = true 
+                        }
+                    }
+                }
+            )
         }
     }
 }

@@ -1,7 +1,10 @@
 package com.example.qvapayappandroid.di
 
+import com.example.qvapayappandroid.domain.usecase.ApplyToP2POfferUseCase
 import com.example.qvapayappandroid.domain.usecase.CheckSessionUseCase
+import com.example.qvapayappandroid.domain.usecase.CreateP2POfferUseCase
 import com.example.qvapayappandroid.domain.usecase.GetCurrentUserUseCase
+import com.example.qvapayappandroid.domain.usecase.GetP2POfferByIdUseCase
 import com.example.qvapayappandroid.domain.usecase.GetP2POffersUseCase
 import com.example.qvapayappandroid.domain.usecase.GetSettingsUseCase
 import com.example.qvapayappandroid.domain.usecase.InitializeSettingsUseCase
@@ -19,6 +22,9 @@ val domainModule = module {
     factory { GetCurrentUserUseCase(get()) }
     factory { LogoutUseCase(get()) }
     factory { GetP2POffersUseCase(get(), get()) }
+    factory { GetP2POfferByIdUseCase(get(), get()) }
+    factory { ApplyToP2POfferUseCase(get(), get()) }
+    factory { CreateP2POfferUseCase(get(), get()) }
     factory { GetSettingsUseCase(get()) }
     factory { InitializeSettingsUseCase(get()) }
     factory { UpdateThemeUseCase(get()) }

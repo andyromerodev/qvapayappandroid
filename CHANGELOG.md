@@ -307,6 +307,208 @@ presentation/ui/p2p/
 4. **UI se actualiza** → Material 3 aplica tema inmediatamente
 5. **Persistencia garantizada** → Configuración sobrevive entre sesiones
 
+## 🚀 v2.3.0 - P2P Offer Detail Access System (2025-08-04)
+
+### ✨ Individual P2P Offer Access Implementation
+
+#### 🔍 New API Integration
+- **P2P Offer by ID endpoint**: `/p2p/{uuid}` implementation
+  - Direct access to specific P2P offers using UUID
+  - Complete offer data including `details`, `tx_id`, and `peer` information
+  - Rate limiting maintained (2 seconds between requests)
+  - Bearer token authentication for secure access
+
+#### 🏗️ Clean Architecture Extension
+
+##### **Data Layer**
+- **P2PDataSource interface updated**: Added `getP2POfferById(offerId, accessToken)` method
+- **P2PDataSourceImpl enhanced**: Full HTTP client implementation with JSON parsing
+- **P2PRepository interface extended**: New method for individual offer retrieval
+- **P2PRepositoryImpl updated**: Repository pattern implementation with error handling
+- **P2POffer model extended**: Added `details`, `txId`, and `peer` fields from API response
+- **New Peer model**: Complete peer information structure
+
+##### **Domain Layer**
+- **GetP2POfferByIdUseCase**: Business logic for retrieving individual offers
+  - SessionRepository integration for access token management
+  - Result pattern for success/failure handling
+  - Comprehensive logging for debugging
+
+##### **Presentation Layer**
+- **P2POfferDetailViewModel**: Dedicated ViewModel for offer detail management
+  - StateFlow/SharedFlow reactive pattern
+  - Loading, success, and error states
+  - Navigation effects handling
+- **Navigation with parameters**: UUID-based route navigation
+  - `AppDestinations.P2POfferDetail.createRoute(uuid)` implementation
+  - Parameter extraction from navigation backstack
+  - Type-safe navigation pattern
+
+#### 🚀 User Experience Enhancements
+- **Clickable P2P offer cards**: Direct navigation to detailed view
+- **Loading states**: Visual feedback during API calls
+- **Error handling**: Comprehensive error messages and recovery options
+- **Back navigation**: Seamless return to P2P list
+- **Real-time data**: Fresh offer details fetched from server
+
+#### 🔧 Technical Implementation
+- **Dependency Injection updated**: 
+  - `GetP2POfferByIdUseCase` registered in `DomainModule`
+  - `P2POfferDetailViewModel` added to `PresentationModule`
+- **API Configuration**: New `P2P_OFFER` endpoint constant
+- **Navigation flow**: P2P List → Click Offer → Detail Screen → API Call → Display
+
+### 📁 New Files Created
+```
+├── domain/usecase/
+│   └── GetP2POfferByIdUseCase.kt
+└── presentation/ui/p2p/
+    └── P2POfferDetailViewModel.kt
+```
+
+### 📁 Files Modified
+```
+├── data/
+│   ├── datasource/
+│   │   ├── P2PDataSource.kt (new method)
+│   │   └── P2PDataSourceImpl.kt (implementation)
+│   ├── model/
+│   │   └── P2POfferResponse.kt (extended models)
+│   ├── network/
+│   │   └── ApiConfig.kt (new endpoint)
+│   └── repository/
+│       └── P2PRepositoryImpl.kt (new method)
+├── domain/repository/
+│   └── P2PRepository.kt (interface update)
+├── navigation/
+│   └── AppDestinations.kt (parameterized route)
+├── presentation/ui/main/
+│   └── MainScreen.kt (navigation implementation)
+└── di/
+    ├── DomainModule.kt (use case registration)
+    └── PresentationModule.kt (ViewModel registration)
+```
+
+### 🐛 Resolved Issues
+- **Navigation state management**: Proper parameter passing between screens
+- **API data mapping**: Complete JSON deserialization with new fields
+- **Error boundary handling**: Graceful fallbacks for missing offer IDs
+- **Memory efficiency**: ViewModel-based state management over static offer storage
+
+### 🎯 Feature Flow
+1. **User clicks P2P offer card** → Extract UUID from offer
+2. **Navigate with parameters** → Route to `/p2p_offer_detail/{uuid}`
+3. **ViewModel initialization** → Call `GetP2POfferByIdUseCase`
+4. **API request** → GET `/p2p/{uuid}` with Bearer token
+5. **Data presentation** → Complete offer details displayed
+6. **User actions** → Contact/Accept offer buttons ready for implementation
+
+## 🚀 v2.4.0 - P2P Offer Application System (2025-08-04)
+
+### ✨ P2P Offer Application Implementation
+
+#### 🔍 New API Integration
+- **P2P Apply endpoint**: `/p2p/{uuid}/apply` implementation
+  - POST request to apply to specific P2P offers using UUID
+  - Bearer token authentication for secure application
+  - Response includes success message and updated offer data
+  - Rate limiting maintained (2 seconds between requests)
+
+#### 🏗️ Clean Architecture Extension
+
+##### **Data Layer**
+- **P2PApplyResponse model**: Complete response structure for application results
+  - `msg` field for success/error messages
+  - `p2p` field with `P2PAppliedOffer` containing updated offer information
+- **P2PAppliedOffer model**: Simplified offer structure for application responses
+- **P2PDataSource interface updated**: Added `applyToP2POffer(offerId, accessToken)` method
+- **P2PDataSourceImpl enhanced**: Full HTTP POST implementation with JSON parsing
+- **P2PRepository interface extended**: New method for offer application
+- **P2PRepositoryImpl updated**: Repository pattern implementation with comprehensive error handling
+
+##### **Domain Layer**
+- **ApplyToP2POfferUseCase**: Business logic for applying to P2P offers
+  - SessionRepository integration for access token management
+  - Result pattern for success/failure handling
+  - Comprehensive logging for debugging and monitoring
+
+##### **Presentation Layer**
+- **P2POfferDetailViewModel enhanced**: Complete offer application management
+  - New UiState fields: `isApplying`, `applicationSuccessMessage`
+  - New Effect: `ShowApplicationSuccess` for success feedback
+  - Real `onAcceptOffer()` implementation with API integration
+  - Loading states during application process
+  - Success and error message handling
+
+#### 🚀 User Experience Enhancements
+- **Interactive "Aceptar Oferta" button**: 
+  - Shows loading spinner during application process
+  - Disabled state while applying to prevent double-submission
+  - Text changes to "Aplicando..." during process
+  - Success feedback after successful application
+- **Real-time application status**: Visual feedback throughout process
+- **Error handling**: Comprehensive error messages for failed applications
+- **Success confirmation**: Clear success message when application succeeds
+
+#### 🔧 Technical Implementation
+- **Dependency Injection updated**: 
+  - `ApplyToP2POfferUseCase` registered in `DomainModule`
+  - `P2POfferDetailViewModel` updated with new dependency
+- **API Configuration**: P2P_APPLY endpoint constant
+- **UI State Management**: Enhanced ViewModel with application-specific states
+- **Navigation flow**: Maintain same flow with enhanced interactivity
+
+### 📁 New Files Created
+```
+├── domain/usecase/
+│   └── ApplyToP2POfferUseCase.kt
+```
+
+### 📁 Files Modified
+```
+├── data/
+│   ├── datasource/
+│   │   ├── P2PDataSource.kt (new method)
+│   │   └── P2PDataSourceImpl.kt (POST implementation)
+│   ├── model/
+│   │   └── P2POfferResponse.kt (new response models)
+│   ├── network/
+│   │   └── ApiConfig.kt (new endpoint)
+│   └── repository/
+│       └── P2PRepositoryImpl.kt (new method)
+├── domain/repository/
+│   └── P2PRepository.kt (interface update)
+├── presentation/ui/
+│   ├── main/MainScreen.kt (new parameters)
+│   └── p2p/
+│       ├── P2POfferDetailScreen.kt (enhanced UI states)
+│       └── P2POfferDetailViewModel.kt (application logic)
+└── di/
+    ├── DomainModule.kt (use case registration)
+    └── PresentationModule.kt (ViewModel dependency update)
+```
+
+### 🐛 Resolved Issues
+- **Button interaction**: Real functionality instead of TODO placeholder
+- **Loading states**: Visual feedback during API calls prevents user confusion
+- **Double-submission prevention**: Button disabled during application process
+- **Success confirmation**: Clear feedback when application succeeds
+- **Error boundary handling**: Graceful error handling with user-friendly messages
+
+### 🎯 Feature Flow
+1. **User views P2P offer details** → Complete offer information displayed
+2. **User clicks "Aceptar Oferta"** → Button shows loading state
+3. **API call initiated** → POST to `/p2p/{uuid}/apply` with Bearer token
+4. **Application processing** → Rate limiting and error handling applied
+5. **Success response** → Success message displayed to user
+6. **Error handling** → User-friendly error messages if application fails
+
+### 🔒 Security Features
+- **Bearer token authentication**: Secure API calls with user authentication
+- **Rate limiting**: 2-second minimum interval between requests
+- **Input validation**: UUID validation before API calls
+- **Error message sanitization**: Safe error message display to users
+
 ## 🚀 Cambios Pendientes de Commit
 
 ### ✨ Nuevas Funcionalidades

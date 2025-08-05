@@ -10,7 +10,7 @@ data class P2POfferResponse(
     val data: List<P2POffer>,
     @SerialName("first_page_url")
     val firstPageUrl: String,
-    val from: Int,
+    val from: Int?,
     @SerialName("last_page")
     val lastPage: Int,
     @SerialName("last_page_url")
@@ -23,7 +23,7 @@ data class P2POfferResponse(
     val perPage: Int,
     @SerialName("prev_page_url")
     val prevPageUrl: String?,
-    val to: Int,
+    val to: Int?,
     val total: Int
 )
 
@@ -36,6 +36,7 @@ data class P2POffer(
     val peerId: Int? = null,
     val amount: String? = null,
     val receive: String? = null,
+    val details: String? = null,
     val message: String? = null,
     @SerialName("only_kyc")
     val onlyKyc: Int? = null,
@@ -43,6 +44,8 @@ data class P2POffer(
     @SerialName("only_vip")
     val onlyVip: Int? = null,
     val status: String? = null,
+    @SerialName("tx_id")
+    val txId: String? = null,
     @SerialName("created_at")
     val createdAt: String? = null,
     @SerialName("updated_at")
@@ -50,7 +53,8 @@ data class P2POffer(
     val valid: Int? = null,
     @SerialName("coin_data")
     val coinData: CoinData? = null,
-    val owner: Owner? = null
+    val owner: Owner? = null,
+    val peer: Peer? = null
 )
 
 @Serializable
@@ -99,6 +103,19 @@ data class Owner(
 )
 
 @Serializable
+data class Peer(
+    val uuid: String? = null,
+    @SerialName("name_verified")
+    val nameVerified: String? = null,
+    @SerialName("cover_photo_url")
+    val coverPhotoUrl: String? = null,
+    @SerialName("profile_photo_url")
+    val profilePhotoUrl: String? = null,
+    @SerialName("average_rating")
+    val averageRating: String? = null
+)
+
+@Serializable
 data class CoinData(
     val id: Int? = null,
     @SerialName("coins_categories_id")
@@ -134,6 +151,33 @@ data class CoinData(
 )
 
 @Serializable
+data class P2PApplyResponse(
+    val msg: String,
+    val p2p: P2PAppliedOffer
+)
+
+@Serializable
+data class P2PAppliedOffer(
+    val id: Int,
+    val uuid: String,
+    @SerialName("user_id")
+    val userId: Int,
+    val type: String,
+    val coin: String,
+    @SerialName("peer_id")
+    val peerId: Int,
+    val amount: String,
+    val receive: String,
+    @SerialName("only_kyc")
+    val onlyKyc: Int,
+    val status: String,
+    @SerialName("created_at")
+    val createdAt: String,
+    @SerialName("updated_at")
+    val updatedAt: String
+)
+
+@Serializable
 data class P2PFilterRequest(
     val type: String? = null, // "buy" or "sell"
     val min: Double? = null,
@@ -143,4 +187,53 @@ data class P2PFilterRequest(
     val vip: Boolean? = null,
     val page: Int? = null,
     val perPage: Int? = 15 // Default 15 items per page to avoid rate limiting
+)
+
+@Serializable
+data class P2PCreateRequest(
+    val type: String, // "buy" or "sell"
+    val coin: Int, // CoinData.id
+    val amount: Double,
+    val receive: Double,
+    val details: String, // JSON string with array of P2PDetail objects
+    @SerialName("only_kyc")
+    val onlyKyc: Int, // 0 or 1
+    val private: Int, // 0 or 1
+    @SerialName("promote_offer")
+    val promoteOffer: Int, // 0 or 1
+    @SerialName("only_vip")
+    val onlyVip: Int, // 0 or 1
+    val message: String,
+    val webhook: String? = null
+)
+
+@Serializable
+data class P2PDetail(
+    val name: String,
+    val value: String
+)
+
+@Serializable
+data class P2PCreateResponse(
+    val msg: String,
+    val p2p: P2PCreatedOffer
+)
+
+@Serializable
+data class P2PCreatedOffer(
+    val uuid: String,
+    @SerialName("user_id")
+    val userId: Int? = null,
+    val type: String,
+    val coin: String,
+    val amount: Double,
+    val receive: Double,
+    @SerialName("only_kyc")
+    val onlyKyc: Int,
+    val private: Int,
+    val status: String,
+    @SerialName("updated_at")
+    val updatedAt: String,
+    @SerialName("created_at")
+    val createdAt: String
 )

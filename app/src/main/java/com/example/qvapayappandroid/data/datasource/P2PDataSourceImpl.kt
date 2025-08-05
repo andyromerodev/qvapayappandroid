@@ -3,6 +3,10 @@ package com.example.qvapayappandroid.data.datasource
 import android.util.Log
 import com.example.qvapayappandroid.data.model.P2PFilterRequest
 import com.example.qvapayappandroid.data.model.P2POfferResponse
+import com.example.qvapayappandroid.data.model.P2POffer
+import com.example.qvapayappandroid.data.model.P2PApplyResponse
+import com.example.qvapayappandroid.data.model.P2PCreateRequest
+import com.example.qvapayappandroid.data.model.P2PCreateResponse
 import com.example.qvapayappandroid.data.network.ApiConfig
 import io.ktor.client.*
 import io.ktor.client.call.*
@@ -83,6 +87,189 @@ class P2PDataSourceImpl(
             
         } catch (e: Exception) {
             Log.e("P2PDataSource", "P2P offers error: ${e.message}", e)
+            Result.failure(e)
+        }
+    }
+    
+    override suspend fun getP2POfferById(
+        offerId: String,
+        accessToken: String?
+    ): Result<P2POffer> {
+        return try {
+            // Rate limiting: ensure minimum interval between requests
+            val currentTime = System.currentTimeMillis()
+            val timeSinceLastRequest = currentTime - lastRequestTime
+            
+            if (timeSinceLastRequest < MIN_REQUEST_INTERVAL) {
+                val waitTime = MIN_REQUEST_INTERVAL - timeSinceLastRequest
+                Log.d("P2PDataSource", "Rate limiting: waiting ${waitTime}ms before request")
+                kotlinx.coroutines.delay(waitTime)
+            }
+            
+            lastRequestTime = System.currentTimeMillis()
+            
+            Log.d("P2PDataSource", "Getting P2P offer by ID: $offerId")
+            Log.d("P2PDataSource", "Access token provided: ${accessToken != null}")
+            
+            val fullUrl = "${ApiConfig.BASE_URL}${ApiConfig.Endpoints.P2P_OFFER}/$offerId"
+            Log.d("P2PDataSource", "Full URL: $fullUrl")
+            
+            val response = httpClient.get(fullUrl) {
+                // Add authorization header if token is available
+                accessToken?.let { token ->
+                    headers {
+                        append("Authorization", "Bearer $token")
+                    }
+                }
+            }
+            
+            Log.d("P2PDataSource", "Response status: ${response.status}")
+            
+            // Get raw response body first
+            val rawResponseBody = response.body<String>()
+            Log.d("P2PDataSource", "Raw response body: $rawResponseBody")
+            
+            // Handle non-success HTTP status codes
+            if (response.status.value !in 200..299) {
+                return Result.failure(Exception("HTTP ${response.status.value}: $rawResponseBody"))
+            }
+            
+            // Try to parse as P2POffer with better error handling
+            val json = kotlinx.serialization.json.Json { 
+                ignoreUnknownKeys = true 
+                isLenient = true 
+            }
+            val responseBody = json.decodeFromString<P2POffer>(rawResponseBody)
+            Log.d("P2PDataSource", "Parsed offer - UUID: ${responseBody.uuid}, Type: ${responseBody.type}")
+            
+            Result.success(responseBody)
+            
+        } catch (e: Exception) {
+            Log.e("P2PDataSource", "P2P offer by ID error: ${e.message}", e)
+            Result.failure(e)
+        }
+    }
+    
+    override suspend fun applyToP2POffer(
+        offerId: String,
+        accessToken: String?
+    ): Result<P2PApplyResponse> {
+        return try {
+            // Rate limiting: ensure minimum interval between requests
+            val currentTime = System.currentTimeMillis()
+            val timeSinceLastRequest = currentTime - lastRequestTime
+            
+            if (timeSinceLastRequest < MIN_REQUEST_INTERVAL) {
+                val waitTime = MIN_REQUEST_INTERVAL - timeSinceLastRequest
+                Log.d("P2PDataSource", "Rate limiting: waiting ${waitTime}ms before request")
+                kotlinx.coroutines.delay(waitTime)
+            }
+            
+            lastRequestTime = System.currentTimeMillis()
+            
+            Log.d("P2PDataSource", "Applying to P2P offer ID: $offerId")
+            Log.d("P2PDataSource", "Access token provided: ${accessToken != null}")
+            
+            val fullUrl = "${ApiConfig.BASE_URL}${ApiConfig.Endpoints.P2P_APPLY}/$offerId/apply"
+            Log.d("P2PDataSource", "Full URL: $fullUrl")
+            
+            val response = httpClient.post(fullUrl) {
+                // Add authorization header if token is available
+                accessToken?.let { token ->
+                    headers {
+                        append("Authorization", "Bearer $token")
+                    }
+                }
+            }
+            
+            Log.d("P2PDataSource", "Response status: ${response.status}")
+            
+            // Get raw response body first
+            val rawResponseBody = response.body<String>()
+            Log.d("P2PDataSource", "Raw response body: $rawResponseBody")
+            
+            // Handle non-success HTTP status codes
+            if (response.status.value !in 200..299) {
+                return Result.failure(Exception("HTTP ${response.status.value}: $rawResponseBody"))
+            }
+            
+            // Try to parse as P2PApplyResponse with better error handling
+            val json = kotlinx.serialization.json.Json { 
+                ignoreUnknownKeys = true 
+                isLenient = true 
+            }
+            val responseBody = json.decodeFromString<P2PApplyResponse>(rawResponseBody)
+            Log.d("P2PDataSource", "Applied successfully - Message: ${responseBody.msg}, Offer UUID: ${responseBody.p2p.uuid}")
+            
+            Result.success(responseBody)
+            
+        } catch (e: Exception) {
+            Log.e("P2PDataSource", "P2P apply error: ${e.message}", e)
+            Result.failure(e)
+        }
+    }
+    
+    override suspend fun createP2POffer(
+        request: P2PCreateRequest,
+        accessToken: String?
+    ): Result<P2PCreateResponse> {
+        return try {
+            // Rate limiting: ensure minimum interval between requests
+            val currentTime = System.currentTimeMillis()
+            val timeSinceLastRequest = currentTime - lastRequestTime
+            
+            if (timeSinceLastRequest < MIN_REQUEST_INTERVAL) {
+                val waitTime = MIN_REQUEST_INTERVAL - timeSinceLastRequest
+                Log.d("P2PDataSource", "Rate limiting: waiting ${waitTime}ms before request")
+                kotlinx.coroutines.delay(waitTime)
+            }
+            
+            lastRequestTime = System.currentTimeMillis()
+            
+            Log.d("P2PDataSource", "Creating P2P offer: $request")
+            Log.d("P2PDataSource", "Access token provided: ${accessToken != null}")
+            
+            val fullUrl = "${ApiConfig.BASE_URL}${ApiConfig.Endpoints.P2P_CREATE}"
+            Log.d("P2PDataSource", "Full URL: $fullUrl")
+            
+            val response = httpClient.post(fullUrl) {
+                // Add authorization header if token is available
+                accessToken?.let { token ->
+                    headers {
+                        append("Authorization", "Bearer $token")
+                    }
+                }
+                
+                // Set content type for JSON
+                contentType(ContentType.Application.Json)
+                
+                // Set request body
+                setBody(request)
+            }
+            
+            Log.d("P2PDataSource", "Response status: ${response.status}")
+            
+            // Get raw response body first
+            val rawResponseBody = response.body<String>()
+            Log.d("P2PDataSource", "Raw response body: $rawResponseBody")
+            
+            // Handle non-success HTTP status codes
+            if (response.status.value !in 200..299) {
+                return Result.failure(Exception("HTTP ${response.status.value}: $rawResponseBody"))
+            }
+            
+            // Try to parse as P2PCreateResponse with better error handling
+            val json = kotlinx.serialization.json.Json { 
+                ignoreUnknownKeys = true 
+                isLenient = true 
+            }
+            val responseBody = json.decodeFromString<P2PCreateResponse>(rawResponseBody)
+            Log.d("P2PDataSource", "Offer created successfully - Message: ${responseBody.msg}, Offer UUID: ${responseBody.p2p.uuid}")
+            
+            Result.success(responseBody)
+            
+        } catch (e: Exception) {
+            Log.e("P2PDataSource", "P2P create error: ${e.message}", e)
             Result.failure(e)
         }
     }
