@@ -19,6 +19,8 @@ import androidx.navigation.compose.rememberNavController
 import com.example.qvapayappandroid.navigation.AppDestinations
 import com.example.qvapayappandroid.presentation.ui.components.BottomNavigationBar
 import com.example.qvapayappandroid.presentation.ui.home.HomeScreen
+import com.example.qvapayappandroid.presentation.ui.p2p.CreateP2POfferScreen
+import com.example.qvapayappandroid.presentation.ui.p2p.CreateP2POfferViewModel
 import com.example.qvapayappandroid.presentation.ui.p2p.P2PScreen
 import com.example.qvapayappandroid.presentation.ui.p2p.P2POfferDetailScreen
 import com.example.qvapayappandroid.presentation.ui.p2p.P2PFiltersScreen
@@ -54,7 +56,10 @@ fun MainScreen(
         ) {
             composable(AppDestinations.Home.route) {
                 HomeScreen(
-                    onLogout = onLogout
+                    onLogout = onLogout,
+                    onCreateOffer = {
+                        navController.navigate(AppDestinations.CreateP2POffer.route)
+                    }
                 )
             }
             
@@ -92,6 +97,9 @@ fun MainScreen(
                                 is P2POfferDetailViewModel.Effect.ShowError -> {
                                     // Error handling is done in the UI state
                                 }
+                                is P2POfferDetailViewModel.Effect.ShowApplicationSuccess -> {
+                                    // Success handling is done in the UI state
+                                }
                             }
                         }
                     }
@@ -110,7 +118,9 @@ fun MainScreen(
                                 offer = uiState.offer!!,
                                 onBackClick = offerDetailViewModel::onBackClick,
                                 onContactUser = offerDetailViewModel::onContactUser,
-                                onAcceptOffer = offerDetailViewModel::onAcceptOffer
+                                onAcceptOffer = offerDetailViewModel::onAcceptOffer,
+                                isApplying = uiState.isApplying,
+                                applicationSuccessMessage = uiState.applicationSuccessMessage
                             )
                         }
                         uiState.errorMessage != null -> {
@@ -176,6 +186,20 @@ fun MainScreen(
                         sharedP2PViewModel.applyFilters(offerType, coins)
                         navController.popBackStack()
                     }
+                )
+            }
+            
+            composable(AppDestinations.CreateP2POffer.route) {
+                val createOfferViewModel: CreateP2POfferViewModel = koinViewModel()
+                
+                CreateP2POfferScreen(
+                    onBackClick = {
+                        navController.popBackStack()
+                    },
+                    onSuccess = {
+                        navController.popBackStack()
+                    },
+                    viewModel = createOfferViewModel
                 )
             }
             
