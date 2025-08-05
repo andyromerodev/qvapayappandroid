@@ -10,7 +10,7 @@ data class P2POfferResponse(
     val data: List<P2POffer>,
     @SerialName("first_page_url")
     val firstPageUrl: String,
-    val from: Int,
+    val from: Int?,
     @SerialName("last_page")
     val lastPage: Int,
     @SerialName("last_page_url")
@@ -23,7 +23,7 @@ data class P2POfferResponse(
     val perPage: Int,
     @SerialName("prev_page_url")
     val prevPageUrl: String?,
-    val to: Int,
+    val to: Int?,
     val total: Int
 )
 
