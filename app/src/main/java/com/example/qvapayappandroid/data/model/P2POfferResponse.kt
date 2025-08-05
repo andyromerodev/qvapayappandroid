@@ -151,6 +151,33 @@ data class CoinData(
 )
 
 @Serializable
+data class P2PApplyResponse(
+    val msg: String,
+    val p2p: P2PAppliedOffer
+)
+
+@Serializable
+data class P2PAppliedOffer(
+    val id: Int,
+    val uuid: String,
+    @SerialName("user_id")
+    val userId: Int,
+    val type: String,
+    val coin: String,
+    @SerialName("peer_id")
+    val peerId: Int,
+    val amount: String,
+    val receive: String,
+    @SerialName("only_kyc")
+    val onlyKyc: Int,
+    val status: String,
+    @SerialName("created_at")
+    val createdAt: String,
+    @SerialName("updated_at")
+    val updatedAt: String
+)
+
+@Serializable
 data class P2PFilterRequest(
     val type: String? = null, // "buy" or "sell"
     val min: Double? = null,
@@ -160,4 +187,53 @@ data class P2PFilterRequest(
     val vip: Boolean? = null,
     val page: Int? = null,
     val perPage: Int? = 15 // Default 15 items per page to avoid rate limiting
+)
+
+@Serializable
+data class P2PCreateRequest(
+    val type: String, // "buy" or "sell"
+    val coin: Int, // CoinData.id
+    val amount: Double,
+    val receive: Double,
+    val details: String, // JSON string with array of P2PDetail objects
+    @SerialName("only_kyc")
+    val onlyKyc: Int, // 0 or 1
+    val private: Int, // 0 or 1
+    @SerialName("promote_offer")
+    val promoteOffer: Int, // 0 or 1
+    @SerialName("only_vip")
+    val onlyVip: Int, // 0 or 1
+    val message: String,
+    val webhook: String? = null
+)
+
+@Serializable
+data class P2PDetail(
+    val name: String,
+    val value: String
+)
+
+@Serializable
+data class P2PCreateResponse(
+    val msg: String,
+    val p2p: P2PCreatedOffer
+)
+
+@Serializable
+data class P2PCreatedOffer(
+    val uuid: String,
+    @SerialName("user_id")
+    val userId: Int? = null,
+    val type: String,
+    val coin: String,
+    val amount: Double,
+    val receive: Double,
+    @SerialName("only_kyc")
+    val onlyKyc: Int,
+    val private: Int,
+    val status: String,
+    @SerialName("updated_at")
+    val updatedAt: String,
+    @SerialName("created_at")
+    val createdAt: String
 )
