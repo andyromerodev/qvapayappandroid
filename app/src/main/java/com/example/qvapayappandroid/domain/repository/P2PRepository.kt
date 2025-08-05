@@ -3,6 +3,9 @@ package com.example.qvapayappandroid.domain.repository
 import com.example.qvapayappandroid.data.model.P2PFilterRequest
 import com.example.qvapayappandroid.data.model.P2POfferResponse
 import com.example.qvapayappandroid.data.model.P2POffer
+import com.example.qvapayappandroid.data.model.P2PApplyResponse
+import com.example.qvapayappandroid.data.model.P2PCreateRequest
+import com.example.qvapayappandroid.data.model.P2PCreateResponse
 
 interface P2PRepository {
     suspend fun getP2POffers(
@@ -14,4 +17,14 @@ interface P2PRepository {
         offerId: String,
         accessToken: String? = null
     ): Result<P2POffer>
+    
+    suspend fun applyToP2POffer(
+        offerId: String,
+        accessToken: String? = null
+    ): Result<P2PApplyResponse>
+    
+    suspend fun createP2POffer(
+        request: P2PCreateRequest,
+        accessToken: String? = null
+    ): Result<P2PCreateResponse>
 }
