@@ -105,6 +105,31 @@ data class Owner(
 @Serializable
 data class Peer(
     val uuid: String? = null,
+    val username: String? = null,
+    val name: String? = null,
+    val lastname: String? = null,
+    @SerialName("two_factor_reset_code")
+    val twoFactorResetCode: String? = null,
+    val bio: String? = null,
+    val country: String? = null,
+    @SerialName("phone_request_id")
+    val phoneRequestId: String? = null,
+    val twitter: String? = null,
+    val kyc: Int? = null,
+    val vip: Int? = null,
+    @SerialName("golden_check")
+    val goldenCheck: Int? = null,
+    val role: String? = null,
+    @SerialName("can_withdraw")
+    val canWithdraw: Int? = null,
+    @SerialName("can_deposit")
+    val canDeposit: Int? = null,
+    @SerialName("can_transfer")
+    val canTransfer: Int? = null,
+    @SerialName("can_buy")
+    val canBuy: Int? = null,
+    @SerialName("can_sell")
+    val canSell: Int? = null,
     @SerialName("name_verified")
     val nameVerified: String? = null,
     @SerialName("cover_photo_url")

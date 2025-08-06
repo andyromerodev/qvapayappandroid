@@ -19,7 +19,9 @@ class HomeViewModel(
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
     
     private var lastLoadTime = 0L
-    private val minLoadInterval = 4000L // Mínimo 2 segundos entre cargas
+    private var lastRefreshTime = 0L
+    private val minLoadInterval = 1000L // Reducido a 1 segundo para paginación más fluida
+    private val minRefreshInterval = 3000L // Reducido a 3 segundos para refresh
     
     init {
         loadMyOffers()
@@ -27,12 +29,27 @@ class HomeViewModel(
     
     private fun loadMyOffers(page: Int = 1, isRefresh: Boolean = false, retryCount: Int = 0) {
         viewModelScope.launch {
-            // Prevenir solicitudes muy frecuentes
+            Log.d("HomeViewModel", "loadMyOffers called - page: $page, isRefresh: $isRefresh, retryCount: $retryCount")
+            Log.d("HomeViewModel", "Current state before load - isLoadingOffers: ${_uiState.value.isLoadingOffers}, isLoadingMore: ${_uiState.value.isLoadingMore}")
+            
+            // Prevenir solicitudes muy frecuentes según el tipo
             val currentTime = System.currentTimeMillis()
-            if (!isRefresh && currentTime - lastLoadTime < minLoadInterval) {
-                Log.d("HomeViewModel", "Request throttled, too soon since last request")
-                return@launch
+            
+            if (isRefresh) {
+                // Para refresh, verificar intervalo más largo
+                if (currentTime - lastRefreshTime < minRefreshInterval) {
+                    Log.d("HomeViewModel", "Refresh throttled, too soon since last refresh")
+                    return@launch
+                }
+                lastRefreshTime = currentTime
+            } else if (page > 1) {
+                // Para paginación, verificar intervalo más corto solo si ya se hizo una carga reciente
+                if (lastLoadTime > 0 && currentTime - lastLoadTime < minLoadInterval) {
+                    Log.d("HomeViewModel", "Pagination throttled, too soon since last load")
+                    return@launch
+                }
             }
+            
             lastLoadTime = currentTime
             
             if (isRefresh) {
@@ -56,6 +73,7 @@ class HomeViewModel(
                         _uiState.value.myOffers + response.data
                     }
                     
+                    Log.d("HomeViewModel", "SUCCESS - Setting isLoadingOffers = false, isLoadingMore = false")
                     _uiState.value = _uiState.value.copy(
                         isLoadingOffers = false,
                         isLoadingMore = false,
@@ -65,6 +83,7 @@ class HomeViewModel(
                         hasNextPage = response.currentPage < response.lastPage
                     )
                     Log.d("HomeViewModel", "My offers loaded: ${response.data.size} offers, page: $page, total pages: ${response.lastPage}")
+                    Log.d("HomeViewModel", "Final state - isLoadingOffers: ${_uiState.value.isLoadingOffers}, isLoadingMore: ${_uiState.value.isLoadingMore}")
                 },
                 onFailure = { error ->
                     handleLoadError(error, page, isRefresh, retryCount)
@@ -100,12 +119,14 @@ class HomeViewModel(
                 }
             }
             
+            Log.d("HomeViewModel", "ERROR - Setting isLoadingOffers = false, isLoadingMore = false")
             _uiState.value = _uiState.value.copy(
                 isLoadingOffers = false,
                 isLoadingMore = false,
                 offersError = "Error cargando ofertas: $errorMessage"
             )
             Log.e("HomeViewModel", "Error loading my offers: $errorMessage")
+            Log.d("HomeViewModel", "Error state - isLoadingOffers: ${_uiState.value.isLoadingOffers}, isLoadingMore: ${_uiState.value.isLoadingMore}")
         }
     }
     
@@ -114,8 +135,15 @@ class HomeViewModel(
     }
     
     fun loadMoreOffers() {
-        if (!_uiState.value.isLoadingMore && _uiState.value.hasNextPage) {
-            loadMyOffers(_uiState.value.currentPage + 1)
+        val currentState = _uiState.value
+        Log.d("HomeViewModel", "loadMoreOffers called - isLoadingMore: ${currentState.isLoadingMore}, hasNextPage: ${currentState.hasNextPage}, currentPage: ${currentState.currentPage}")
+        
+        if (!currentState.isLoadingMore && currentState.hasNextPage) {
+            val nextPage = currentState.currentPage + 1
+            Log.d("HomeViewModel", "Loading page $nextPage")
+            loadMyOffers(nextPage)
+        } else {
+            Log.d("HomeViewModel", "loadMoreOffers blocked - isLoadingMore: ${currentState.isLoadingMore}, hasNextPage: ${currentState.hasNextPage}")
         }
     }
     

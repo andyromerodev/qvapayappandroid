@@ -18,7 +18,11 @@ class P2PDataSourceImpl(
 ) : P2PDataSource {
     
     companion object {
-        private var lastRequestTime = 0L
+        // Separate throttling per endpoint instead of global
+        private var lastP2POffersRequestTime = 0L
+        private var lastOfferByIdRequestTime = 0L
+        private var lastApplyRequestTime = 0L
+        private var lastCreateRequestTime = 0L
         private const val MIN_REQUEST_INTERVAL = 2000L // 2 seconds between requests
     }
     
@@ -29,7 +33,7 @@ class P2PDataSourceImpl(
         return try {
             // Rate limiting: ensure minimum interval between requests
             val currentTime = System.currentTimeMillis()
-            val timeSinceLastRequest = currentTime - lastRequestTime
+            val timeSinceLastRequest = currentTime - lastP2POffersRequestTime
             
             if (timeSinceLastRequest < MIN_REQUEST_INTERVAL) {
                 val waitTime = MIN_REQUEST_INTERVAL - timeSinceLastRequest
@@ -37,7 +41,7 @@ class P2PDataSourceImpl(
                 kotlinx.coroutines.delay(waitTime)
             }
             
-            lastRequestTime = System.currentTimeMillis()
+            lastP2POffersRequestTime = System.currentTimeMillis()
             
             Log.d("P2PDataSource", "Getting P2P offers with filters: $filters")
             Log.d("P2PDataSource", "Access token provided: ${accessToken != null}")
@@ -98,7 +102,7 @@ class P2PDataSourceImpl(
         return try {
             // Rate limiting: ensure minimum interval between requests
             val currentTime = System.currentTimeMillis()
-            val timeSinceLastRequest = currentTime - lastRequestTime
+            val timeSinceLastRequest = currentTime - lastOfferByIdRequestTime
             
             if (timeSinceLastRequest < MIN_REQUEST_INTERVAL) {
                 val waitTime = MIN_REQUEST_INTERVAL - timeSinceLastRequest
@@ -106,7 +110,7 @@ class P2PDataSourceImpl(
                 kotlinx.coroutines.delay(waitTime)
             }
             
-            lastRequestTime = System.currentTimeMillis()
+            lastOfferByIdRequestTime = System.currentTimeMillis()
             
             Log.d("P2PDataSource", "Getting P2P offer by ID: $offerId")
             Log.d("P2PDataSource", "Access token provided: ${accessToken != null}")
@@ -157,7 +161,7 @@ class P2PDataSourceImpl(
         return try {
             // Rate limiting: ensure minimum interval between requests
             val currentTime = System.currentTimeMillis()
-            val timeSinceLastRequest = currentTime - lastRequestTime
+            val timeSinceLastRequest = currentTime - lastApplyRequestTime
             
             if (timeSinceLastRequest < MIN_REQUEST_INTERVAL) {
                 val waitTime = MIN_REQUEST_INTERVAL - timeSinceLastRequest
@@ -165,7 +169,7 @@ class P2PDataSourceImpl(
                 kotlinx.coroutines.delay(waitTime)
             }
             
-            lastRequestTime = System.currentTimeMillis()
+            lastApplyRequestTime = System.currentTimeMillis()
             
             Log.d("P2PDataSource", "Applying to P2P offer ID: $offerId")
             Log.d("P2PDataSource", "Access token provided: ${accessToken != null}")
@@ -216,7 +220,7 @@ class P2PDataSourceImpl(
         return try {
             // Rate limiting: ensure minimum interval between requests
             val currentTime = System.currentTimeMillis()
-            val timeSinceLastRequest = currentTime - lastRequestTime
+            val timeSinceLastRequest = currentTime - lastCreateRequestTime
             
             if (timeSinceLastRequest < MIN_REQUEST_INTERVAL) {
                 val waitTime = MIN_REQUEST_INTERVAL - timeSinceLastRequest
@@ -224,7 +228,7 @@ class P2PDataSourceImpl(
                 kotlinx.coroutines.delay(waitTime)
             }
             
-            lastRequestTime = System.currentTimeMillis()
+            lastCreateRequestTime = System.currentTimeMillis()
             
             Log.d("P2PDataSource", "Creating P2P offer: $request")
             Log.d("P2PDataSource", "Access token provided: ${accessToken != null}")
@@ -279,17 +283,7 @@ class P2PDataSourceImpl(
         page: Int?
     ): Result<P2POfferResponse> {
         return try {
-            // Rate limiting: ensure minimum interval between requests
-            val currentTime = System.currentTimeMillis()
-            val timeSinceLastRequest = currentTime - lastRequestTime
-            
-            if (timeSinceLastRequest < MIN_REQUEST_INTERVAL) {
-                val waitTime = MIN_REQUEST_INTERVAL - timeSinceLastRequest
-                Log.d("P2PDataSource", "Rate limiting: waiting ${waitTime}ms before request")
-                kotlinx.coroutines.delay(waitTime)
-            }
-            
-            lastRequestTime = System.currentTimeMillis()
+            // No throttling for getMyP2POffers - ViewModel handles pagination throttling
             
             Log.d("P2PDataSource", "Getting my P2P offers with page: $page")
             Log.d("P2PDataSource", "Access token provided: ${accessToken.isNotEmpty()}")
