@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -17,6 +18,7 @@ import org.koin.androidx.compose.koinViewModel
 @Composable
 fun SettingsScreen(
     onLogout: () -> Unit = {},
+    onProfileClick: () -> Unit = {},
     viewModel: SettingsViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -69,8 +71,8 @@ fun SettingsScreen(
                     onBiometricToggle = { viewModel.toggleBiometric(it) },
                     onThemeChange = { viewModel.changeTheme(it) },
                     onLanguageChange = { viewModel.changeLanguage(it) },
+                    onProfileClick = onProfileClick,
                     onChangePassword = { viewModel.changePassword() },
-                    onManageDevices = { viewModel.manageDevices() },
                     onPrivacySettings = { viewModel.privacySettings() },
                     onAbout = { viewModel.showAbout() },
                     onLogout = { viewModel.logout() },
@@ -120,8 +122,8 @@ private fun SettingsContent(
     onBiometricToggle: (Boolean) -> Unit,
     onThemeChange: (String) -> Unit,
     onLanguageChange: (String) -> Unit,
+    onProfileClick: () -> Unit,
     onChangePassword: () -> Unit,
-    onManageDevices: () -> Unit,
     onPrivacySettings: () -> Unit,
     onAbout: () -> Unit,
     onLogout: () -> Unit,
@@ -135,17 +137,17 @@ private fun SettingsContent(
         // Account Section
         SettingsSection(title = "Cuenta") {
             SettingsItem(
+                icon = Icons.Default.Person,
+                title = "Mi Perfil",
+                subtitle = "Ver y editar información personal",
+                onClick = onProfileClick
+            )
+            
+            SettingsItem(
                 icon = Icons.Default.Lock,
                 title = "Cambiar Contraseña",
                 subtitle = "Actualiza tu contraseña de acceso",
                 onClick = onChangePassword
-            )
-            
-            SettingsItem(
-                icon = Icons.Default.Home,
-                title = "Dispositivos Vinculados",
-                subtitle = "Gestiona tus dispositivos de confianza",
-                onClick = onManageDevices
             )
         }
         
@@ -246,7 +248,7 @@ private fun SettingsContent(
                     )
                 } else {
                     Icon(
-                        imageVector = Icons.Default.ExitToApp,
+                        imageVector = Icons.AutoMirrored.Filled.ExitToApp,
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.onErrorContainer
                     )

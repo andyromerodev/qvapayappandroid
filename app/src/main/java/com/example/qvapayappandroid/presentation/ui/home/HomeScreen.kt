@@ -31,6 +31,7 @@ import com.example.qvapayappandroid.presentation.ui.home.components.EmptyOffersS
 import com.example.qvapayappandroid.presentation.ui.home.components.ErrorCard
 import com.example.qvapayappandroid.presentation.ui.home.components.LoadingMoreIndicator
 import com.example.qvapayappandroid.presentation.ui.home.components.MyOfferCard
+import com.example.qvapayappandroid.presentation.ui.home.components.StatusFilterChips
 import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -64,6 +65,7 @@ fun HomeScreen(
             onRefresh = { viewModel.refreshOffers() },
             onLoadMore = { viewModel.loadMoreOffers() },
             onClearError = { viewModel.clearOffersError() },
+            onStatusToggle = { viewModel.toggleStatusFilter(it) },
             onOfferClick = onOfferClick,
             modifier = Modifier
                 .fillMaxSize()
@@ -80,6 +82,7 @@ private fun MyP2POffersSection(
     onRefresh: () -> Unit,
     onLoadMore: () -> Unit,
     onClearError: () -> Unit,
+    onStatusToggle: (String) -> Unit,
     onOfferClick: (P2POffer) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -129,6 +132,10 @@ private fun MyP2POffersSection(
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
+            StatusFilterChips(
+                selectedStatuses = uiState.selectedStatusFilters,
+                onStatusToggle = onStatusToggle
+            )
             
             when {
                 uiState.offersError != null -> {
@@ -140,15 +147,23 @@ private fun MyP2POffersSection(
                 }
                 
                 uiState.myOffers.isEmpty() && !uiState.isLoadingOffers -> {
-                    EmptyOffersState()
+                    EmptyOffersState(
+                        onRetry = onRefresh
+                    )
                 }
                 
                 else -> {
+                    val offersToShow = if (uiState.selectedStatusFilters.isEmpty()) {
+                        uiState.myOffers
+                    } else {
+                        uiState.filteredOffers
+                    }
+                    
                     LazyColumn(
                         state = listState,
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        items(uiState.myOffers) { offer ->
+                        items(offersToShow) { offer ->
                             MyOfferCard(
                                 offer = offer,
                                 onClick = onOfferClick

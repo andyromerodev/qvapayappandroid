@@ -1,3 +1,4 @@
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -46,7 +47,11 @@ fun P2POfferCard(
         onClick = { onClick(offer) },
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-        shape = RoundedCornerShape(14.dp)
+        shape = RoundedCornerShape(14.dp),
+        border = BorderStroke(
+            width = 1.dp,
+            color = MaterialTheme.colorScheme.outlineVariant
+        )
     ) {
         Column(
             modifier = Modifier
@@ -145,45 +150,52 @@ fun P2POfferCard(
 
             Spacer(modifier = Modifier.height(6.dp))
 
-            // Minicards en grid MUY compacto (dos columnas, dos filas)
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            // Minicards en grid optimizado (primera fila: monto y recibe, segunda fila: tipo y ratio)
+            Column(
+                verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                // Columna izquierda
-                Column(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                // Primera fila: Información principal (transacción)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    MiniCardM3(
-                        label = "MONTO",
-                        value = offer.amount.toTwoDecimals(),
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                    MiniCardM3(
-                        label = "RATIO",
-                        value = offer.getRatio() ?: "-",
-                        color = MaterialTheme.colorScheme.primary
-                    )
+                    Box(modifier = Modifier.weight(1f)) {
+                        MiniCardM3(
+                            label = "MONTO",
+                            value = offer.amount.toTwoDecimals(),
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                    Box(modifier = Modifier.weight(1f)) {
+                        MiniCardM3(
+                            label = "RECIBE",
+                            value = offer.receive.toTwoDecimals(),
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
                 }
-                // Columna derecha
-                Column(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                // Segunda fila: Información secundaria (detalles)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    MiniCardM3(
-                        label = "TIPO",
-                        value = offer.coinData?.tick
-                            ?: offer.coinData?.name
-                            ?: offer.coin ?: "N/A",
-                        color = MaterialTheme.colorScheme.secondary,
-                        isTag = true
-                    )
-                    MiniCardM3(
-                        label = "RECIBE",
-                        value = offer.receive.toTwoDecimals(),
-                        color = MaterialTheme.colorScheme.primary
-                    )
+                    Box(modifier = Modifier.weight(1f)) {
+                        MiniCardM3(
+                            label = "TIPO",
+                            value = offer.coinData?.tick
+                                ?: offer.coinData?.name
+                                ?: offer.coin ?: "N/A",
+                            color = MaterialTheme.colorScheme.secondary,
+                            isTag = true
+                        )
+                    }
+                    Box(modifier = Modifier.weight(1f)) {
+                        MiniCardM3(
+                            label = "RATIO",
+                            value = offer.getRatio() ?: "-",
+                            color = MaterialTheme.colorScheme.tertiary
+                        )
+                    }
                 }
             }
 

@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
@@ -32,7 +33,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -40,8 +43,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import android.util.Log
 import com.example.qvapayappandroid.data.model.P2POffer
-import com.example.qvapayappandroid.presentation.ui.p2p.components.P2PPagination
+import com.example.qvapayappandroid.presentation.ui.home.components.LoadingMoreIndicator
+import com.example.qvapayappandroid.presentation.ui.p2p.components.ErrorRetryState
+import com.example.qvapayappandroid.presentation.ui.p2p.components.LoadMoreRetryIndicator
 import com.example.qvapayappandroid.presentation.ui.p2p.components.getRatio
 import org.koin.androidx.compose.koinViewModel
 
@@ -73,7 +79,7 @@ fun P2PScreen(
         )
 
         when {
-            uiState.isLoading -> {
+            uiState.isLoading && uiState.offers.isEmpty() -> {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -105,40 +111,12 @@ fun P2PScreen(
                     onOfferClick = onOfferClick,
                     onSortByChanged = { viewModel.onSortByChanged(it) },
                     onSortOrderToggled = { viewModel.onSortOrderToggled() },
+                    onRetryLoadMore = { viewModel.retryLoadMore() },
+                    onRetryFirstLoad = { viewModel.retryFirstLoad() },
                 )
             }
         }
 
-        uiState.errorMessage?.let { error ->
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.errorContainer
-                )
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp)
-                ) {
-                    Text(
-                        text = "Error",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onErrorContainer
-                    )
-                    Text(
-                        text = error,
-                        color = MaterialTheme.colorScheme.onErrorContainer
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    TextButton(
-                        onClick = { viewModel.clearError() }
-                    ) {
-                        Text("Dismiss")
-                    }
-                }
-            }
-        }
     }
 }
 
@@ -158,7 +136,42 @@ private fun P2PContent(
     onOfferClick: (P2POffer) -> Unit,
     onSortByChanged: (String) -> Unit,
     onSortOrderToggled: () -> Unit,
+    onRetryLoadMore: () -> Unit,
+    onRetryFirstLoad: () -> Unit,
 ) {
+    val listState = rememberLazyListState()
+    
+    val shouldLoadMore by remember {
+        derivedStateOf {
+            val layoutInfo = listState.layoutInfo
+            val totalItemsNumber = layoutInfo.totalItemsCount
+            val lastVisibleItemIndex = (layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1)
+
+            val condition1 = totalItemsNumber > 0
+            val condition2 = lastVisibleItemIndex >= totalItemsNumber - 3
+            val condition3 = uiState.currentPage < uiState.totalPages
+            val condition4 = !uiState.isLoadingMore
+            val condition5 = !uiState.isLoading
+            val condition6 = uiState.errorMessage == null
+
+            val result = condition1 && condition2 && condition3 && condition4 && condition5 && condition6
+            
+            if (totalItemsNumber > 0) {
+                Log.d("P2PScreen", "shouldLoadMore check - total: $totalItemsNumber, lastVisible: $lastVisibleItemIndex, currentPage: ${uiState.currentPage}, totalPages: ${uiState.totalPages}, isLoadingMore: ${uiState.isLoadingMore}, isLoading: ${uiState.isLoading}, error: ${uiState.errorMessage}")
+                Log.d("P2PScreen", "Conditions - 1: $condition1, 2: $condition2, 3: $condition3, 4: $condition4, 5: $condition5, 6: $condition6, RESULT: $result")
+            }
+
+            result
+        }
+    }
+
+    LaunchedEffect(shouldLoadMore) {
+        Log.d("P2PScreen", "LaunchedEffect triggered - shouldLoadMore = $shouldLoadMore")
+        if (shouldLoadMore) {
+            Log.d("P2PScreen", "Triggering onNextPage - shouldLoadMore = true")
+            onNextPage()
+        }
+    }
     Column(
         modifier = modifier.fillMaxSize().padding(horizontal = 12.dp)
     ) {
@@ -236,20 +249,35 @@ private fun P2PContent(
             }
         }
 
-        // Ofertas o mensaje de vacío
-        if (sortedOffers.isEmpty()) {
-            Box(
-                modifier = Modifier.weight(1f),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "No hay ofertas disponibles",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+        // Ofertas, error o mensaje de vacío
+        when {
+            uiState.errorMessage != null || uiState.isRetryingFirstLoad -> {
+                Box(
+                    modifier = Modifier.weight(1f),
+                    contentAlignment = Alignment.Center
+                ) {
+                    ErrorRetryState(
+                        errorMessage = uiState.errorMessage ?: "",
+                        onRetry = onRetryFirstLoad,
+                        isRetrying = uiState.isRetryingFirstLoad
+                    )
+                }
             }
-        } else {
+            sortedOffers.isEmpty() -> {
+                Box(
+                    modifier = Modifier.weight(1f),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "No hay ofertas disponibles",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+            else -> {
             LazyColumn(
+                state = listState,
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 contentPadding = PaddingValues(vertical = 12.dp)
@@ -260,16 +288,26 @@ private fun P2PContent(
                         onClick = onOfferClick
                     )
                 }
+                
+                if (uiState.isLoadingMore) {
+                    item {
+                        LoadingMoreIndicator()
+                    }
+                }
+                
+                if (uiState.loadMoreError != null || uiState.isRetrying) {
+                    item {
+                        LoadMoreRetryIndicator(
+                            errorMessage = uiState.loadMoreError ?: "Reintentando...",
+                            onRetry = onRetryLoadMore,
+                            isRetrying = uiState.isRetrying
+                        )
+                    }
+                }
             }
         }
+        }
 
-        // Paginación SIEMPRE al fondo
-        P2PPagination(
-            currentPage = uiState.currentPage,
-            totalPages = uiState.totalPages,
-            onNextPage = onNextPage,
-            onPreviousPage = onPreviousPage
-        )
 
     }
 }

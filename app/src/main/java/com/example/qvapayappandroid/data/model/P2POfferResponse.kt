@@ -211,7 +211,7 @@ data class P2PFilterRequest(
     val my: Boolean? = null,
     val vip: Boolean? = null,
     val page: Int? = null,
-    val perPage: Int? = 15 // Default 15 items per page to avoid rate limiting
+    val perPage: Int? = 100 // Default 15 items per page to avoid rate limiting
 )
 
 @Serializable
