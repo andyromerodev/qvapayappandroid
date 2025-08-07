@@ -63,7 +63,7 @@ fun P2POfferCard(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                val username = offer.owner?.username?.trim().orEmpty()
+                val username = offer.owner?.name?.trim().orEmpty()
                 val initial = username.firstOrNull()?.uppercase() ?: "?"
 
                 if (!offer.owner?.profilePhotoUrl.isNullOrBlank()) {

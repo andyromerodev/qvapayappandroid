@@ -832,11 +832,166 @@ presentation/ui/home/
 - **Visual Improvements**: Enhanced offer cards with user photos and transaction flow
 - **Faster Response**: Reduced delays in pagination and error recovery
 
-## 🚀 Cambios Pendientes de Commit
+## 🚀 v2.7.0 - Enhanced Pagination UX with Infinite Scroll and Improved Error Handling (2025-08-06)
 
-### ✨ Nuevas Funcionalidades
+### ✨ Infinite Scroll Pagination Implementation
 
-#### 🏗️ Refactorización de Arquitectura
+#### 🔄 P2P Screen Pagination Transformation
+- **Manual to Infinite Scroll**: Replaced pagination controls with seamless infinite scroll
+- **Scroll Detection**: Implemented `derivedStateOf` with `LazyListState` for performance-optimized scroll monitoring
+- **Load More Trigger**: Automatic pagination when user scrolls within 3 items of list end
+- **Offer Accumulation**: Previous offers maintained during pagination (no more replacement)
+- **Loading States**: `LoadingMoreIndicator` shows at list bottom during pagination
+
+#### 🎯 Advanced Error Handling System
+- **Separate Error Types**: Distinguished first-load errors from pagination errors
+- **HTTP 429 Rate Limiting**: Automatic 15-second delay for "Too Many Attempts" errors
+- **Error Recovery Components**:
+  - `ErrorRetryState` - Elegant first-load error recovery with centered card design
+  - `LoadMoreRetryIndicator` - Pagination error recovery at list bottom
+  - Automatic error type detection and appropriate delay application
+
+#### 🛠️ ViewModel Architecture Enhancement
+- **State Management**: Added `isLoadingMore`, `isRetrying`, `isRetryingFirstLoad`, `loadMoreError` states
+- **Smart Error Handling**: Differentiated error handling for first-load vs pagination scenarios
+- **Retry Methods**: Separate `retryFirstLoad()` and `retryLoadMore()` with intelligent delay logic
+- **Offer Persistence**: Maintains existing offers during pagination errors
+
+### 🎨 User Experience Improvements
+
+#### 📱 Home Screen Error Handling
+- **Fixed EmptyOffersState Priority**: Added `uiState.offersError == null` condition to prevent empty state during errors
+- **Enhanced EmptyOffersState**: Added retry button with refresh icon for better user recovery
+- **PullToRefresh Integration**: Consistent retry functionality across multiple interaction methods
+- **Network Error Recovery**: Clear error messages with multiple retry options
+
+#### 🔧 Component Design Enhancements
+- **ErrorRetryState Component**: 
+  - Material 3 Card design with 4dp elevation
+  - Refresh icon (48dp) with primary color theming
+  - Contextual messages for HTTP 429 vs generic errors
+  - Full-width retry button with integrated icon
+  - Center-aligned layout for professional appearance
+
+- **LoadMoreRetryIndicator Component**:
+  - Compact design for list bottom placement
+  - Error message display with retry button
+  - Disabled state during retry operations
+  - Consistent styling with other error components
+
+### 🔧 Technical Architecture Improvements
+
+#### 📊 State Management Enhancements
+- **P2PUiState Expansion**: Added pagination-specific error and loading states
+- **Reactive State Updates**: Proper state transitions during all error/retry scenarios  
+- **Loading State Logic**: Fixed `isLoading && uiState.offers.isEmpty()` condition to prevent spinner during pagination
+
+#### 🚀 Performance Optimizations
+- **Scroll Performance**: `derivedStateOf` prevents unnecessary recompositions during scroll
+- **Efficient Pagination**: Only triggers when genuinely near list end (3-item threshold)
+- **Memory Management**: Proper offer accumulation without memory leaks
+
+### 🐛 Critical Fixes
+- **Pagination State Management**: Fixed issues where retry would clear `loadMoreError` prematurely
+- **Error Component Visibility**: Proper show/hide logic for different error states
+- **Loading Indicator Overlap**: Prevented multiple loading states from showing simultaneously
+- **State Consistency**: Ensured proper error cleanup on successful operations
+
+### 📁 New Files Created
+```
+├── presentation/ui/p2p/components/
+│   ├── ErrorRetryState.kt (first-load error recovery)
+│   └── LoadMoreRetryIndicator.kt (pagination error recovery)
+```
+
+### 📁 Files Enhanced
+```
+├── presentation/ui/p2p/
+│   ├── P2PScreen.kt (infinite scroll implementation)
+│   └── P2PViewModel.kt (enhanced error handling)
+├── presentation/ui/home/
+│   ├── HomeScreen.kt (error state priority fix)
+│   └── components/
+│       └── EmptyOffersState.kt (retry button added)
+```
+
+### 🎯 User Experience Flow
+1. **Normal Pagination**: User scrolls → Auto-loads next page → Shows loading indicator → Accumulates results
+2. **Pagination Error**: Error occurs → Shows retry indicator → User taps retry → Waits 15s if HTTP 429 → Retries
+3. **First Load Error**: Error on initial load → Shows centered error card → User can retry → Elegant recovery
+4. **Empty State**: No errors, no offers → Shows empty state with retry option → Multiple recovery methods
+
+### 🔒 Rate Limiting & Resilience
+- **Smart 429 Handling**: Automatic detection and 15-second delay for rate limit errors
+- **User-Friendly Messages**: Clear Spanish error messages for different scenarios
+- **Resilient Architecture**: Graceful degradation during network issues
+- **Multiple Recovery Paths**: Retry buttons, pull-to-refresh, navigation refresh
+
+### 🎨 Design System Consistency
+- **Material 3 Integration**: All components follow Material 3 design principles
+- **Color Theming**: Proper use of primary, surface, and error color roles
+- **Typography**: Consistent text styles across all error components
+- **Icon Usage**: Refresh icons for retry actions, proper sizing and tinting
+
+---
+
+## 🚀 Future Development Roadmap
+
+### ✨ Recommended Next Features
+
+#### 🔄 Pull-to-Refresh Implementation
+- **P2PScreen Pull-to-Refresh**: Implement PullToRefreshBox similar to HomeScreen
+- **Consistent UX**: Unified refresh pattern across all list screens
+- **Loading State Integration**: Proper coordination between pull-to-refresh and pagination states
+
+#### 📊 Advanced Pagination Features
+- **Page Size Optimization**: Dynamic page size based on network conditions
+- **Preloading**: Load next page before user reaches end for smoother experience
+- **Pagination Caching**: Cache paginated results for faster back navigation
+
+#### 🚨 Enhanced Error Recovery
+- **Network Status Detection**: Real-time network connectivity monitoring
+- **Offline Mode**: Cache previous results for offline viewing
+- **Smart Retry Logic**: Exponential backoff for repeated failures
+- **Error Analytics**: Track error patterns for better API optimization
+
+#### 🎯 Performance Optimizations
+- **Lazy Loading**: Image lazy loading for offer cards
+- **Memory Management**: Implement LRU cache for paginated offers
+- **Background Refresh**: Periodic background data updates
+
+#### 🔍 Search and Filtering
+- **P2P Search**: Search offers by user, amount, or currency
+- **Advanced Filters**: Date range, amount range, verification status filters
+- **Filter Persistence**: Remember user's preferred filters
+- **Search History**: Quick access to recent searches
+
+#### 🔔 Real-time Updates
+- **WebSocket Integration**: Real-time offer updates
+- **Push Notifications**: New offer alerts based on user preferences
+- **Live Status Updates**: Real-time offer status changes
+
+#### 🧪 Testing Enhancements
+- **Unit Tests**: Comprehensive ViewModel testing
+- **Integration Tests**: API integration testing
+- **UI Tests**: Compose UI testing for error scenarios
+- **Performance Tests**: Pagination performance benchmarks
+
+### 🛡️ Security Enhancements
+- **Request Validation**: Enhanced input validation for all API calls
+- **Token Refresh**: Automatic access token refresh on expiry
+- **Rate Limit Compliance**: Intelligent rate limiting to prevent API blocks
+- **Error Sanitization**: Secure error message handling
+
+### 📊 Analytics Integration
+- **User Behavior**: Track pagination usage patterns
+- **Error Tracking**: Monitor error rates and types
+- **Performance Metrics**: Measure scroll performance and loading times
+- **A/B Testing**: Test different pagination strategies
+
+---
+
+## 🏗️ Future Architecture Considerations
 - **Reorganización del directorio `presentation/ui/`**:
   ```
   presentation/ui/

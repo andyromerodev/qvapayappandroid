@@ -52,13 +52,13 @@ import java.util.Locale
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun P2POfferDetailScreen(
+    modifier: Modifier = Modifier,
     offer: P2POffer,
     onBackClick: () -> Unit,
     onContactUser: () -> Unit = {},
     onAcceptOffer: () -> Unit = {},
     isApplying: Boolean = false,
-    applicationSuccessMessage: String? = null,
-    modifier: Modifier = Modifier
+    applicationSuccessMessage: String? = null
 ) {
     Scaffold(
         topBar = {

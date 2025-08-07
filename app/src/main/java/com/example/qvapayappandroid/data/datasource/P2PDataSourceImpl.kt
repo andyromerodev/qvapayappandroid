@@ -173,27 +173,52 @@ class P2PDataSourceImpl(
             
             Log.d("P2PDataSource", "Applying to P2P offer ID: $offerId")
             Log.d("P2PDataSource", "Access token provided: ${accessToken != null}")
+            Log.d("P2PDataSource", "Access token value: $accessToken")
             
-            val fullUrl = "${ApiConfig.BASE_URL}${ApiConfig.Endpoints.P2P_APPLY}/$offerId/apply"
+            val fullUrl = "${ApiConfig.BASE_URL}${ApiConfig.Endpoints.P2P_APPLY}/$offerId"
             Log.d("P2PDataSource", "Full URL: $fullUrl")
+            
+            // Try different HTTP methods and body configurations
+            Log.d("P2PDataSource", "Attempting POST request...")
             
             val response = httpClient.post(fullUrl) {
                 // Add authorization header if token is available
                 accessToken?.let { token ->
                     headers {
                         append("Authorization", "Bearer $token")
+                        append("Accept", "application/json")
+                        append("User-Agent", "QvaPay-Android-App")
+                        append("X-Requested-With", "XMLHttpRequest")
                     }
+                    Log.d("P2PDataSource", "Authorization header set with token: Bearer $token")
+                } ?: run {
+                    Log.w("P2PDataSource", "No access token provided!")
                 }
+                
+                // Log all request headers
+                headers.entries().forEach { (key, values) ->
+                    Log.d("P2PDataSource", "Request header: $key = ${values.joinToString(", ")}")
+                }
+                
+                // Set content type and empty JSON body
+                contentType(ContentType.Application.Json)
+                setBody("{}")
+                Log.d("P2PDataSource", "Sending POST with JSON body: {}")
             }
             
             Log.d("P2PDataSource", "Response status: ${response.status}")
+            Log.d("P2PDataSource", "Response headers: ${response.headers}")
+            Log.d("P2PDataSource", "Content-Type: ${response.headers["Content-Type"]}")
             
             // Get raw response body first
             val rawResponseBody = response.body<String>()
             Log.d("P2PDataSource", "Raw response body: $rawResponseBody")
+            Log.d("P2PDataSource", "Response body length: ${rawResponseBody.length}")
             
             // Handle non-success HTTP status codes
             if (response.status.value !in 200..299) {
+                Log.e("P2PDataSource", "HTTP Error ${response.status.value}: $rawResponseBody")
+                Log.e("P2PDataSource", "Response headers on error: ${response.headers}")
                 return Result.failure(Exception("HTTP ${response.status.value}: $rawResponseBody"))
             }
             
