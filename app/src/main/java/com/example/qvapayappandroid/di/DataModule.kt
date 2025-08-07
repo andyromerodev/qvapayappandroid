@@ -8,6 +8,8 @@ import com.example.qvapayappandroid.data.datasource.SessionLocalDataSource
 import com.example.qvapayappandroid.data.datasource.SessionLocalDataSourceImpl
 import com.example.qvapayappandroid.data.datasource.SettingsLocalDataSource
 import com.example.qvapayappandroid.data.datasource.SettingsLocalDataSourceImpl
+import com.example.qvapayappandroid.data.datasource.WebViewLoginDataSource
+import com.example.qvapayappandroid.data.datasource.WebViewLoginDataSourceImpl
 import com.example.qvapayappandroid.data.repository.AuthRepositoryImpl
 import com.example.qvapayappandroid.data.repository.P2PRepositoryImpl
 import com.example.qvapayappandroid.data.repository.SessionRepositoryImpl
@@ -24,6 +26,9 @@ val dataModule = module {
     single<SessionLocalDataSource> { SessionLocalDataSourceImpl(get(), get()) }
     single<P2PDataSource> { P2PDataSourceImpl(get()) }
     single<SettingsLocalDataSource> { SettingsLocalDataSourceImpl(get()) }
+    
+    // WebView para login fallback - se creará en la UI cuando sea necesario
+    single<WebViewLoginDataSource> { WebViewLoginDataSourceImpl() }
     
     // Repositories
     single<SessionRepository> { SessionRepositoryImpl(get()) }
