@@ -1,83 +1,52 @@
 package com.example.qvapayappandroid.presentation.ui.home
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ExitToApp
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import coil.compose.SubcomposeAsyncImage
+import android.util.Log
+import com.example.qvapayappandroid.data.model.P2POffer
+import com.example.qvapayappandroid.presentation.ui.home.components.EmptyOffersState
+import com.example.qvapayappandroid.presentation.ui.home.components.ErrorCard
+import com.example.qvapayappandroid.presentation.ui.home.components.LoadingMoreIndicator
+import com.example.qvapayappandroid.presentation.ui.home.components.MyOfferCard
+import com.example.qvapayappandroid.presentation.ui.home.components.StatusFilterChips
 import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
-    onLogout: () -> Unit = {},
     onCreateOffer: () -> Unit = {},
+    onOfferClick: (P2POffer) -> Unit = {},
     viewModel: HomeViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-
-    LaunchedEffect(Unit) {
-        viewModel.effect.collect { effect ->
-            when (effect) {
-                is HomeEffect.NavigateToLogin -> onLogout()
-            }
-        }
-    }
     
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("QvaPay") },
-                actions = {
-                    IconButton(
-                        onClick = { viewModel.logout() },
-                        enabled = !uiState.isLoggingOut
-                    ) {
-                        if (uiState.isLoggingOut) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(24.dp),
-                                strokeWidth = 2.dp
-                            )
-                        } else {
-                            Icon(Icons.Default.ExitToApp, contentDescription = "Logout")
-                        }
-                    }
-                }
+                title = { Text("Mis Ofertas P2P") }
             )
         },
         floatingActionButton = {
@@ -91,63 +60,119 @@ fun HomeScreen(
             }
         }
     ) { paddingValues ->
-        Column(
+        MyP2POffersSection(
+            uiState = uiState,
+            onRefresh = { viewModel.refreshOffers() },
+            onLoadMore = { viewModel.loadMoreOffers() },
+            onClearError = { viewModel.clearOffersError() },
+            onStatusToggle = { viewModel.toggleStatusFilter(it) },
+            onOfferClick = onOfferClick,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .verticalScroll(rememberScrollState())
+        )
+    }
+}
+
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun MyP2POffersSection(
+    uiState: HomeUiState,
+    onRefresh: () -> Unit,
+    onLoadMore: () -> Unit,
+    onClearError: () -> Unit,
+    onStatusToggle: (String) -> Unit,
+    onOfferClick: (P2POffer) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val listState = rememberLazyListState()
+    
+    val shouldLoadMore by remember {
+        derivedStateOf {
+            val layoutInfo = listState.layoutInfo
+            val totalItemsNumber = layoutInfo.totalItemsCount
+            val lastVisibleItemIndex = (layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1)
+
+            val condition1 = totalItemsNumber > 0
+            val condition2 = lastVisibleItemIndex >= totalItemsNumber - 3
+            val condition3 = uiState.hasNextPage
+            val condition4 = !uiState.isLoadingMore
+            // Ignorar loadingOffers si hay páginas disponibles - solo verificar que no esté ya paginando
+            val condition5 = true // Removemos la condición de loadingOffers
+            val condition6 = uiState.offersError == null
+
+            val result = condition1 && condition2 && condition3 && condition4 && condition5 && condition6
+            
+            // Solo log cuando las condiciones cambian
+            if (totalItemsNumber > 0) {
+                Log.d("HomeScreen", "shouldLoadMore check - total: $totalItemsNumber, lastVisible: $lastVisibleItemIndex, hasNext: ${uiState.hasNextPage}, loadingMore: ${uiState.isLoadingMore}, loadingOffers: ${uiState.isLoadingOffers}, error: ${uiState.offersError}")
+                Log.d("HomeScreen", "Conditions - 1: $condition1, 2: $condition2, 3: $condition3, 4: $condition4, 5: $condition5, 6: $condition6, RESULT: $result")
+            }
+
+            result
+        }
+    }
+
+    LaunchedEffect(shouldLoadMore) {
+        Log.d("HomeScreen", "LaunchedEffect triggered - shouldLoadMore = $shouldLoadMore")
+        if (shouldLoadMore) {
+            Log.d("HomeScreen", "Triggering loadMore - shouldLoadMore = true")
+            onLoadMore()
+        }
+    }
+    
+    PullToRefreshBox(
+        isRefreshing = uiState.isLoadingOffers,
+        onRefresh = onRefresh,
+        modifier = modifier
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
         ) {
+            StatusFilterChips(
+                selectedStatuses = uiState.selectedStatusFilters,
+                onStatusToggle = onStatusToggle
+            )
+            
             when {
-                uiState.isLoading -> {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(16.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            CircularProgressIndicator()
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Text("Cargando datos del usuario...")
-                        }
-                    }
-                }
-                
-                uiState.user != null -> {
-                    UserProfileContent(
-                        user = uiState.user!!,
-                        modifier = Modifier.padding(16.dp)
+                uiState.offersError != null -> {
+                    ErrorCard(
+                        errorMessage = uiState.offersError,
+                        onDismiss = onClearError,
+                        onRetry = onRefresh
                     )
                 }
                 
-                uiState.errorMessage != null -> {
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.errorContainer
-                        )
+                uiState.myOffers.isEmpty() && !uiState.isLoadingOffers -> {
+                    EmptyOffersState(
+                        onRetry = onRefresh
+                    )
+                }
+                
+                else -> {
+                    val offersToShow = if (uiState.selectedStatusFilters.isEmpty()) {
+                        uiState.myOffers
+                    } else {
+                        uiState.filteredOffers
+                    }
+                    
+                    LazyColumn(
+                        state = listState,
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Column(
-                            modifier = Modifier.padding(16.dp)
-                        ) {
-                            Text(
-                                text = "Error",
-                                style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.onErrorContainer
+                        items(offersToShow) { offer ->
+                            MyOfferCard(
+                                offer = offer,
+                                onClick = onOfferClick
                             )
-                            Text(
-                                text = uiState.errorMessage!!,
-                                color = MaterialTheme.colorScheme.onErrorContainer
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            TextButton(
-                                onClick = { viewModel.clearError() }
-                            ) {
-                                Text("Dismiss")
+                        }
+                        
+                        if (uiState.isLoadingMore) {
+                            item {
+                                LoadingMoreIndicator()
                             }
                         }
                     }
@@ -157,197 +182,3 @@ fun HomeScreen(
     }
 }
 
-@Composable
-private fun UserProfileContent(
-    user: com.example.qvapayappandroid.data.model.User,
-    modifier: Modifier = Modifier
-) {
-    Column(
-        modifier = modifier.fillMaxSize()
-    ) {
-        // Profile Header
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer
-            )
-        ) {
-            Column(
-                modifier = Modifier.padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                // Profile Picture
-                SubcomposeAsyncImage(
-                    model = user.profilePhotoUrl,
-                    contentDescription = "Profile Picture",
-                    modifier = Modifier
-                        .size(80.dp)
-                        .clip(CircleShape),
-                    contentScale = ContentScale.Crop,
-                    loading = {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(24.dp),
-                                strokeWidth = 2.dp
-                            )
-                        }
-                    },
-                    error = {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .clip(CircleShape),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                Icons.Default.Person,
-                                contentDescription = null,
-                                modifier = Modifier.size(40.dp),
-                                tint = MaterialTheme.colorScheme.onPrimaryContainer
-                            )
-                        }
-                    }
-                )
-                
-                Spacer(modifier = Modifier.height(16.dp))
-                
-                Text(
-                    text = "${user.name} ${user.lastname}",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
-                )
-                
-                Text(
-                    text = "@${user.username}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
-                )
-                
-                if (user.bio?.isNotBlank() == true) {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = user.bio,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                }
-            }
-        }
-        
-        Spacer(modifier = Modifier.height(16.dp))
-        
-        // Balance Card
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.secondaryContainer
-            )
-        ) {
-            Column(
-                modifier = Modifier.padding(16.dp)
-            ) {
-                Text(
-                    text = "Balance",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSecondaryContainer
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Column {
-                        Text(
-                            text = "Disponible",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSecondaryContainer
-                        )
-                        Text(
-                            text = "$${user.balance}",
-                            style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSecondaryContainer
-                        )
-                    }
-                    
-                    Column {
-                        Text(
-                            text = "Pendiente",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSecondaryContainer
-                        )
-                        Text(
-                            text = "$${user.pendingBalance}",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onSecondaryContainer
-                        )
-                    }
-                }
-                
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "Satoshis: ${user.satoshis}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSecondaryContainer
-                )
-            }
-        }
-        
-        Spacer(modifier = Modifier.height(16.dp))
-        
-        // Account Info Card
-        Card(
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Column(
-                modifier = Modifier.padding(16.dp)
-            ) {
-                Text(
-                    text = "Información de la cuenta",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-                
-                AccountInfoRow("UUID", user.uuid)
-                AccountInfoRow("Email", user.phone ?: "No disponible")
-                AccountInfoRow("País", user.country?.ifBlank { "No especificado" } ?: "No especificado")
-                AccountInfoRow("Rol", user.role)
-                AccountInfoRow("Rating", user.averageRating)
-                AccountInfoRow("KYC", if (user.kyc == 1) "Verificado" else "No verificado")
-                AccountInfoRow("VIP", if (user.vip == 1) "Sí" else "No")
-                AccountInfoRow("P2P", if (user.p2pEnabled == 1) "Habilitado" else "Deshabilitado")
-            }
-        }
-    }
-}
-
-@Composable
-private fun AccountInfoRow(
-    label: String,
-    value: String
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Text(
-            text = value,
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Medium
-        )
-    }
-}

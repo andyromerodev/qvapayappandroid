@@ -1,213 +1,291 @@
 package com.example.qvapayappandroid.presentation.ui.p2p
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Security
-import androidx.compose.material3.*
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.example.qvapayappandroid.data.model.P2POffer
+import com.example.qvapayappandroid.presentation.ui.p2p.components.KycChipMiniM3
+import com.example.qvapayappandroid.presentation.ui.webview.WebViewScreen
+import com.example.qvapayappandroid.presentation.ui.p2p.components.MiniCardM3
+import com.example.qvapayappandroid.presentation.ui.p2p.components.OfferChipMiniM3
+import com.example.qvapayappandroid.presentation.ui.p2p.components.getRatio
+import com.example.qvapayappandroid.presentation.ui.p2p.components.toTwoDecimals
+import org.koin.androidx.compose.koinViewModel
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun P2POfferDetailScreen(
+    modifier: Modifier = Modifier,
     offer: P2POffer,
     onBackClick: () -> Unit,
     onContactUser: () -> Unit = {},
-    onAcceptOffer: () -> Unit = {},
-    isApplying: Boolean = false,
-    applicationSuccessMessage: String? = null,
-    modifier: Modifier = Modifier
+    viewModel: P2POfferDetailViewModel = koinViewModel()
 ) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-    ) {
-        TopAppBar(
-            title = { Text("Detalles de Oferta P2P") },
-            navigationIcon = {
-                IconButton(onClick = onBackClick) {
-                    Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
+    val uiState by viewModel.uiState.collectAsState()
+    
+    // Estado para controlar la visibilidad del WebView y el diálogo
+    var showWebView by remember { mutableStateOf(false) }
+    var showConfirmDialog by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        viewModel.effect.collect { effect ->
+            when (effect) {
+                is P2POfferDetailViewModel.Effect.NavigateBack -> onBackClick()
+                is P2POfferDetailViewModel.Effect.ShowError -> {
+                    // Error handling can be done here if needed
                 }
+                is P2POfferDetailViewModel.Effect.ShowApplicationSuccess -> {
+                    // Success handling can be done here if needed
+                }
+            }
+        }
+    }
+
+    if (showWebView) {
+        WebViewScreen(
+            onClose = { 
+                showWebView = false
+                showConfirmDialog = false
+            },
+            customUrl = "https://qvapay.com/p2p/${offer.uuid}",
+            showConfirmDialog = showConfirmDialog,
+            offer = offer,
+            onAcceptOffer = {
+                // El WebViewScreen ya maneja la llamada a applyToP2POffer
+                // Solo necesitamos cerrar el diálogo después
+                showConfirmDialog = false
+                showWebView = false
+            },
+            onCancelOffer = {
+                showConfirmDialog = false
+                showWebView = false
             }
         )
-        
-        Column(
-            modifier = Modifier.padding(16.dp)
-        ) {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
-                )
-            ) {
-                Column(
-                    modifier = Modifier.padding(20.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Surface(
-                            color = if (offer.type == "buy") 
-                                MaterialTheme.colorScheme.primary 
-                            else 
-                                MaterialTheme.colorScheme.secondary,
-                            shape = MaterialTheme.shapes.medium
-                        ) {
-                            Text(
-                                text = when (offer.type) {
-                                    "buy" -> "OFERTA DE COMPRA"
-                                    "sell" -> "OFERTA DE VENTA"
-                                    else -> "N/A"
-                                },
-                                style = MaterialTheme.typography.titleSmall,
-                                color = if (offer.type == "buy") 
-                                    MaterialTheme.colorScheme.onPrimary 
-                                else 
-                                    MaterialTheme.colorScheme.onSecondary,
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                        
-                        if (offer.onlyKyc == 1) {
-                            Surface(
-                                color = MaterialTheme.colorScheme.tertiary,
-                                shape = MaterialTheme.shapes.small
-                            ) {
-                                Row(
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Icon(
-                                        Icons.Default.Security,
-                                        contentDescription = "KYC Required",
-                                        modifier = Modifier.size(16.dp),
-                                        tint = MaterialTheme.colorScheme.onTertiary
-                                    )
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text(
-                                        text = "KYC Requerido",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.onTertiary
-                                    )
-                                }
-                            }
-                        }
+    } else {
+        P2POfferDetailContent(
+            offer = offer,
+            uiState = uiState,
+            onBackClick = { viewModel.onBackClick() },
+            onContactUser = onContactUser,
+            onAcceptOffer = { 
+                showWebView = true
+                showConfirmDialog = true
+            },
+            modifier = modifier
+        )
+    }
+
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun P2POfferDetailContent(
+    offer: P2POffer,
+    uiState: P2POfferDetailViewModel.UiState,
+    onBackClick: () -> Unit,
+    onContactUser: () -> Unit,
+    onAcceptOffer: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Detalles de Oferta P2P") },
+                navigationIcon = {
+                    IconButton(onClick = onBackClick) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Volver"
+                        )
                     }
-                    
-                    Spacer(modifier = Modifier.height(16.dp))
-                    
-                    Text(
-                        text = offer.coin ?: "N/A",
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
+                }
+            )
+        },
+    ) { paddingValues ->
+        Column(
+            modifier = modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // Estado y propietario de la oferta
+            OfferOwnerCard(offer = offer)
+
+            // Información de la transacción
+            TransactionInfoCard(offer = offer)
+
+            // Detalles adicionales
+            AdditionalDetailsCard(offer = offer)
+
+            // Mensaje si existe
+            offer.message?.takeIf { it.isNotBlank() }?.let { message ->
+                MessageCard(message = message)
+            }
+
+            // Aplicación exitosa si existe
+            uiState.applicationSuccessMessage?.let { successMessage ->
+                SuccessMessageCard(message = successMessage)
+            }
+
+            // Error message si existe
+            uiState.errorMessage?.let { errorMessage ->
+                ErrorMessageCard(message = errorMessage)
+            }
+
+            // Botones de acción
+            ActionButtonsRow(
+                onContactUser = onContactUser,
+                onAcceptOffer = onAcceptOffer,
+                isApplying = uiState.isApplying
+            )
+        }
+    }
+}
+
+@Composable
+private fun OfferOwnerCard(
+    offer: P2POffer,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            // Header con tipo de oferta
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                OfferChipMiniM3(type = offer.type)
+                if (offer.onlyKyc == 1) {
+                    KycChipMiniM3()
                 }
             }
-            
+
             Spacer(modifier = Modifier.height(16.dp))
-            
-            Card(
-                modifier = Modifier.fillMaxWidth()
+
+            // Información del propietario
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Column(
-                    modifier = Modifier.padding(16.dp)
-                ) {
+                // Avatar del propietario
+                val username = offer.owner?.username?.trim().orEmpty()
+                val initial = username.firstOrNull()?.uppercase() ?: "?"
+
+                if (!offer.owner?.profilePhotoUrl.isNullOrBlank()) {
+                    AsyncImage(
+                        model = offer.owner.profilePhotoUrl,
+                        contentDescription = username,
+                        modifier = Modifier
+                            .size(48.dp)
+                            .clip(CircleShape)
+                    )
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .size(48.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.primaryContainer),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = initial,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 20.sp
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.width(12.dp))
+
+                // Información del usuario
+                Column {
                     Text(
-                        text = "Información de la Oferta",
+                        text = username.ifEmpty { "Usuario Desconocido" },
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
-                    
-                    Spacer(modifier = Modifier.height(16.dp))
-                    
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Column(modifier = Modifier.weight(1f)) {
+                    offer.owner?.let { owner ->
+                        if (!owner.name.isNullOrBlank()) {
                             Text(
-                                text = "Monto a ${if (offer.type == "buy") "comprar" else "vender"}",
-                                style = MaterialTheme.typography.bodySmall,
+                                text = "${owner.name} ${owner.lastname ?: ""}".trim(),
+                                style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            Text(
-                                text = offer.amount ?: "N/A",
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Bold
                             )
                         }
-                        
-                        Column(
-                            modifier = Modifier.weight(1f),
-                            horizontalAlignment = Alignment.End
-                        ) {
-                            Text(
-                                text = "Recibirás",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            Text(
-                                text = offer.receive ?: "N/A",
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                    }
-                    
-                    Spacer(modifier = Modifier.height(16.dp))
-                    
-                    HorizontalDivider()
-                    
-                    Spacer(modifier = Modifier.height(16.dp))
-                    
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            Icons.Default.Person,
-                            contentDescription = "Usuario",
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Column {
-                            Text(
-                                text = "Ofertado por",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            Text(
-                                text = offer.owner?.username ?: "Usuario N/A",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Medium
-                            )
-                            offer.owner?.let { owner ->
-                                if (!owner.name.isNullOrBlank()) {
-                                    Text(
-                                        text = "${owner.name} ${owner.lastname ?: ""}".trim(),
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        // Rating con estrella
+                        owner.averageRating?.toDoubleOrNull()?.let { rating ->
+                            if (rating > 0.0) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Filled.Star,
+                                        contentDescription = "Rating",
+                                        tint = MaterialTheme.colorScheme.secondary,
+                                        modifier = Modifier.size(16.dp)
                                     )
-                                }
-                                owner.averageRating?.let { rating ->
+                                    Spacer(modifier = Modifier.width(4.dp))
                                     Text(
-                                        text = "⭐ $rating",
+                                        text = String.format(Locale.US, "%.1f", rating),
                                         style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.primary
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        fontWeight = FontWeight.Medium
                                     )
                                 }
                             }
@@ -215,121 +293,348 @@ fun P2POfferDetailScreen(
                     }
                 }
             }
-            
+        }
+    }
+}
+
+@Composable
+private fun TransactionInfoCard(
+    offer: P2POffer,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            Text(
+                text = "Información de la Transacción",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+
             Spacer(modifier = Modifier.height(16.dp))
-            
-            offer.message?.let { message ->
-                Card(
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp)
-                    ) {
-                        Text(
-                            text = "Mensaje del usuario",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                        
-                        Spacer(modifier = Modifier.height(8.dp))
-                        
-                        Text(
-                            text = message,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                }
-                
-                Spacer(modifier = Modifier.height(16.dp))
-            }
-            
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer
-                )
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp)
-                ) {
-                    Text(
-                        text = "Información Adicional",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer
-                    )
-                    
-                    Spacer(modifier = Modifier.height(12.dp))
-                    
-                    offer.owner?.let { owner ->
-                        if (owner.kyc == 1) {
-                            Text(
-                                text = "✅ Usuario verificado por KYC",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSecondaryContainer
-                            )
-                        }
-                        if (owner.goldenCheck == 1) {
-                            Text(
-                                text = "🏆 Usuario verificado Gold",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSecondaryContainer
-                            )
-                        }
-                        if (owner.vip == 1) {
-                            Text(
-                                text = "⭐ Usuario VIP",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSecondaryContainer
-                            )
-                        }
-                    }
-                    
-                    offer.coinData?.let { coinData ->
-                        Text(
-                            text = "💰 Moneda: ${coinData.name ?: offer.coin}",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSecondaryContainer
-                        )
-                    }
-                }
-            }
-            
-            Spacer(modifier = Modifier.height(24.dp))
-            
+
+            // Primera fila: Monto y Recibe
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                OutlinedButton(
-                    onClick = onContactUser,
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Icon(Icons.Default.Person, contentDescription = null)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Contactar")
+                Box(modifier = Modifier.weight(1f)) {
+                    MiniCardM3(
+                        label = "Monto",
+                        value = offer.amount.toTwoDecimals(),
+                        color = MaterialTheme.colorScheme.primary
+                    )
                 }
-                
-                Button(
-                    onClick = onAcceptOffer,
-                    modifier = Modifier.weight(1f),
-                    enabled = !isApplying
-                ) {
-                    if (isApplying) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(16.dp),
-                            strokeWidth = 2.dp,
-                            color = MaterialTheme.colorScheme.onPrimary
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Aplicando...")
-                    } else {
-                        Icon(Icons.Default.Check, contentDescription = null)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Aceptar Oferta")
+                Box(modifier = Modifier.weight(1f)) {
+                    MiniCardM3(
+                        label = "Recibes",
+                        value = offer.receive.toTwoDecimals(),
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Segunda fila: Tipo y Ratio
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Box(modifier = Modifier.weight(1f)) {
+                    MiniCardM3(
+                        label = "Tipo de Moneda",
+                        value = offer.coinData?.tick
+                            ?: offer.coinData?.name
+                            ?: offer.coin ?: "N/A",
+                        color = MaterialTheme.colorScheme.secondary,
+                        isTag = true
+                    )
+                }
+                Box(modifier = Modifier.weight(1f)) {
+                    MiniCardM3(
+                        label = "Ratio",
+                        value = offer.getRatio() ?: "-",
+                        color = MaterialTheme.colorScheme.tertiary
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AdditionalDetailsCard(
+    offer: P2POffer,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            Text(
+                text = "Detalles Adicionales",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Verificaciones del usuario
+            offer.owner?.let { owner ->
+                if (owner.kyc == 1 || owner.goldenCheck == 1 || owner.vip == 1) {
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        if (owner.kyc == 1) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "✅",
+                                    fontSize = 16.sp
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "Usuario verificado por KYC",
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                            }
+                        }
+                        if (owner.goldenCheck == 1) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "🏆",
+                                    fontSize = 16.sp
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "Usuario verificado Gold",
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                            }
+                        }
+                        if (owner.vip == 1) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "⭐",
+                                    fontSize = 16.sp
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "Usuario VIP",
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                            }
+                        }
                     }
+
+                    Spacer(modifier = Modifier.height(12.dp))
                 }
+            }
+
+            // Información de la moneda si existe
+            offer.coinData?.let { coinData ->
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "💰",
+                        fontSize = 16.sp
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Moneda: ${coinData.name ?: offer.coin}",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            }
+
+            // ID de la oferta si existe
+            offer.uuid?.let { uuid ->
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "🔗",
+                        fontSize = 16.sp
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "ID: ${uuid.take(8)}...",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun MessageCard(
+    message: String,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            Text(
+                text = "Mensaje del Usuario",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = message,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
+private fun SuccessMessageCard(
+    message: String,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    Icons.Default.Check,
+                    contentDescription = "Éxito",
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "¡Aplicación Exitosa!",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = message,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onPrimaryContainer
+            )
+        }
+    }
+}
+
+@Composable
+private fun ErrorMessageCard(
+    message: String,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            Text(
+                text = "Error",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onErrorContainer
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = message,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onErrorContainer
+            )
+        }
+    }
+}
+
+@Composable
+private fun ActionButtonsRow(
+    onContactUser: () -> Unit,
+    onAcceptOffer: () -> Unit,
+    isApplying: Boolean,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        OutlinedButton(
+            onClick = onContactUser,
+            modifier = Modifier.weight(1f)
+        ) {
+            Icon(Icons.Default.Person, contentDescription = null)
+            Spacer(modifier = Modifier.width(8.dp))
+            Text("Contactar")
+        }
+
+        Button(
+            onClick = onAcceptOffer,
+            modifier = Modifier.weight(1f),
+            enabled = !isApplying
+        ) {
+            if (isApplying) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(16.dp),
+                    strokeWidth = 2.dp,
+                    color = MaterialTheme.colorScheme.onPrimary
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Aplicando...")
+            } else {
+                Icon(Icons.Default.Check, contentDescription = null)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Aceptar Oferta")
             }
         }
     }

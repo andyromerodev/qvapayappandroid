@@ -1,6 +1,7 @@
 package com.example.qvapayappandroid
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
@@ -12,15 +13,16 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.example.qvapayappandroid.di.allModules
 import com.example.qvapayappandroid.navigation.AppNavigation
 import com.example.qvapayappandroid.presentation.ui.theme.AppTheme
+import org.koin.android.ext.android.inject
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import org.koin.core.context.startKoin
 
 class MainActivity : ComponentActivity() {
-    
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
+
         // Inicializar Koin si no está ya iniciado
         if (org.koin.core.context.GlobalContext.getOrNull() == null) {
             startKoin {
@@ -29,7 +31,7 @@ class MainActivity : ComponentActivity() {
                 modules(allModules)
             }
         }
-        
+
         setContent {
             AppTheme {
                 Surface(

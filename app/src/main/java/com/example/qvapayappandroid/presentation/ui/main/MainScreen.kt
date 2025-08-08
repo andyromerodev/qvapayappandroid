@@ -19,6 +19,8 @@ import androidx.navigation.compose.rememberNavController
 import com.example.qvapayappandroid.navigation.AppDestinations
 import com.example.qvapayappandroid.presentation.ui.components.BottomNavigationBar
 import com.example.qvapayappandroid.presentation.ui.home.HomeScreen
+import com.example.qvapayappandroid.presentation.ui.home.HomeViewModel
+import com.example.qvapayappandroid.presentation.ui.home.MyOfferDetailScreen
 import com.example.qvapayappandroid.presentation.ui.p2p.CreateP2POfferScreen
 import com.example.qvapayappandroid.presentation.ui.p2p.CreateP2POfferViewModel
 import com.example.qvapayappandroid.presentation.ui.p2p.P2PScreen
@@ -27,6 +29,7 @@ import com.example.qvapayappandroid.presentation.ui.p2p.P2PFiltersScreen
 import com.example.qvapayappandroid.presentation.ui.p2p.P2PViewModel
 import com.example.qvapayappandroid.presentation.ui.p2p.P2POfferDetailViewModel
 import com.example.qvapayappandroid.presentation.ui.settings.SettingsScreen
+import com.example.qvapayappandroid.presentation.ui.profile.UserProfileScreen
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
@@ -40,6 +43,9 @@ fun MainScreen(
     
     // Instancia compartida del ViewModel P2P
     val sharedP2PViewModel: P2PViewModel = koinViewModel()
+    
+    // Instancia compartida del HomeViewModel
+    val sharedHomeViewModel: HomeViewModel = koinViewModel()
     
     Scaffold(
         bottomBar = {
@@ -56,10 +62,15 @@ fun MainScreen(
         ) {
             composable(AppDestinations.Home.route) {
                 HomeScreen(
-                    onLogout = onLogout,
                     onCreateOffer = {
                         navController.navigate(AppDestinations.CreateP2POffer.route)
-                    }
+                    },
+                    onOfferClick = { offer ->
+                        offer.uuid?.let { uuid ->
+                            navController.navigate(AppDestinations.MyOfferDetail.createRoute(uuid))
+                        }
+                    },
+                    viewModel = sharedHomeViewModel
                 )
             }
             
@@ -118,9 +129,9 @@ fun MainScreen(
                                 offer = uiState.offer!!,
                                 onBackClick = offerDetailViewModel::onBackClick,
                                 onContactUser = offerDetailViewModel::onContactUser,
-                                onAcceptOffer = offerDetailViewModel::onAcceptOffer,
-                                isApplying = uiState.isApplying,
-                                applicationSuccessMessage = uiState.applicationSuccessMessage
+//                                onAcceptOffer = offerDetailViewModel::onAcceptOffer,
+//                                isApplying = uiState.isApplying,
+//                                applicationSuccessMessage = uiState.applicationSuccessMessage
                             )
                         }
                         uiState.errorMessage != null -> {
@@ -174,6 +185,74 @@ fun MainScreen(
                 }
             }
             
+            composable(AppDestinations.MyOfferDetail.route) { backStackEntry ->
+                val offerId = backStackEntry.arguments?.getString("offerId")
+                
+                if (offerId != null) {
+                    val offer = sharedHomeViewModel.getOfferById(offerId)
+                    
+                    offer?.let { myOffer ->
+                        MyOfferDetailScreen(
+                            offer = myOffer,
+                            onBackClick = {
+                                navController.popBackStack()
+                            },
+                            onEditOffer = { offer ->
+                                // TODO: Implementar navegación a editar oferta
+                            },
+                            onShareOffer = { offer ->
+                                // TODO: Implementar compartir oferta
+                            }
+                        )
+                    } ?: run {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(
+                                    text = "Oferta no encontrada",
+                                    style = MaterialTheme.typography.headlineSmall
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = "La oferta que buscas no está disponible",
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Button(
+                                    onClick = { navController.popBackStack() }
+                                ) {
+                                    Text("Volver")
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = "ID de oferta no válido",
+                                style = MaterialTheme.typography.headlineSmall
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Button(
+                                onClick = { navController.popBackStack() }
+                            ) {
+                                Text("Volver")
+                            }
+                        }
+                    }
+                }
+            }
+            
             composable(AppDestinations.P2PFilters.route) {
                 val uiState by sharedP2PViewModel.uiState.collectAsState()
                 
@@ -205,6 +284,15 @@ fun MainScreen(
             
             composable(AppDestinations.Settings.route) {
                 SettingsScreen(
+                    onLogout = onLogout,
+                    onProfileClick = {
+                        navController.navigate(AppDestinations.UserProfile.route)
+                    }
+                )
+            }
+            
+            composable(AppDestinations.UserProfile.route) {
+                UserProfileScreen(
                     onLogout = onLogout
                 )
             }

@@ -14,5 +14,6 @@ object ApiConfig {
         const val P2P_OFFER = "/p2p"
         const val P2P_APPLY = "/p2p"
         const val P2P_CREATE = "/p2p/create"
+        const val P2P_MY = "/p2p/my"
     }
 }

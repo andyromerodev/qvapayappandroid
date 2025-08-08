@@ -56,10 +56,18 @@ class P2PViewModel(
                 
                 getP2POffersUseCase(filters).fold(
                     onSuccess = { response ->
+                        val newOffers = if (currentState.currentPage == 1) {
+                            response.data
+                        } else {
+                            _uiState.value.offers + response.data
+                        }
+                        
                         _uiState.value = _uiState.value.copy(
                             isLoading = false,
+                            isLoadingMore = false,
                             errorMessage = null,
-                            offers = response.data,
+                            loadMoreError = null, // Clear on success
+                            offers = newOffers,
                             currentPage = response.currentPage,
                             totalPages = response.lastPage,
                             totalOffers = response.total
@@ -67,20 +75,44 @@ class P2PViewModel(
                         Log.d("P2PViewModel", "P2P offers loaded: ${response.data.size} offers, page ${response.currentPage}/${response.lastPage}")
                     },
                     onFailure = { error ->
-                        _uiState.value = _uiState.value.copy(
-                            isLoading = false,
-                            errorMessage = "Error loading P2P offers: ${error.message}",
-                            offers = emptyList()
-                        )
+                        val currentStateForError = _uiState.value
+                        if (currentStateForError.currentPage > 1 && currentStateForError.offers.isNotEmpty()) {
+                            // Error en paginación - mantener ofertas existentes
+                            _uiState.value = _uiState.value.copy(
+                                isLoading = false,
+                                isLoadingMore = false,
+                                loadMoreError = "Error loading more offers: ${error.message}"
+                            )
+                        } else {
+                            // Error en primera carga - limpiar ofertas
+                            _uiState.value = _uiState.value.copy(
+                                isLoading = false,
+                                isLoadingMore = false,
+                                errorMessage = "Error loading P2P offers: ${error.message}",
+                                offers = emptyList()
+                            )
+                        }
                         Log.e("P2PViewModel", "Error loading P2P offers", error)
                     }
                 )
             } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    errorMessage = "Unexpected error: ${e.message}",
-                    offers = emptyList()
-                )
+                val currentStateForError = _uiState.value
+                if (currentStateForError.currentPage > 1 && currentStateForError.offers.isNotEmpty()) {
+                    // Error en paginación - mantener ofertas existentes
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        isLoadingMore = false,
+                        loadMoreError = "Unexpected error: ${e.message}"
+                    )
+                } else {
+                    // Error en primera carga - limpiar ofertas
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        isLoadingMore = false,
+                        errorMessage = "Unexpected error: ${e.message}",
+                        offers = emptyList()
+                    )
+                }
                 Log.e("P2PViewModel", "Unexpected error loading P2P data", e)
             }
         }
@@ -115,14 +147,73 @@ class P2PViewModel(
         _uiState.value = _uiState.value.copy(errorMessage = null)
     }
     
+    fun clearLoadMoreError() {
+        _uiState.value = _uiState.value.copy(loadMoreError = null)
+    }
+    
+    fun retryLoadMore() {
+        val currentError = _uiState.value.loadMoreError
+        val is429Error = currentError?.contains("429") == true || currentError?.contains("Too Many Attempts") == true
+        
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(
+                isRetrying = true,
+                loadMoreError = if (is429Error) "Esperando 15 segundos antes de reintentar..." else null
+            )
+            
+            if (is429Error) {
+                Log.d("P2PViewModel", "HTTP 429 detected, waiting 15 seconds before retry")
+                delay(15000) // 15 segundos de espera
+            }
+            
+            _uiState.value = _uiState.value.copy(
+                isRetrying = false,
+                loadMoreError = null
+            )
+            
+            onNextPage()
+        }
+    }
+    
+    fun retryFirstLoad() {
+        val currentError = _uiState.value.errorMessage
+        val is429Error = currentError?.contains("429") == true || currentError?.contains("Too Many Attempts") == true
+        
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(
+                isRetryingFirstLoad = true,
+                errorMessage = if (is429Error) currentError else null
+            )
+            
+            if (is429Error) {
+                Log.d("P2PViewModel", "HTTP 429 detected on first load, waiting 15 seconds before retry")
+                delay(15000) // 15 segundos de espera
+            }
+            
+            _uiState.value = _uiState.value.copy(
+                isRetryingFirstLoad = false,
+                errorMessage = null,
+                currentPage = 1,
+                offers = emptyList()
+            )
+            
+            loadP2PData()
+        }
+    }
+    
     fun refreshData() {
+        _uiState.value = _uiState.value.copy(
+            currentPage = 1,
+            offers = emptyList() // Clear offers when refreshing
+        )
         loadP2PData()
     }
     
     fun onOfferTypeChanged(offerType: String) {
         _uiState.value = _uiState.value.copy(
             selectedOfferType = offerType,
-            currentPage = 1
+            currentPage = 1,
+            offers = emptyList() // Clear offers when changing filters
         )
         loadP2PData()
     }
@@ -130,7 +221,8 @@ class P2PViewModel(
     fun onCoinChanged(coin: String) {
         _uiState.value = _uiState.value.copy(
             selectedCoin = coin,
-            currentPage = 1
+            currentPage = 1,
+            offers = emptyList() // Clear offers when changing filters
         )
         loadP2PData()
     }
@@ -140,7 +232,8 @@ class P2PViewModel(
             selectedOfferType = offerType,
             selectedCoins = coins,
             selectedCoin = if (coins.isEmpty()) "all" else coins.firstOrNull() ?: "all",
-            currentPage = 1
+            currentPage = 1,
+            offers = emptyList() // Clear offers when applying filters
         )
         loadP2PDataImmediate()
     }
@@ -199,33 +292,65 @@ class P2PViewModel(
                     )
                 }
                 
-                if (hasError && allOffers.isEmpty()) {
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        errorMessage = errorMessage,
-                        offers = emptyList()
-                    )
+                if (hasError) {
+                    val currentStateForError = _uiState.value
+                    if (currentStateForError.currentPage > 1 && currentStateForError.offers.isNotEmpty()) {
+                        // Error en paginación - mantener ofertas existentes
+                        _uiState.value = _uiState.value.copy(
+                            isLoading = false,
+                            isLoadingMore = false,
+                            loadMoreError = errorMessage
+                        )
+                    } else {
+                        // Error en primera carga - limpiar ofertas
+                        _uiState.value = _uiState.value.copy(
+                            isLoading = false,
+                            isLoadingMore = false,
+                            errorMessage = errorMessage,
+                            offers = emptyList()
+                        )
+                    }
                 } else {
                     // Deduplicar ofertas por UUID
                     val uniqueOffers = allOffers.distinctBy { it.uuid }
                     
+                    val finalOffers = if (currentState.currentPage == 1) {
+                        uniqueOffers
+                    } else {
+                        (_uiState.value.offers + uniqueOffers).distinctBy { it.uuid }
+                    }
+                    
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
+                        isLoadingMore = false,
                         errorMessage = null,
-                        offers = uniqueOffers,
+                        loadMoreError = null, // Clear on success
+                        offers = finalOffers,
                         currentPage = currentState.currentPage,
                         totalPages = maxPages,
-                        totalOffers = uniqueOffers.size
+                        totalOffers = finalOffers.size
                     )
                     Log.d("P2PViewModel", "P2P offers loaded: ${uniqueOffers.size} unique offers from ${coinsToQuery.size} coin(s)")
                 }
                 
             } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    errorMessage = "Error loading P2P offers: ${e.message}",
-                    offers = emptyList()
-                )
+                val currentStateForError = _uiState.value
+                if (currentStateForError.currentPage > 1 && currentStateForError.offers.isNotEmpty()) {
+                    // Error en paginación - mantener ofertas existentes
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        isLoadingMore = false,
+                        loadMoreError = "Error loading P2P offers: ${e.message}"
+                    )
+                } else {
+                    // Error en primera carga - limpiar ofertas
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        isLoadingMore = false,
+                        errorMessage = "Error loading P2P offers: ${e.message}",
+                        offers = emptyList()
+                    )
+                }
                 Log.e("P2PViewModel", "Error loading P2P offers", e)
             }
         }
@@ -240,7 +365,7 @@ class P2PViewModel(
     
     fun onNextPage() {
         // Prevent navigation if already loading
-        if (_uiState.value.isLoading) {
+        if (_uiState.value.isLoading || _uiState.value.isLoadingMore) {
             Log.d("P2PViewModel", "Next page blocked - already loading")
             return
         }
@@ -248,19 +373,21 @@ class P2PViewModel(
         val currentPage = _uiState.value.currentPage
         val totalPages = _uiState.value.totalPages
         if (currentPage < totalPages) {
+            _uiState.value = _uiState.value.copy(isLoadingMore = true)
             onPageChanged(currentPage + 1)
         }
     }
     
     fun onPreviousPage() {
         // Prevent navigation if already loading
-        if (_uiState.value.isLoading) {
+        if (_uiState.value.isLoading || _uiState.value.isLoadingMore) {
             Log.d("P2PViewModel", "Previous page blocked - already loading")
             return
         }
         
         val currentPage = _uiState.value.currentPage
         if (currentPage > 1) {
+            _uiState.value = _uiState.value.copy(isLoadingMore = true)
             onPageChanged(currentPage - 1)
         }
     }
@@ -277,7 +404,11 @@ class P2PViewModel(
 
 data class P2PUiState(
     val isLoading: Boolean = true,
+    val isLoadingMore: Boolean = false,
     val errorMessage: String? = null,
+    val loadMoreError: String? = null,
+    val isRetrying: Boolean = false,
+    val isRetryingFirstLoad: Boolean = false,
     val offers: List<P2POffer> = emptyList(),
     val selectedOfferType: String = "all", // "all", "buy", "sell"
     val selectedCoin: String = "all", // "all" or specific coin

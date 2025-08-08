@@ -509,11 +509,489 @@ presentation/ui/p2p/
 - **Input validation**: UUID validation before API calls
 - **Error message sanitization**: Safe error message display to users
 
-## 🚀 Cambios Pendientes de Commit
+## 🚀 v2.5.0 - HomeScreen Component Extraction and SOLID Refactoring (2025-08-06)
 
-### ✨ Nuevas Funcionalidades
+### ✨ HomeScreen SOLID Refactoring
 
-#### 🏗️ Refactorización de Arquitectura
+#### 🔧 Component Extraction for Better Separation of Concerns
+- **MyOfferCard extracted** to `components/MyOfferCard.kt`:
+  - Self-contained P2P offer display component
+  - Reusable across multiple screens
+  - Complete offer information rendering (badges, amounts, dates, requirements)
+  - Material 3 design with proper theming support
+
+- **ErrorCard extracted** to `components/ErrorCard.kt`:
+  - Generic error display component
+  - Reusable error handling UI
+  - Material 3 error container styling
+  - Dismiss functionality with callback support
+
+- **EmptyOffersState extracted** to `components/EmptyOffersState.kt`:
+  - Empty state component for no offers scenario
+  - Clear user guidance messaging
+  - Consistent empty state design pattern
+
+- **LoadingMoreIndicator extracted** to `components/LoadingMoreIndicator.kt`:
+  - Pagination loading indicator component
+  - Centered circular progress indicator
+  - Consistent loading state across the app
+
+#### 🏗️ Improved Architecture Following SOLID Principles
+
+##### **Single Responsibility Principle (SRP)**
+- Each component now has a single, well-defined responsibility
+- `HomeScreen.kt` focuses solely on screen layout and state management
+- Individual components handle their specific UI concerns
+
+##### **Open/Closed Principle (OCP)**
+- Components are open for extension through `Modifier` parameters
+- Closed for modification - stable interfaces
+
+##### **Dependency Inversion Principle (DIP)**
+- Components depend on abstractions (Composable interfaces)
+- Reduced coupling between UI components
+
+#### 📁 New Component Architecture
+```
+presentation/ui/home/
+├── HomeScreen.kt (main screen, cleaner and focused)
+├── HomeViewModel.kt (unchanged)
+└── components/
+    ├── MyOfferCard.kt (P2P offer display)
+    ├── ErrorCard.kt (error handling UI)
+    ├── EmptyOffersState.kt (empty state UI)
+    └── LoadingMoreIndicator.kt (loading indicator)
+```
+
+#### 🔄 HomeScreen Refactoring Benefits
+- **Reduced complexity**: HomeScreen.kt reduced from 374 to ~140 lines
+- **Better maintainability**: Each component can be modified independently
+- **Improved reusability**: Components can be used in other screens
+- **Cleaner imports**: Optimized import statements
+- **Better testability**: Individual components can be tested in isolation
+
+### 📁 Files Created
+```
+├── presentation/ui/home/components/
+│   ├── MyOfferCard.kt
+│   ├── ErrorCard.kt
+│   ├── EmptyOffersState.kt
+│   └── LoadingMoreIndicator.kt
+```
+
+### 📁 Files Modified
+```
+├── presentation/ui/home/
+│   └── HomeScreen.kt (refactored with component imports)
+```
+
+### 🎯 SOLID Principles Applied
+1. **SRP**: Each component has one reason to change
+2. **OCP**: Components extensible via Modifier parameters
+3. **LSP**: All components follow Composable contracts
+4. **ISP**: Small, focused component interfaces
+5. **DIP**: Components depend on Compose abstractions
+
+### 🔧 Technical Improvements
+- **Package organization**: Components in dedicated subdirectory
+- **Import optimization**: Cleaner import statements in HomeScreen
+- **Code reusability**: Components can be imported and used elsewhere
+- **Separation of concerns**: UI logic properly separated by responsibility
+
+### ✨ MyOfferCard Enhancement and P2P Design Consistency
+
+#### 🎨 Complete MyOfferCard Redesign
+- **P2P Design Consistency**: MyOfferCard now matches P2POfferCard visual style
+- **Material 3 Design**: Consistent elevation, colors, and rounded corners (14.dp)
+- **Compact MiniCard Layout**: 2x2 grid showing MONTO, RATIO, TIPO, RECIBE
+- **Click Functionality**: Full card click support with callback handling
+
+#### 🏷️ Enhanced Status Management
+- **MyOfferStatusChip Component**:
+  - Smart status detection for different offer states
+  - **ACTIVA** (green) - for open/active offers
+  - **COMPLETADA** (tertiary) - for completed offers  
+  - **CANCELADA** (red) - for cancelled offers
+  - **PAUSADA** (secondary) - for paused offers
+  - **PENDIENTE** (neutral) - for pending offers
+  - Dynamic color theming following Material 3
+
+#### 🔧 Visual Improvements
+- **"Mi Oferta" Header**: Person icon with primary container styling
+- **Chip Collection**: OfferChipMiniM3 (COMPRA/VENTA), KycChipMiniM3, VipChipMiniM3
+- **Message Display**: Conditional rendering when message exists
+- **Consistent Spacing**: Matches P2POfferCard spacing (6dp, 7dp, 8dp)
+
+#### 🎯 HomeScreen Integration
+- **Click Handler**: `onOfferClick: (P2POffer) -> Unit` parameter added
+- **Component Callback**: MyOfferCard now receives onClick callback
+- **Future Navigation**: Ready for offer detail navigation implementation
+
+### 📁 Files Created
+```
+├── presentation/ui/home/components/
+│   └── MyOfferStatusChip.kt (new status chip component)
+```
+
+### 📁 Files Enhanced
+```
+├── presentation/ui/home/components/
+│   └── MyOfferCard.kt (complete redesign with click support)
+├── presentation/ui/home/
+│   └── HomeScreen.kt (click handling integration)
+```
+
+### 🎨 Design Benefits
+- **Visual Consistency**: MyOfferCard and P2POfferCard now share identical design language
+- **Better UX**: Clear status indication with color-coded chips
+- **Improved Navigation**: Click-to-view functionality ready for implementation
+- **Enhanced Information Display**: MiniCard grid shows key offer details efficiently
+
+### 🔄 Network Error Handling with Retry Functionality
+
+#### 🛠️ Enhanced ErrorCard Component
+- **Smart Error Detection**: Automatically detects network-related errors
+  - **Timeout errors**: `HttpRequestTimeoutException`, "timeout"
+  - **Connection errors**: "connection", "network"
+  - **Request failures**: Connection timeouts, server unavailable
+
+#### 🔄 Retry Functionality
+- **Automatic Retry Button**: Shows "Reintentar" button for network errors
+- **Dual Action Layout**: 
+  - **Reintentar** (primary button with refresh icon) - retries the failed request
+  - **Cerrar** (outlined button) - dismisses the error
+- **User-Friendly Messages**: 
+  - Network errors: "No se pudo conectar al servidor. Verifica tu conexión a internet."
+  - Other errors: Shows original error message
+
+#### 🎯 HomeScreen Integration
+- **Retry Handler**: ErrorCard `onRetry` connected to `onRefresh` function
+- **Seamless Recovery**: Users can retry failed requests without navigating away
+- **Connection Recovery**: Perfect for handling poor network conditions
+
+### 🔧 Technical Implementation
+- **Error Type Detection**: Smart pattern matching for network error identification
+- **Callback Architecture**: Clean separation between error display and retry logic
+- **Material 3 Design**: Consistent button styling and spacing
+- **Icon Integration**: Refresh icon for visual retry indication
+
+### 📱 User Experience Improvements
+- **No App Restart Required**: Users can retry failed requests immediately
+- **Clear Error Communication**: Friendly Spanish messages for network issues
+- **Visual Feedback**: Loading states during retry attempts
+- **Graceful Degradation**: Falls back to dismiss-only for non-network errors
+
+### 📁 Files Enhanced
+```
+├── presentation/ui/home/components/
+│   └── ErrorCard.kt (retry functionality added)
+├── presentation/ui/home/
+│   └── HomeScreen.kt (retry integration)
+```
+
+### 📊 Data Model Enhancement - Complete Peer Model
+
+#### 🔧 Expanded Peer Data Class
+- **Complete JSON Mapping**: Added all missing fields from API response
+- **New Fields Added**:
+  - `username`, `name`, `lastname` - User identification
+  - `bio`, `country`, `twitter` - Profile information  
+  - `kyc`, `vip`, `goldenCheck` - Verification status
+  - `role` - User role (regular, etc.)
+  - `can_withdraw`, `can_deposit`, `can_transfer`, `can_buy`, `can_sell` - Permission flags
+  - `twoFactorResetCode`, `phoneRequestId` - Security fields
+
+#### 🔄 Data Type Consistency  
+- **Aligned with Owner Model**: Both `Peer` and `Owner` now have identical field types
+- **Permission Fields**: Changed from `Boolean?` to `Int?` to match API response format
+- **Complete Serialization**: All fields properly mapped with `@SerialName` annotations
+
+#### 🎯 API Response Coverage
+- **Full JSON Support**: Now captures all data from peer objects in P2P responses
+- **Better Data Utilization**: Can access complete user profiles in P2P offers
+- **Enhanced User Information**: Support for KYC status, VIP status, verification badges
+
+### 📁 Files Enhanced
+```
+├── data/model/
+│   └── P2POfferResponse.kt (complete Peer model with all JSON fields)
+```
+
+### 🔄 MyOfferCard Transaction Direction Enhancement
+
+#### 👥 Owner → Peer Transaction Display
+- **Visual Transaction Flow**: Shows direction from owner to peer with arrow
+- **Layout Enhancement**: 
+  - **"Yo"** (owner name, bold) → **Arrow Icon** → **Peer Name** (normal weight)
+  - Clear visual indication of transaction participants
+  - Consistent spacing with 4dp between elements
+
+#### 🎨 Visual Improvements
+- **ArrowForward Icon**: 12dp size with onSurfaceVariant tint
+- **Typography Hierarchy**: Bold for owner, normal for peer
+- **Color Contrast**: Primary color for owner, variant for peer
+- **Compact Design**: Maintains card's compact layout
+
+#### 🎯 Better User Understanding
+- **Transaction Clarity**: Users immediately see who they're transacting with
+- **Direction Indication**: Clear visual flow from "me" to "other party"
+- **Improved UX**: Better understanding of P2P offer relationships
+
+### 📁 Files Enhanced
+```
+├── presentation/ui/home/components/
+│   └── MyOfferCard.kt (transaction direction display)
+```
+
+## 🚀 v2.6.0 - MyOffers Pagination Fix and Enhanced Error Handling (2025-08-06)
+
+### ✨ Pagination System Fixes
+
+#### 🔄 Fixed Infinite Scroll for My P2P Offers
+- **LazyColumn Scroll Detection**: Enhanced scroll threshold detection (now triggers at 3 items from end instead of 2)
+- **Throttling Optimization**: 
+  - Reduced pagination interval from 2s to 1s for smoother scrolling
+  - Reduced refresh interval from 4s to 3s
+  - First pagination no longer subject to throttling delays
+- **Loading State Logic**: Fixed condition that prevented pagination (`isLoadingOffers` no longer blocks pagination when `hasNextPage` is true)
+- **Per-Endpoint Rate Limiting**: Separated throttling per API endpoint instead of global throttling to prevent cross-interference
+
+#### 🛠️ Data Source Improvements
+- **P2PDataSourceImpl Refactoring**: 
+  - Separate throttling timers for each endpoint: `getP2POffers`, `getP2POfferById`, `applyToP2POffer`, `createP2POffer`, `getMyP2POffers`
+  - Eliminated global throttling conflicts that blocked pagination
+  - Maintained 2-second rate limiting per individual endpoint
+
+#### 🎯 HomeViewModel Enhancements
+- **Smart Throttling Logic**: First pagination attempt bypasses throttling for immediate response
+- **Detailed Logging**: Added comprehensive logging for debugging pagination issues
+- **State Management**: Better handling of loading states for pagination vs refresh operations
+
+### 🔧 Enhanced Error Dialog System
+
+#### 💬 ErrorCard as AlertDialog
+- **Modal Dialog**: Converted from inline card to centered AlertDialog for better UX
+- **Time Counter**: Added real-time seconds counter in dialog title showing how long error has been displayed
+- **Auto-updating Title**: Shows "Error de Conexión (X s)" or "Error (X s)" with live timer
+- **Material 3 Design**: Consistent with app's design system using AlertDialog
+
+#### 🔄 Smart Error Detection and Retry
+- **Network Error Recognition**: Automatically detects timeout, connection, and network errors
+- **Contextual Actions**:
+  - **Network errors**: "Reintentar" (primary) + "Cerrar" (secondary)
+  - **Other errors**: "Cerrar" button only
+- **Visual Feedback**: Refresh icon in retry button for clear action indication
+
+### 📱 User Experience Improvements
+
+#### 🎨 MyOfferCard Visual Enhancements
+- **Profile Photos**: 
+  - Owner profile photo (32dp) with fallback to Person icon
+  - Peer profile photo (32dp) with fallback to smaller Person icon
+- **Transaction Direction**: Clear visual flow "Owner → Peer" with arrow icon
+- **AsyncImage Integration**: Coil-powered image loading with proper error handling
+
+#### 🏷️ Status Management
+- **MyOfferStatusChip**: Enhanced status visualization with proper color coding
+- **Status Types**: ACTIVA, COMPLETADA, CANCELADA, PAUSADA, PENDIENTE with appropriate colors
+
+### 🔧 Technical Improvements
+
+#### 🛡️ Scroll Detection Logic
+- **derivedStateOf Optimization**: Improved scroll position calculation for pagination trigger
+- **Condition Debugging**: Detailed logging of all scroll conditions for troubleshooting
+- **Performance**: More responsive infinite scroll with earlier trigger point
+
+#### 📊 State Management
+- **HomeViewModel Logging**: Enhanced debugging with detailed state transitions
+- **Error Recovery**: Better handling of pagination failures with retry mechanisms
+- **Loading States**: Clear separation between initial loading and pagination loading
+
+### 📁 Files Modified
+```
+├── presentation/ui/home/
+│   ├── HomeScreen.kt (scroll detection improvements, logging)
+│   ├── HomeViewModel.kt (throttling optimization, enhanced logging)
+│   └── components/
+│       ├── MyOfferCard.kt (profile photos, transaction direction)
+│       ├── MyOfferStatusChip.kt (status color enhancements)
+│       └── ErrorCard.kt (AlertDialog conversion, time counter)
+├── data/datasource/
+│   └── P2PDataSourceImpl.kt (per-endpoint throttling separation)
+```
+
+### 🐛 Critical Bugs Fixed
+- **Pagination Blocked Issue**: Fixed infinite scroll that wouldn't trigger on first page load
+- **Cross-Endpoint Throttling**: Eliminated interference between different API endpoints
+- **State Synchronization**: Fixed loading state that permanently blocked pagination
+- **Scroll Threshold**: Improved detection accuracy for end-of-list pagination trigger
+
+### 🎯 User Impact
+- **Seamless Pagination**: Users can now scroll through all pages of offers without manual refresh
+- **Better Error Handling**: Clear error dialogs with time tracking and retry options  
+- **Visual Improvements**: Enhanced offer cards with user photos and transaction flow
+- **Faster Response**: Reduced delays in pagination and error recovery
+
+## 🚀 v2.7.0 - Enhanced Pagination UX with Infinite Scroll and Improved Error Handling (2025-08-06)
+
+### ✨ Infinite Scroll Pagination Implementation
+
+#### 🔄 P2P Screen Pagination Transformation
+- **Manual to Infinite Scroll**: Replaced pagination controls with seamless infinite scroll
+- **Scroll Detection**: Implemented `derivedStateOf` with `LazyListState` for performance-optimized scroll monitoring
+- **Load More Trigger**: Automatic pagination when user scrolls within 3 items of list end
+- **Offer Accumulation**: Previous offers maintained during pagination (no more replacement)
+- **Loading States**: `LoadingMoreIndicator` shows at list bottom during pagination
+
+#### 🎯 Advanced Error Handling System
+- **Separate Error Types**: Distinguished first-load errors from pagination errors
+- **HTTP 429 Rate Limiting**: Automatic 15-second delay for "Too Many Attempts" errors
+- **Error Recovery Components**:
+  - `ErrorRetryState` - Elegant first-load error recovery with centered card design
+  - `LoadMoreRetryIndicator` - Pagination error recovery at list bottom
+  - Automatic error type detection and appropriate delay application
+
+#### 🛠️ ViewModel Architecture Enhancement
+- **State Management**: Added `isLoadingMore`, `isRetrying`, `isRetryingFirstLoad`, `loadMoreError` states
+- **Smart Error Handling**: Differentiated error handling for first-load vs pagination scenarios
+- **Retry Methods**: Separate `retryFirstLoad()` and `retryLoadMore()` with intelligent delay logic
+- **Offer Persistence**: Maintains existing offers during pagination errors
+
+### 🎨 User Experience Improvements
+
+#### 📱 Home Screen Error Handling
+- **Fixed EmptyOffersState Priority**: Added `uiState.offersError == null` condition to prevent empty state during errors
+- **Enhanced EmptyOffersState**: Added retry button with refresh icon for better user recovery
+- **PullToRefresh Integration**: Consistent retry functionality across multiple interaction methods
+- **Network Error Recovery**: Clear error messages with multiple retry options
+
+#### 🔧 Component Design Enhancements
+- **ErrorRetryState Component**: 
+  - Material 3 Card design with 4dp elevation
+  - Refresh icon (48dp) with primary color theming
+  - Contextual messages for HTTP 429 vs generic errors
+  - Full-width retry button with integrated icon
+  - Center-aligned layout for professional appearance
+
+- **LoadMoreRetryIndicator Component**:
+  - Compact design for list bottom placement
+  - Error message display with retry button
+  - Disabled state during retry operations
+  - Consistent styling with other error components
+
+### 🔧 Technical Architecture Improvements
+
+#### 📊 State Management Enhancements
+- **P2PUiState Expansion**: Added pagination-specific error and loading states
+- **Reactive State Updates**: Proper state transitions during all error/retry scenarios  
+- **Loading State Logic**: Fixed `isLoading && uiState.offers.isEmpty()` condition to prevent spinner during pagination
+
+#### 🚀 Performance Optimizations
+- **Scroll Performance**: `derivedStateOf` prevents unnecessary recompositions during scroll
+- **Efficient Pagination**: Only triggers when genuinely near list end (3-item threshold)
+- **Memory Management**: Proper offer accumulation without memory leaks
+
+### 🐛 Critical Fixes
+- **Pagination State Management**: Fixed issues where retry would clear `loadMoreError` prematurely
+- **Error Component Visibility**: Proper show/hide logic for different error states
+- **Loading Indicator Overlap**: Prevented multiple loading states from showing simultaneously
+- **State Consistency**: Ensured proper error cleanup on successful operations
+
+### 📁 New Files Created
+```
+├── presentation/ui/p2p/components/
+│   ├── ErrorRetryState.kt (first-load error recovery)
+│   └── LoadMoreRetryIndicator.kt (pagination error recovery)
+```
+
+### 📁 Files Enhanced
+```
+├── presentation/ui/p2p/
+│   ├── P2PScreen.kt (infinite scroll implementation)
+│   └── P2PViewModel.kt (enhanced error handling)
+├── presentation/ui/home/
+│   ├── HomeScreen.kt (error state priority fix)
+│   └── components/
+│       └── EmptyOffersState.kt (retry button added)
+```
+
+### 🎯 User Experience Flow
+1. **Normal Pagination**: User scrolls → Auto-loads next page → Shows loading indicator → Accumulates results
+2. **Pagination Error**: Error occurs → Shows retry indicator → User taps retry → Waits 15s if HTTP 429 → Retries
+3. **First Load Error**: Error on initial load → Shows centered error card → User can retry → Elegant recovery
+4. **Empty State**: No errors, no offers → Shows empty state with retry option → Multiple recovery methods
+
+### 🔒 Rate Limiting & Resilience
+- **Smart 429 Handling**: Automatic detection and 15-second delay for rate limit errors
+- **User-Friendly Messages**: Clear Spanish error messages for different scenarios
+- **Resilient Architecture**: Graceful degradation during network issues
+- **Multiple Recovery Paths**: Retry buttons, pull-to-refresh, navigation refresh
+
+### 🎨 Design System Consistency
+- **Material 3 Integration**: All components follow Material 3 design principles
+- **Color Theming**: Proper use of primary, surface, and error color roles
+- **Typography**: Consistent text styles across all error components
+- **Icon Usage**: Refresh icons for retry actions, proper sizing and tinting
+
+---
+
+## 🚀 Future Development Roadmap
+
+### ✨ Recommended Next Features
+
+#### 🔄 Pull-to-Refresh Implementation
+- **P2PScreen Pull-to-Refresh**: Implement PullToRefreshBox similar to HomeScreen
+- **Consistent UX**: Unified refresh pattern across all list screens
+- **Loading State Integration**: Proper coordination between pull-to-refresh and pagination states
+
+#### 📊 Advanced Pagination Features
+- **Page Size Optimization**: Dynamic page size based on network conditions
+- **Preloading**: Load next page before user reaches end for smoother experience
+- **Pagination Caching**: Cache paginated results for faster back navigation
+
+#### 🚨 Enhanced Error Recovery
+- **Network Status Detection**: Real-time network connectivity monitoring
+- **Offline Mode**: Cache previous results for offline viewing
+- **Smart Retry Logic**: Exponential backoff for repeated failures
+- **Error Analytics**: Track error patterns for better API optimization
+
+#### 🎯 Performance Optimizations
+- **Lazy Loading**: Image lazy loading for offer cards
+- **Memory Management**: Implement LRU cache for paginated offers
+- **Background Refresh**: Periodic background data updates
+
+#### 🔍 Search and Filtering
+- **P2P Search**: Search offers by user, amount, or currency
+- **Advanced Filters**: Date range, amount range, verification status filters
+- **Filter Persistence**: Remember user's preferred filters
+- **Search History**: Quick access to recent searches
+
+#### 🔔 Real-time Updates
+- **WebSocket Integration**: Real-time offer updates
+- **Push Notifications**: New offer alerts based on user preferences
+- **Live Status Updates**: Real-time offer status changes
+
+#### 🧪 Testing Enhancements
+- **Unit Tests**: Comprehensive ViewModel testing
+- **Integration Tests**: API integration testing
+- **UI Tests**: Compose UI testing for error scenarios
+- **Performance Tests**: Pagination performance benchmarks
+
+### 🛡️ Security Enhancements
+- **Request Validation**: Enhanced input validation for all API calls
+- **Token Refresh**: Automatic access token refresh on expiry
+- **Rate Limit Compliance**: Intelligent rate limiting to prevent API blocks
+- **Error Sanitization**: Secure error message handling
+
+### 📊 Analytics Integration
+- **User Behavior**: Track pagination usage patterns
+- **Error Tracking**: Monitor error rates and types
+- **Performance Metrics**: Measure scroll performance and loading times
+- **A/B Testing**: Test different pagination strategies
+
+---
+
+## 🏗️ Future Architecture Considerations
 - **Reorganización del directorio `presentation/ui/`**:
   ```
   presentation/ui/

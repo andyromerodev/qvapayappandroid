@@ -7,7 +7,9 @@
       "Bash(mv:*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(./gradlew:*)"
+      "Bash(./gradlew:*)",
+      "Bash(git push:*)",
+      "Bash(adb logcat:*)"
     ],
     "deny": []
   }

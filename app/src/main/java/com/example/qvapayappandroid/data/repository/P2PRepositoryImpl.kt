@@ -116,4 +116,30 @@ class P2PRepositoryImpl(
             Result.failure(e)
         }
     }
+    
+    override suspend fun getMyP2POffers(
+        accessToken: String,
+        page: Int?
+    ): Result<P2POfferResponse> {
+        return try {
+            Log.d("P2PRepository", "Getting my P2P offers with page: $page")
+            Log.d("P2PRepository", "Access token provided: ${accessToken.isNotEmpty()}")
+            
+            // Call data source with provided token
+            p2pDataSource.getMyP2POffers(accessToken, page).fold(
+                onSuccess = { response ->
+                    Log.d("P2PRepository", "My P2P offers retrieved successfully - Total: ${response.total}")
+                    Result.success(response)
+                },
+                onFailure = { error ->
+                    Log.e("P2PRepository", "Failed to get my P2P offers: ${error.message}")
+                    Result.failure(error)
+                }
+            )
+            
+        } catch (e: Exception) {
+            Log.e("P2PRepository", "P2P repository error for my offers: ${e.message}", e)
+            Result.failure(e)
+        }
+    }
 }

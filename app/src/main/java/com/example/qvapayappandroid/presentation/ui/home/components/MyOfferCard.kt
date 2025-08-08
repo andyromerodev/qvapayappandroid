@@ -1,3 +1,5 @@
+package com.example.qvapayappandroid.presentation.ui.home.components
+
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -13,7 +15,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -34,10 +37,9 @@ import com.example.qvapayappandroid.presentation.ui.p2p.components.MiniCardM3
 import com.example.qvapayappandroid.presentation.ui.p2p.components.OfferChipMiniM3
 import com.example.qvapayappandroid.presentation.ui.p2p.components.getRatio
 import com.example.qvapayappandroid.presentation.ui.p2p.components.toTwoDecimals
-import java.util.Locale
 
 @Composable
-fun P2POfferCard(
+fun MyOfferCard(
     offer: P2POffer,
     onClick: (P2POffer) -> Unit,
     modifier: Modifier = Modifier
@@ -58,82 +60,97 @@ fun P2POfferCard(
                 .padding(8.dp)
                 .fillMaxWidth()
         ) {
-            // Primera fila: avatar, user, rating
+            // Primera fila: icono "Mi Oferta", estado
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                val username = offer.owner?.name?.trim().orEmpty()
-                val initial = username.firstOrNull()?.uppercase() ?: "?"
-
+                // Foto de perfil del owner o icono por defecto
                 if (!offer.owner?.profilePhotoUrl.isNullOrBlank()) {
                     AsyncImage(
                         model = offer.owner.profilePhotoUrl,
-                        contentDescription = username,
+                        contentDescription = offer.owner.name ?: "Mi perfil",
                         modifier = Modifier
-                            .size(28.dp)
+                            .size(32.dp)
                             .clip(CircleShape)
                     )
                 } else {
                     Box(
                         modifier = Modifier
-                            .size(28.dp)
+                            .size(32.dp)
                             .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.surfaceVariant),
+                            .background(MaterialTheme.colorScheme.primaryContainer),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            text = initial,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 13.sp
+                        Icon(
+                            imageVector = Icons.Default.Person,
+                            contentDescription = "Mi oferta",
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                            modifier = Modifier.size(18.dp)
                         )
                     }
                 }
 
                 Spacer(Modifier.width(7.dp))
 
-                Text(
-                    text = username.ifEmpty { "Desconocido" },
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 13.sp,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        text = offer.owner?.name ?: "Yo",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 13.sp,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                        contentDescription = "hacia",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(12.dp)
+                    )
+                    // Foto de perfil del peer
+                    if (!offer.peer?.profilePhotoUrl.isNullOrBlank()) {
+                        AsyncImage(
+                            model = offer.peer.profilePhotoUrl,
+                            contentDescription = offer.peer.name ?: "Usuario",
+                            modifier = Modifier
+                                .size(32.dp)
+                                .clip(CircleShape)
+                        )
+                    } else {
+                        Box(
+                            modifier = Modifier
+                                .size(20.dp)
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.surfaceVariant),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Person,
+                                contentDescription = "Usuario",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(12.dp)
+                            )
+                        }
+                    }
+                    Text(
+                        text = offer.peer?.name ?: "Usuario",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Normal,
+                        fontSize = 13.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
 
                 Spacer(modifier = Modifier.weight(1f))
 
-                // Rating
-                offer.owner?.averageRating?.toDoubleOrNull()?.let { rating ->
-                    if (rating > 0.0) {
-                        Surface(
-                            color = MaterialTheme.colorScheme.secondaryContainer,
-                            shape = CircleShape,
-                            shadowElevation = 0.dp
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 1.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Filled.Star,
-                                    contentDescription = "Rating",
-                                    tint = MaterialTheme.colorScheme.secondary,
-                                    modifier = Modifier.size(10.dp)
-                                )
-                                Text(
-                                    text = String.format(Locale.US, "%.1f", rating),
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = MaterialTheme.colorScheme.onSecondaryContainer,
-                                    fontSize = 11.sp,
-                                    modifier = Modifier.padding(start = 2.dp)
-                                )
-                            }
-                        }
-                    }
-                }
+                // Status Chip
+                MyOfferStatusChip(status = offer.status)
             }
 
+            // Mensaje si existe
             offer.message?.takeIf { it.isNotBlank() }?.let { msg ->
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
@@ -210,9 +227,26 @@ fun P2POfferCard(
                 if (offer.onlyKyc == 1) {
                     KycChipMiniM3()
                 }
+                if (offer.onlyVip == 1) {
+                    VipChipMiniM3()
+                }
             }
         }
     }
 }
 
-
+@Composable
+private fun VipChipMiniM3() {
+    Surface(
+        color = MaterialTheme.colorScheme.secondaryContainer,
+        shape = CircleShape
+    ) {
+        Text(
+            text = "VIP",
+            color = MaterialTheme.colorScheme.onSecondaryContainer,
+            fontWeight = FontWeight.Bold,
+            fontSize = 10.sp,
+            modifier = Modifier.padding(horizontal = 7.dp, vertical = 2.dp)
+        )
+    }
+}

@@ -27,4 +27,9 @@ interface P2PDataSource {
         request: P2PCreateRequest,
         accessToken: String? = null
     ): Result<P2PCreateResponse>
+    
+    suspend fun getMyP2POffers(
+        accessToken: String,
+        page: Int? = null
+    ): Result<P2POfferResponse>
 }
