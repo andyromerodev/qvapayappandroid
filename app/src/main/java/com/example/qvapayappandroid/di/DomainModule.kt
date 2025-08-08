@@ -1,6 +1,7 @@
 package com.example.qvapayappandroid.di
 
 import com.example.qvapayappandroid.domain.usecase.ApplyToP2POfferUseCase
+import com.example.qvapayappandroid.domain.usecase.ApplyToP2POfferWebViewUseCase
 import com.example.qvapayappandroid.domain.usecase.CheckSessionUseCase
 import com.example.qvapayappandroid.domain.usecase.CreateP2POfferUseCase
 import com.example.qvapayappandroid.domain.usecase.GetCurrentUserUseCase
@@ -32,4 +33,7 @@ val domainModule = module {
     factory { UpdateThemeUseCase(get()) }
     factory { UpdateNotificationsUseCase(get()) }
     factory { UpdateBiometricUseCase(get()) }
+
+    // WebView Use Case
+    factory { ApplyToP2POfferWebViewUseCase(get()) }
 }

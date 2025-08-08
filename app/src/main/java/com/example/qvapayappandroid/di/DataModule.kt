@@ -14,10 +14,13 @@ import com.example.qvapayappandroid.data.repository.AuthRepositoryImpl
 import com.example.qvapayappandroid.data.repository.P2PRepositoryImpl
 import com.example.qvapayappandroid.data.repository.SessionRepositoryImpl
 import com.example.qvapayappandroid.data.repository.SettingsRepositoryImpl
+import com.example.qvapayappandroid.data.repository.WebViewRepositoryImpl
 import com.example.qvapayappandroid.domain.repository.AuthRepository
 import com.example.qvapayappandroid.domain.repository.P2PRepository
 import com.example.qvapayappandroid.domain.repository.SessionRepository
 import com.example.qvapayappandroid.domain.repository.SettingsRepository
+import com.example.qvapayappandroid.domain.repository.WebViewRepository
+import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 
 val dataModule = module {
@@ -26,13 +29,14 @@ val dataModule = module {
     single<SessionLocalDataSource> { SessionLocalDataSourceImpl(get(), get()) }
     single<P2PDataSource> { P2PDataSourceImpl(get()) }
     single<SettingsLocalDataSource> { SettingsLocalDataSourceImpl(get()) }
-    
-    // WebView para login fallback - se creará en la UI cuando sea necesario
+
+    // WebView DataSource
     single<WebViewLoginDataSource> { WebViewLoginDataSourceImpl() }
-    
+
     // Repositories
     single<SessionRepository> { SessionRepositoryImpl(get()) }
     single<AuthRepository> { AuthRepositoryImpl(get(), get()) }
     single<P2PRepository> { P2PRepositoryImpl(get()) }
     single<SettingsRepository> { SettingsRepositoryImpl(get()) }
+    single<WebViewRepository> { WebViewRepositoryImpl(get()) }
 }

@@ -8,7 +8,8 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(./gradlew:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(adb logcat:*)"
     ],
     "deny": []
   }

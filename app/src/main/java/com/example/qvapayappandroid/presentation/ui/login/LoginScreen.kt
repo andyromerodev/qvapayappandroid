@@ -1,5 +1,6 @@
 package com.example.qvapayappandroid.presentation.ui.login
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -41,18 +42,14 @@ fun LoginScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
-    
-    // WebView Manager from DI
-    val webViewManager: WebViewLoginManager = get()
-    val webViewState by webViewManager.state.collectAsState()
-    
-    // Check WebView availability
-    val isWebViewAvailable = remember { WebViewAvailability.isWebViewAvailable(context) }
+
 
     LaunchedEffect(Unit) {
         viewModel.effect.collect { effect ->
             when (effect) {
-                is LoginEffect.NavigateToHome -> onLoginSuccess()
+                is LoginEffect.NavigateToHome -> {
+                    onLoginSuccess()
+                }
             }
         }
     }
@@ -72,31 +69,13 @@ fun LoginScreen(
                 )
             )
     ) {
-        // WebView Component
-        WebViewLoginComponent(
-            state = webViewState,
-            onClose = { webViewManager.hideWebView() },
-            onWebViewReady = { webView ->
-                webViewManager.initialize(webView) {
-                }
-            }
+        LoginForm(
+            uiState = uiState,
+            viewModel = viewModel,
+            focusManager = focusManager,
+            passwordVisible = passwordVisible,
+            onPasswordVisibilityToggle = { passwordVisible = !passwordVisible }
         )
-
-        // Login Form (solo visible cuando WebView está oculto)
-        if (!webViewState.isVisible) {
-            LoginForm(
-                uiState = uiState,
-                viewModel = viewModel,
-                focusManager = focusManager,
-                passwordVisible = passwordVisible,
-                onPasswordVisibilityToggle = { passwordVisible = !passwordVisible },
-                onWebViewLoginClick = { 
-                    // Mostrar WebView para login manual del usuario
-                    webViewManager.showWebViewLogin()
-                },
-                isWebViewAvailable = isWebViewAvailable
-            )
-        }
     }
 }
 
@@ -106,9 +85,7 @@ private fun LoginForm(
     viewModel: LoginViewModel,
     focusManager: androidx.compose.ui.focus.FocusManager,
     passwordVisible: Boolean,
-    onPasswordVisibilityToggle: () -> Unit,
-    onWebViewLoginClick: () -> Unit,
-    isWebViewAvailable: Boolean
+    onPasswordVisibilityToggle: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -157,12 +134,7 @@ private fun LoginForm(
             onLogin = {
                 focusManager.clearFocus()
                 viewModel.login()
-            },
-            onWebViewLogin = {
-                focusManager.clearFocus()
-                onWebViewLoginClick()
-            },
-            isWebViewAvailable = isWebViewAvailable
+            }
         )
 
         // Error Message
@@ -342,8 +314,6 @@ private fun CodeField(
 private fun LoginButtons(
     uiState: LoginUiState,
     onLogin: () -> Unit,
-    onWebViewLogin: () -> Unit,
-    isWebViewAvailable: Boolean
 ) {
     // Login Button
     Button(
@@ -378,29 +348,6 @@ private fun LoginButtons(
         } else {
             Text(
                 text = "Iniciar Sesión",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Medium
-            )
-        }
-    }
-
-    Spacer(modifier = Modifier.height(16.dp))
-
-    // WebView Login Button - solo si está disponible
-    if (isWebViewAvailable) {
-        OutlinedButton(
-        onClick = onWebViewLogin,
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(56.dp),
-        enabled = !uiState.isLoading,
-        shape = RoundedCornerShape(12.dp),
-        colors = ButtonDefaults.outlinedButtonColors(
-            contentColor = MaterialTheme.colorScheme.primary
-        )
-    ) {
-            Text(
-                text = "Login con navegador (Cloudflare)",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Medium
             )

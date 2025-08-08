@@ -1,6 +1,10 @@
-package com.example.qvapayappandroid.presentation.ui.login
+package com.example.qvapayappandroid.presentation.ui.webview
 
-data class WebViewLoginState(
+/**
+ * Estado para el WebView VISIBLE usado en LoginScreen
+ * (El WebView invisible para aplicar ofertas no necesita estado UI)
+ */
+data class WebViewScreenState(
     val isVisible: Boolean = false,
     val url: String = "",
     val isLoading: Boolean = false,
@@ -8,21 +12,21 @@ data class WebViewLoginState(
 ) {
     companion object {
         const val QVAPAY_LOGIN_URL = "https://qvapay.com/login"
-        
-        fun showLogin() = WebViewLoginState(
+
+        fun showLogin() = WebViewScreenState(
             isVisible = true,
             url = QVAPAY_LOGIN_URL,
             isLoading = false
         )
-        
-        fun hide() = WebViewLoginState(
+
+        fun hide() = WebViewScreenState(
             isVisible = false,
             url = "",
             isLoading = false,
             error = null
         )
-        
-        fun error(message: String) = WebViewLoginState(
+
+        fun error(message: String) = WebViewScreenState(
             isVisible = true,
             url = QVAPAY_LOGIN_URL,
             isLoading = false,

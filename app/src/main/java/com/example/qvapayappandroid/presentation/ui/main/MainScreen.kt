@@ -129,9 +129,9 @@ fun MainScreen(
                                 offer = uiState.offer!!,
                                 onBackClick = offerDetailViewModel::onBackClick,
                                 onContactUser = offerDetailViewModel::onContactUser,
-                                onAcceptOffer = offerDetailViewModel::onAcceptOffer,
-                                isApplying = uiState.isApplying,
-                                applicationSuccessMessage = uiState.applicationSuccessMessage
+//                                onAcceptOffer = offerDetailViewModel::onAcceptOffer,
+//                                isApplying = uiState.isApplying,
+//                                applicationSuccessMessage = uiState.applicationSuccessMessage
                             )
                         }
                         uiState.errorMessage != null -> {

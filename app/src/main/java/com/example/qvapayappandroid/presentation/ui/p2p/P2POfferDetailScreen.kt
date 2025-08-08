@@ -30,10 +30,15 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -43,10 +48,12 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.example.qvapayappandroid.data.model.P2POffer
 import com.example.qvapayappandroid.presentation.ui.p2p.components.KycChipMiniM3
+import com.example.qvapayappandroid.presentation.ui.webview.WebViewScreen
 import com.example.qvapayappandroid.presentation.ui.p2p.components.MiniCardM3
 import com.example.qvapayappandroid.presentation.ui.p2p.components.OfferChipMiniM3
 import com.example.qvapayappandroid.presentation.ui.p2p.components.getRatio
 import com.example.qvapayappandroid.presentation.ui.p2p.components.toTwoDecimals
+import org.koin.androidx.compose.koinViewModel
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -56,9 +63,73 @@ fun P2POfferDetailScreen(
     offer: P2POffer,
     onBackClick: () -> Unit,
     onContactUser: () -> Unit = {},
-    onAcceptOffer: () -> Unit = {},
-    isApplying: Boolean = false,
-    applicationSuccessMessage: String? = null
+    viewModel: P2POfferDetailViewModel = koinViewModel()
+) {
+    val uiState by viewModel.uiState.collectAsState()
+    
+    // Estado para controlar la visibilidad del WebView y el diálogo
+    var showWebView by remember { mutableStateOf(false) }
+    var showConfirmDialog by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        viewModel.effect.collect { effect ->
+            when (effect) {
+                is P2POfferDetailViewModel.Effect.NavigateBack -> onBackClick()
+                is P2POfferDetailViewModel.Effect.ShowError -> {
+                    // Error handling can be done here if needed
+                }
+                is P2POfferDetailViewModel.Effect.ShowApplicationSuccess -> {
+                    // Success handling can be done here if needed
+                }
+            }
+        }
+    }
+
+    if (showWebView) {
+        WebViewScreen(
+            onClose = { 
+                showWebView = false
+                showConfirmDialog = false
+            },
+            customUrl = "https://qvapay.com/p2p/${offer.uuid}",
+            showConfirmDialog = showConfirmDialog,
+            offer = offer,
+            onAcceptOffer = {
+                // El WebViewScreen ya maneja la llamada a applyToP2POffer
+                // Solo necesitamos cerrar el diálogo después
+                showConfirmDialog = false
+                showWebView = false
+            },
+            onCancelOffer = {
+                showConfirmDialog = false
+                showWebView = false
+            }
+        )
+    } else {
+        P2POfferDetailContent(
+            offer = offer,
+            uiState = uiState,
+            onBackClick = { viewModel.onBackClick() },
+            onContactUser = onContactUser,
+            onAcceptOffer = { 
+                showWebView = true
+                showConfirmDialog = true
+            },
+            modifier = modifier
+        )
+    }
+
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun P2POfferDetailContent(
+    offer: P2POffer,
+    uiState: P2POfferDetailViewModel.UiState,
+    onBackClick: () -> Unit,
+    onContactUser: () -> Unit,
+    onAcceptOffer: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     Scaffold(
         topBar = {
@@ -73,7 +144,7 @@ fun P2POfferDetailScreen(
                     }
                 }
             )
-        }
+        },
     ) { paddingValues ->
         Column(
             modifier = modifier
@@ -85,28 +156,33 @@ fun P2POfferDetailScreen(
         ) {
             // Estado y propietario de la oferta
             OfferOwnerCard(offer = offer)
-            
+
             // Información de la transacción
             TransactionInfoCard(offer = offer)
-            
+
             // Detalles adicionales
             AdditionalDetailsCard(offer = offer)
-            
+
             // Mensaje si existe
             offer.message?.takeIf { it.isNotBlank() }?.let { message ->
                 MessageCard(message = message)
             }
-            
+
             // Aplicación exitosa si existe
-            applicationSuccessMessage?.let { successMessage ->
+            uiState.applicationSuccessMessage?.let { successMessage ->
                 SuccessMessageCard(message = successMessage)
             }
-            
+
+            // Error message si existe
+            uiState.errorMessage?.let { errorMessage ->
+                ErrorMessageCard(message = errorMessage)
+            }
+
             // Botones de acción
             ActionButtonsRow(
                 onContactUser = onContactUser,
                 onAcceptOffer = onAcceptOffer,
-                isApplying = isApplying
+                isApplying = uiState.isApplying
             )
         }
     }
@@ -138,9 +214,9 @@ private fun OfferOwnerCard(
                     KycChipMiniM3()
                 }
             }
-            
+
             Spacer(modifier = Modifier.height(16.dp))
-            
+
             // Información del propietario
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -174,9 +250,9 @@ private fun OfferOwnerCard(
                         )
                     }
                 }
-                
+
                 Spacer(modifier = Modifier.width(12.dp))
-                
+
                 // Información del usuario
                 Column {
                     Text(
@@ -241,10 +317,10 @@ private fun TransactionInfoCard(
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
-            
+
             Spacer(modifier = Modifier.height(16.dp))
-            
-            // Primera fila: Monto y Recibe (como en MyOfferDetailScreen)
+
+            // Primera fila: Monto y Recibe
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -264,10 +340,10 @@ private fun TransactionInfoCard(
                     )
                 }
             }
-            
+
             Spacer(modifier = Modifier.height(12.dp))
-            
-            // Segunda fila: Tipo y Ratio (como en MyOfferDetailScreen)
+
+            // Segunda fila: Tipo y Ratio
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -275,8 +351,8 @@ private fun TransactionInfoCard(
                 Box(modifier = Modifier.weight(1f)) {
                     MiniCardM3(
                         label = "Tipo de Moneda",
-                        value = offer.coinData?.tick 
-                            ?: offer.coinData?.name 
+                        value = offer.coinData?.tick
+                            ?: offer.coinData?.name
                             ?: offer.coin ?: "N/A",
                         color = MaterialTheme.colorScheme.secondary,
                         isTag = true
@@ -314,9 +390,9 @@ private fun AdditionalDetailsCard(
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
-            
+
             Spacer(modifier = Modifier.height(16.dp))
-            
+
             // Verificaciones del usuario
             offer.owner?.let { owner ->
                 if (owner.kyc == 1 || owner.goldenCheck == 1 || owner.vip == 1) {
@@ -369,11 +445,11 @@ private fun AdditionalDetailsCard(
                             }
                         }
                     }
-                    
+
                     Spacer(modifier = Modifier.height(12.dp))
                 }
             }
-            
+
             // Información de la moneda si existe
             offer.coinData?.let { coinData ->
                 Row(
@@ -390,7 +466,7 @@ private fun AdditionalDetailsCard(
                     )
                 }
             }
-            
+
             // ID de la oferta si existe
             offer.uuid?.let { uuid ->
                 Spacer(modifier = Modifier.height(8.dp))
@@ -433,9 +509,9 @@ private fun MessageCard(
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
-            
+
             Spacer(modifier = Modifier.height(8.dp))
-            
+
             Text(
                 text = message,
                 style = MaterialTheme.typography.bodyMedium,
@@ -477,13 +553,46 @@ private fun SuccessMessageCard(
                     color = MaterialTheme.colorScheme.onPrimaryContainer
                 )
             }
-            
+
             Spacer(modifier = Modifier.height(8.dp))
-            
+
             Text(
                 text = message,
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onPrimaryContainer
+            )
+        }
+    }
+}
+
+@Composable
+private fun ErrorMessageCard(
+    message: String,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            Text(
+                text = "Error",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onErrorContainer
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = message,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onErrorContainer
             )
         }
     }
@@ -508,7 +617,7 @@ private fun ActionButtonsRow(
             Spacer(modifier = Modifier.width(8.dp))
             Text("Contactar")
         }
-        
+
         Button(
             onClick = onAcceptOffer,
             modifier = Modifier.weight(1f),

@@ -1,8 +1,17 @@
 package com.example.qvapayappandroid.navigation
 
-import androidx.compose.animation.*
+import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.tween
-import androidx.compose.runtime.*
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -16,7 +25,9 @@ import com.example.qvapayappandroid.presentation.ui.splash.SplashScreen
 fun AppNavigation(
     navController: NavHostController = rememberNavController()
 ) {
-    NavHost(
+    // Box para contener la navegación y el WebView global
+    Box(modifier = Modifier.fillMaxSize()) {
+        NavHost(
         navController = navController,
         startDestination = AppDestinations.START_DESTINATION,
         enterTransition = {
@@ -139,5 +150,9 @@ fun AppNavigation(
                 }
             )
         }
+    }
+        
+    // WebView global - una sola instancia para toda la aplicación
+    // GlobalWebViewContainer()
     }
 }
