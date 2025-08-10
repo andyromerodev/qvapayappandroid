@@ -5,6 +5,7 @@ import com.example.qvapayappandroid.data.model.P2PFilterRequest
 import com.example.qvapayappandroid.data.model.P2POfferResponse
 import com.example.qvapayappandroid.data.model.P2POffer
 import com.example.qvapayappandroid.data.model.P2PApplyResponse
+import com.example.qvapayappandroid.data.model.P2PCancelResponse
 import com.example.qvapayappandroid.data.model.P2PCreateRequest
 import com.example.qvapayappandroid.data.model.P2PCreateResponse
 import com.example.qvapayappandroid.data.network.ApiConfig
@@ -22,6 +23,7 @@ class P2PDataSourceImpl(
         private var lastP2POffersRequestTime = 0L
         private var lastOfferByIdRequestTime = 0L
         private var lastApplyRequestTime = 0L
+        private var lastCancelRequestTime = 0L
         private var lastCreateRequestTime = 0L
         private const val MIN_REQUEST_INTERVAL = 2000L // 2 seconds between requests
     }
@@ -349,6 +351,64 @@ class P2PDataSourceImpl(
             
         } catch (e: Exception) {
             Log.e("P2PDataSource", "My P2P offers error: ${e.message}", e)
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun cancelP2POffer(
+        offerId: String,
+        accessToken: String?
+    ): Result<P2PCancelResponse> {
+        return try {
+            // Rate limiting: ensure minimum interval between requests
+            val currentTime = System.currentTimeMillis()
+            val timeSinceLastRequest = currentTime - lastCancelRequestTime
+            
+            if (timeSinceLastRequest < MIN_REQUEST_INTERVAL) {
+                val waitTime = MIN_REQUEST_INTERVAL - timeSinceLastRequest
+                Log.d("P2PDataSource", "Rate limiting: waiting ${waitTime}ms before request")
+                kotlinx.coroutines.delay(waitTime)
+            }
+            
+            lastCancelRequestTime = System.currentTimeMillis()
+            
+            Log.d("P2PDataSource", "Cancelling P2P offer ID: $offerId")
+            Log.d("P2PDataSource", "Access token provided: ${accessToken != null}")
+            
+            val fullUrl = "${ApiConfig.BASE_URL}${ApiConfig.Endpoints.P2P_CANCEL}/$offerId/cancel"
+            Log.d("P2PDataSource", "Full URL: $fullUrl")
+            
+            val response = httpClient.post(fullUrl) {
+                accessToken?.let { token ->
+                    headers {
+                        append("Authorization", "Bearer $token")
+                        append("Accept", "application/json")
+                        append("User-Agent", "QvaPay-Android-App")
+                        append("X-Requested-With", "XMLHttpRequest")
+                    }
+                }
+                contentType(ContentType.Application.Json)
+                setBody("{}")
+            }
+            
+            Log.d("P2PDataSource", "Response status: ${response.status}")
+            val rawResponseBody = response.body<String>()
+            Log.d("P2PDataSource", "Raw response body: $rawResponseBody")
+            
+            if (response.status.value !in 200..299) {
+                return Result.failure(Exception("HTTP ${response.status.value}: $rawResponseBody"))
+            }
+            
+            val json = kotlinx.serialization.json.Json {
+                ignoreUnknownKeys = true
+                isLenient = true
+            }
+            val responseBody = json.decodeFromString<P2PCancelResponse>(rawResponseBody)
+            Log.d("P2PDataSource", "Offer cancelled successfully - Message: ${responseBody.msg}")
+            
+            Result.success(responseBody)
+        } catch (e: Exception) {
+            Log.e("P2PDataSource", "P2P cancel error: ${e.message}", e)
             Result.failure(e)
         }
     }

@@ -18,7 +18,7 @@ val presentationModule = module {
     viewModel { SplashViewModel(get(), get()) }
     viewModel { LoginViewModel(get()) }
     viewModel { MainViewModel(get()) }
-    viewModel { HomeViewModel(get()) }
+    viewModel { HomeViewModel(get(), get()) }
     viewModel { UserProfileViewModel(get(), get()) }
     viewModel { P2PViewModel(get()) }
     viewModel { P2POfferDetailViewModel(get()) }

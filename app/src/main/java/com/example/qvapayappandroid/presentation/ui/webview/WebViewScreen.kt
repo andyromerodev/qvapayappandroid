@@ -18,8 +18,10 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.unit.sp
 import org.koin.androidx.compose.koinViewModel
 import com.example.qvapayappandroid.data.model.P2POffer
+import android.content.Intent
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -30,9 +32,20 @@ fun WebViewScreen(
     showConfirmDialog: Boolean = false,
     offer: P2POffer? = null,
     onAcceptOffer: () -> Unit = {},
-    onCancelOffer: () -> Unit = {}
+    onCancelOffer: () -> Unit = {},
+    onOfferApplied: () -> Unit = {}
 ) {
     val state by viewModel.state.collectAsState()
+    
+    // Estado para el snackbar
+    var showSnackbar by remember { mutableStateOf(false) }
+    var snackbarMessage by remember { mutableStateOf("") }
+    var snackbarIsError by remember { mutableStateOf(false) }
+    
+    // Estado para el dialog de error de WebView
+    var showWebViewErrorDialog by remember { mutableStateOf(false) }
+    
+    val context = LocalContext.current
     
     // Inicializar el WebView cuando se monta el composable
     LaunchedEffect(customUrl) {
@@ -40,32 +53,125 @@ fun WebViewScreen(
         viewModel.showWebView(url)
     }
     
-    WebViewContent(
-        state = state,
-        onClose = {
-            viewModel.hideWebView()
-            onClose()
-        },
-        onWebViewReady = viewModel::onWebViewReady,
-        onWebViewUnavailable = viewModel::onWebViewUnavailable,
-        customUrl = customUrl,
-        showConfirmDialog = showConfirmDialog,
-        offer = offer,
-        onAcceptOffer = {
-            // Extraer el UUID de la oferta de la URL personalizada
-            val offerId = offer?.uuid ?: customUrl?.substringAfterLast("/") ?: ""
-            Log.d("WebViewScreen", "🎯 onAcceptOffer - offerId extraído: '$offerId'")
-            Log.d("WebViewScreen", "🔍 offer?.uuid: '${offer?.uuid}', customUrl: '$customUrl'")
-            if (offerId.isNotEmpty()) {
-                Log.d("WebViewScreen", "✅ Llamando a viewModel.applyToP2POffer($offerId)")
-                viewModel.applyToP2POffer(offerId)
-            } else {
-                Log.w("WebViewScreen", "⚠️ offerId está vacío, no se puede aplicar a la oferta")
+    if (showSnackbar) {
+        LaunchedEffect(showSnackbar) {
+            kotlinx.coroutines.delay(4000)
+            showSnackbar = false
+        }
+    }
+    
+    Box(modifier = Modifier.fillMaxSize()) {
+        WebViewContent(
+            state = state,
+            onClose = {
+                viewModel.hideWebView()
+                onClose()
+            },
+            onWebViewReady = viewModel::onWebViewReady,
+            onWebViewUnavailable = {
+                viewModel.onWebViewUnavailable()
+                showWebViewErrorDialog = true
+            },
+            customUrl = customUrl,
+            showConfirmDialog = showConfirmDialog,
+            offer = offer,
+            onAcceptOffer = {
+                // Extraer el UUID de la oferta de la URL personalizada
+                val offerId = offer?.uuid ?: customUrl?.substringAfterLast("/") ?: ""
+                Log.d("WebViewScreen", "🎯 onAcceptOffer - offerId extraído: '$offerId'")
+                Log.d("WebViewScreen", "🔍 offer?.uuid: '${offer?.uuid}', customUrl: '$customUrl'")
+                if (offerId.isNotEmpty()) {
+                    Log.d("WebViewScreen", "✅ Llamando a viewModel.executeButtonClick($offerId)")
+                    viewModel.executeButtonClick(offerId) { success, message ->
+                        if (success) {
+                            // Éxito: cerrar WebView y notificar
+                            snackbarMessage = message ?: "Oferta aplicada exitosamente"
+                            snackbarIsError = false
+                            showSnackbar = true
+                            
+                            // Cerrar WebView
+                            viewModel.hideWebView()
+                            onAcceptOffer()
+                            onOfferApplied()
+                            onClose()
+                        } else {
+                            // Error: mostrar snackbar pero no cerrar dialog
+                            snackbarMessage = message ?: "Error aplicando a la oferta"
+                            snackbarIsError = true
+                            showSnackbar = true
+                        }
+                    }
+                } else {
+                    Log.w("WebViewScreen", "⚠️ offerId está vacío, no se puede aplicar a la oferta")
+                    snackbarMessage = "Error: ID de oferta no válido"
+                    snackbarIsError = true
+                    showSnackbar = true
+                }
+            },
+            onCancelOffer = onCancelOffer
+        )
+        
+        // Snackbar flotante
+        if (showSnackbar) {
+            Card(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(16.dp)
+                    .fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = if (snackbarIsError) 
+                        MaterialTheme.colorScheme.errorContainer 
+                    else 
+                        MaterialTheme.colorScheme.primaryContainer
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = if (snackbarIsError) "❌" else "✅",
+                        fontSize = 20.sp
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = snackbarMessage,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = if (snackbarIsError) 
+                            MaterialTheme.colorScheme.onErrorContainer 
+                        else 
+                            MaterialTheme.colorScheme.onPrimaryContainer,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
             }
-            onAcceptOffer()
-        },
-        onCancelOffer = onCancelOffer
-    )
+        }
+        
+        // Dialog de error de WebView
+        if (showWebViewErrorDialog) {
+            WebViewErrorDialog(
+                onDismiss = {
+                    showWebViewErrorDialog = false
+                    onClose()
+                },
+                onRestartApp = {
+                    // Reiniciar la aplicación
+                    val packageManager = context.packageManager
+                    val intent = packageManager.getLaunchIntentForPackage(context.packageName)
+                    intent?.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                    intent?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    context.startActivity(intent)
+                    if (context is android.app.Activity) {
+                        context.finish()
+                    }
+                    Runtime.getRuntime().exit(0)
+                }
+            )
+        }
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -149,45 +255,6 @@ fun WebViewContent(
             Column(
                 modifier = Modifier.fillMaxSize()
             ) {
-                // Header con botón de cerrar
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer
-                    )
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = customUrl ?: state.url,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-
-                        IconButton(onClick = onClose) {
-                            Icon(
-                                imageVector = Icons.Default.Close,
-                                contentDescription = "Cerrar",
-                                tint = MaterialTheme.colorScheme.onPrimaryContainer
-                            )
-                        }
-                    }
-
-                    // Loading indicator
-                    if (state.isLoading) {
-                        LinearProgressIndicator(
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
-                }
-
                 // WebView para login con Cloudflare
                 val currentWebView = webView
                 if (currentWebView != null) {

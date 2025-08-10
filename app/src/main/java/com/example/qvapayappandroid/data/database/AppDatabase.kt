@@ -15,7 +15,7 @@ import com.example.qvapayappandroid.data.database.entities.UserEntity
 
 @Database(
     entities = [UserEntity::class, SessionEntity::class, SettingsEntity::class],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -45,13 +45,42 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
         
+        private val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("""
+                    ALTER TABLE users ADD COLUMN twoFactorSecret TEXT
+                """)
+                database.execSQL("""
+                    ALTER TABLE users ADD COLUMN twoFactorResetCode TEXT
+                """)
+                database.execSQL("""
+                    ALTER TABLE users ADD COLUMN phoneRequestId TEXT
+                """)
+                database.execSQL("""
+                    ALTER TABLE users ADD COLUMN canWithdraw INTEGER NOT NULL DEFAULT 0
+                """)
+                database.execSQL("""
+                    ALTER TABLE users ADD COLUMN canDeposit INTEGER NOT NULL DEFAULT 0
+                """)
+                database.execSQL("""
+                    ALTER TABLE users ADD COLUMN canTransfer INTEGER NOT NULL DEFAULT 0
+                """)
+                database.execSQL("""
+                    ALTER TABLE users ADD COLUMN canBuy INTEGER NOT NULL DEFAULT 0
+                """)
+                database.execSQL("""
+                    ALTER TABLE users ADD COLUMN canSell INTEGER NOT NULL DEFAULT 0
+                """)
+            }
+        }
+        
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
                     context.applicationContext,
                     AppDatabase::class.java,
                     "qvapay_database"
-                ).addMigrations(MIGRATION_1_2).build()
+                ).addMigrations(MIGRATION_1_2, MIGRATION_2_3).build()
                 INSTANCE = instance
                 instance
             }

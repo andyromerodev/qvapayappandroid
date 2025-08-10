@@ -29,6 +29,14 @@ data class UserEntity(
     val coverPhotoUrl: String,
     val profilePhotoUrl: String,
     val averageRating: String,
+    val twoFactorSecret: String?,
+    val twoFactorResetCode: String?,
+    val phoneRequestId: String?,
+    val canWithdraw: Int,
+    val canDeposit: Int,
+    val canTransfer: Int,
+    val canBuy: Int,
+    val canSell: Int,
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis()
 )

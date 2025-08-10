@@ -37,12 +37,15 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import android.util.Log
 import com.example.qvapayappandroid.data.model.P2POffer
 import com.example.qvapayappandroid.presentation.ui.home.components.LoadingMoreIndicator
@@ -54,11 +57,12 @@ import org.koin.androidx.compose.koinViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun P2PScreen(
-    viewModel: P2PViewModel = koinViewModel(),
+    viewModel: P2PViewModel,
     onOfferClick: (P2POffer) -> Unit = {},
-    onShowFilters: () -> Unit = {}
+    navController: NavController? = null
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    var showFilters by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -69,7 +73,9 @@ fun P2PScreen(
         TopAppBar(
             title = { Text("P2P Transactions") },
             actions = {
-                IconButton(onClick = onShowFilters) {
+                IconButton(onClick = { 
+                    showFilters = true
+                }) {
                     Icon(
                         imageVector = Icons.Default.FilterList,
                         contentDescription = "Filtros"
@@ -78,42 +84,54 @@ fun P2PScreen(
             }
         )
 
-        when {
-            uiState.isLoading && uiState.offers.isEmpty() -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(16.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally
+        if (showFilters) {
+            P2PFiltersScreen(
+                onBackClick = { showFilters = false },
+                selectedOfferType = uiState.selectedOfferType,
+                selectedCoins = uiState.selectedCoins,
+                availableCoins = uiState.availableCoins,
+                onApplyFilters = { offerType, coins ->
+                    viewModel.applyFilters(offerType, coins)
+                }
+            )
+        } else {
+            when {
+                uiState.isLoading && uiState.offers.isEmpty() -> {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(16.dp),
+                        contentAlignment = Alignment.Center
                     ) {
-                        CircularProgressIndicator()
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text("Cargando datos P2P...")
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            CircularProgressIndicator()
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text("Cargando datos P2P...")
+                        }
                     }
                 }
-            }
 
-            else -> {
-                P2PContent(
-                    uiState = uiState,
-                    modifier = Modifier.weight(1f), // <- Toma el espacio disponible
-                    onSendMoney = { viewModel.onSendMoney() },
-                    onReceiveMoney = { viewModel.onReceiveMoney() },
-                    onViewHistory = { viewModel.onViewHistory() },
-                    onOfferTypeChanged = { viewModel.onOfferTypeChanged(it) },
-                    onCoinChanged = { viewModel.onCoinChanged(it) },
-                    onNextPage = { viewModel.onNextPage() },
-                    onPreviousPage = { viewModel.onPreviousPage() },
-                    onRefresh = { viewModel.refreshData() },
-                    onOfferClick = onOfferClick,
-                    onSortByChanged = { viewModel.onSortByChanged(it) },
-                    onSortOrderToggled = { viewModel.onSortOrderToggled() },
-                    onRetryLoadMore = { viewModel.retryLoadMore() },
-                    onRetryFirstLoad = { viewModel.retryFirstLoad() },
-                )
+                else -> {
+                    P2PContent(
+                        uiState = uiState,
+                        modifier = Modifier.weight(1f), // <- Toma el espacio disponible
+                        onSendMoney = { viewModel.onSendMoney() },
+                        onReceiveMoney = { viewModel.onReceiveMoney() },
+                        onViewHistory = { viewModel.onViewHistory() },
+                        onOfferTypeChanged = { viewModel.onOfferTypeChanged(it) },
+                        onCoinChanged = { viewModel.onCoinChanged(it) },
+                        onNextPage = { viewModel.onNextPage() },
+                        onPreviousPage = { viewModel.onPreviousPage() },
+                        onRefresh = { viewModel.refreshData() },
+                        onOfferClick = onOfferClick,
+                        onSortByChanged = { viewModel.onSortByChanged(it) },
+                        onSortOrderToggled = { viewModel.onSortOrderToggled() },
+                        onRetryLoadMore = { viewModel.retryLoadMore() },
+                        onRetryFirstLoad = { viewModel.retryFirstLoad() },
+                    )
+                }
             }
         }
 

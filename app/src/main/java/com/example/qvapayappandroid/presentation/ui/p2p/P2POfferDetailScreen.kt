@@ -70,6 +70,7 @@ fun P2POfferDetailScreen(
     // Estado para controlar la visibilidad del WebView y el diálogo
     var showWebView by remember { mutableStateOf(false) }
     var showConfirmDialog by remember { mutableStateOf(false) }
+    var isOfferApplied by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         viewModel.effect.collect { effect ->
@@ -95,7 +96,7 @@ fun P2POfferDetailScreen(
             showConfirmDialog = showConfirmDialog,
             offer = offer,
             onAcceptOffer = {
-                // El WebViewScreen ya maneja la llamada a applyToP2POffer
+                // El WebViewScreen ya maneja la llamada a executeButtonClick
                 // Solo necesitamos cerrar el diálogo después
                 showConfirmDialog = false
                 showWebView = false
@@ -103,6 +104,10 @@ fun P2POfferDetailScreen(
             onCancelOffer = {
                 showConfirmDialog = false
                 showWebView = false
+            },
+            onOfferApplied = {
+                // Callback cuando la oferta se aplica exitosamente
+                isOfferApplied = true
             }
         )
     } else {
@@ -115,6 +120,7 @@ fun P2POfferDetailScreen(
                 showWebView = true
                 showConfirmDialog = true
             },
+            isOfferApplied = isOfferApplied,
             modifier = modifier
         )
     }
@@ -124,12 +130,13 @@ fun P2POfferDetailScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun P2POfferDetailContent(
+    modifier: Modifier = Modifier,
     offer: P2POffer,
     uiState: P2POfferDetailViewModel.UiState,
     onBackClick: () -> Unit,
     onContactUser: () -> Unit,
     onAcceptOffer: () -> Unit,
-    modifier: Modifier = Modifier
+    isOfferApplied: Boolean = false,
 ) {
     Scaffold(
         topBar = {
@@ -182,7 +189,8 @@ private fun P2POfferDetailContent(
             ActionButtonsRow(
                 onContactUser = onContactUser,
                 onAcceptOffer = onAcceptOffer,
-                isApplying = uiState.isApplying
+                isApplying = uiState.isApplying,
+                isOfferApplied = isOfferApplied
             )
         }
     }
@@ -600,10 +608,11 @@ private fun ErrorMessageCard(
 
 @Composable
 private fun ActionButtonsRow(
+    modifier: Modifier = Modifier,
     onContactUser: () -> Unit,
     onAcceptOffer: () -> Unit,
     isApplying: Boolean,
-    modifier: Modifier = Modifier
+    isOfferApplied: Boolean = false
 ) {
     Row(
         modifier = modifier.fillMaxWidth(),
@@ -621,20 +630,28 @@ private fun ActionButtonsRow(
         Button(
             onClick = onAcceptOffer,
             modifier = Modifier.weight(1f),
-            enabled = !isApplying
+            enabled = !isApplying && !isOfferApplied
         ) {
-            if (isApplying) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(16.dp),
-                    strokeWidth = 2.dp,
-                    color = MaterialTheme.colorScheme.onPrimary
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Aplicando...")
-            } else {
-                Icon(Icons.Default.Check, contentDescription = null)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Aceptar Oferta")
+            when {
+                isOfferApplied -> {
+                    Icon(Icons.Default.Check, contentDescription = null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Oferta Aplicada")
+                }
+                isApplying -> {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(16.dp),
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Aplicando...")
+                }
+                else -> {
+                    Icon(Icons.Default.Check, contentDescription = null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Aceptar Oferta")
+                }
             }
         }
     }

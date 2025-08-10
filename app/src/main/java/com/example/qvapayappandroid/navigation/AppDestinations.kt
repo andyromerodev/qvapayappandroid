@@ -14,6 +14,7 @@ sealed class AppDestinations(val route: String) {
     }
     object P2PFilters : AppDestinations("p2p_filters")
     object CreateP2POffer : AppDestinations("create_p2p_offer")
+    object WebView : AppDestinations("webview")
     object Settings : AppDestinations("settings")
     object UserProfile : AppDestinations("user_profile")
     

@@ -46,15 +46,15 @@ data class User(
     val telegramId: Long? = null,
     val role: String,
     @SerialName("can_withdraw")
-    val canWithdraw: String? = null,
+    val canWithdraw: Int,
     @SerialName("can_deposit")
-    val canDeposit: String? = null,
+    val canDeposit: Int,
     @SerialName("can_transfer")
-    val canTransfer: String? = null,
+    val canTransfer: Int,
     @SerialName("can_buy")
-    val canBuy: String? = null,
+    val canBuy: Int,
     @SerialName("can_sell")
-    val canSell: String? = null,
+    val canSell: Int,
     @SerialName("name_verified")
     val nameVerified: String,
     @SerialName("cover_photo_url")

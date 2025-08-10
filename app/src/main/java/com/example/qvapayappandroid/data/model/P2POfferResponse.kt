@@ -262,3 +262,8 @@ data class P2PCreatedOffer(
     @SerialName("created_at")
     val createdAt: String
 )
+
+@Serializable
+data class P2PCancelResponse(
+    val msg: String
+)

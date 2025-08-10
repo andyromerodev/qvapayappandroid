@@ -3,9 +3,11 @@ package com.example.qvapayappandroid.presentation.ui.components
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBox
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.AccountBox
 import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.Language
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -24,6 +26,7 @@ fun BottomNavigationBar(
     val items = listOf(
         BottomNavItem.Home,
         BottomNavItem.P2P,
+        BottomNavItem.WebView,
         BottomNavItem.Settings
     )
     
@@ -77,6 +80,13 @@ sealed class BottomNavItem(
         title = "P2P",
         selectedIcon = Icons.Filled.AccountBox,
         unselectedIcon = Icons.Outlined.AccountBox
+    )
+    
+    object WebView : BottomNavItem(
+        route = AppDestinations.WebView.route,
+        title = "Web",
+        selectedIcon = Icons.Filled.Language,
+        unselectedIcon = Icons.Outlined.Language
     )
     
     object Settings : BottomNavItem(

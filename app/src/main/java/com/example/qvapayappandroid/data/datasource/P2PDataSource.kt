@@ -3,9 +3,10 @@ package com.example.qvapayappandroid.data.datasource
 import com.example.qvapayappandroid.data.model.P2PFilterRequest
 import com.example.qvapayappandroid.data.model.P2POfferResponse
 import com.example.qvapayappandroid.data.model.P2POffer
-import com.example.qvapayappandroid.data.model.P2PApplyResponse
 import com.example.qvapayappandroid.data.model.P2PCreateRequest
 import com.example.qvapayappandroid.data.model.P2PCreateResponse
+import com.example.qvapayappandroid.data.model.P2PApplyResponse
+import com.example.qvapayappandroid.data.model.P2PCancelResponse
 
 interface P2PDataSource {
     suspend fun getP2POffers(
@@ -32,4 +33,9 @@ interface P2PDataSource {
         accessToken: String,
         page: Int? = null
     ): Result<P2POfferResponse>
+
+    suspend fun cancelP2POffer(
+        offerId: String,
+        accessToken: String? = null
+    ): Result<P2PCancelResponse>
 }
