@@ -1,20 +1,29 @@
 package com.example.qvapayappandroid.presentation.ui.webview
 
-import android.view.ViewGroup
-import android.webkit.WebView
-import android.webkit.WebViewClient
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -26,31 +35,21 @@ import org.koin.androidx.compose.koinViewModel
 fun WebViewFullScreen(
     viewModel: WebViewViewModel = koinViewModel(),
     onBackClick: () -> Unit,
-    initialUrl: String = "https://qvapay.com"
+    initialUrl: String = WebViewScreenState.QVAPAY_LOGIN_URL
 ) {
     val state by viewModel.state.collectAsState()
 
-    // Inicializa el intent de mostrar la WebView (no fuerza recreación)
-    LaunchedEffect(Unit) {
-        android.util.Log.d("WebViewFullScreen", "🚀 Inicializando con URL: $initialUrl")
+    LaunchedEffect(initialUrl) {
         viewModel.showWebView(initialUrl)
     }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = {
-                    Text(
-                        text = "QvaPay Web",
-                        style = MaterialTheme.typography.titleMedium
-                    )
-                },
+                title = { Text("QvaPay Web") },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Volver"
-                        )
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver")
                     }
                 },
                 actions = {
@@ -66,22 +65,23 @@ fun WebViewFullScreen(
                 )
             )
         }
-    ) { paddingValues ->
+    ) { padding ->
         val context = LocalContext.current
         val lifecycleOwner = LocalLifecycleOwner.current
 
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
+                .padding(padding)
         ) {
-            // Instancia ÚNICA desde el ViewModel (no se destruye al cambiar de pestaña)
-            val webView = remember { viewModel.getOrCreateWebView(context, initialUrl) }
+            val webView = remember(key1 = "webview_instance_fullscreen") {
+                viewModel.getOrCreateWebView(context, initialUrl)
+            }
 
-            // Atar al ciclo de vida para pausar/reanudar (sin destruir)
+            // Ciclo de vida (resume/pause)
             DisposableEffect(lifecycleOwner) {
-                val observer = LifecycleEventObserver { _, event ->
-                    when (event) {
+                val observer = LifecycleEventObserver { _, e ->
+                    when (e) {
                         Lifecycle.Event.ON_RESUME -> webView.onResume()
                         Lifecycle.Event.ON_PAUSE -> webView.onPause()
                         else -> Unit
@@ -91,74 +91,22 @@ fun WebViewFullScreen(
                 onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
             }
 
-            // Guardar estado al desmontar esta pantalla (p. ej., navegar fuera del flujo)
+            // Guardar estado al salir de la pantalla
             DisposableEffect(Unit) {
-                onDispose {
-                    // No destruir: solo guardar el estado para restaurar al volver
-                    viewModel.saveWebViewState()
-                }
+                onDispose { viewModel.saveWebViewState() }
             }
 
-            // === Render: WebView SIEMPRE montado ===
-            AndroidView(
-                modifier = Modifier.fillMaxSize(),
-                factory = { _ -> webView }
-            )
-
-            // === Shimmer overlay: fade-out cuando el primer frame es visible ===
-//            val targetAlpha = if (state.isLoading) 1f else 0f
-//            val alpha by animateFloatAsState(targetValue = targetAlpha, label = "shimmerAlpha")
-//
-//            if (alpha > 0f) {
-//                Box(
-//                    modifier = Modifier
-//                        .matchParentSize()
-//                        .alpha(alpha)
-//                ) {
-//                    WebViewShimmer(
-//                        modifier = Modifier.fillMaxSize()
-//                    )
-//                }
-//            }
-
-            // === Overlay de error (si existe) ===
-            state.error?.let { message ->
-                Column(
+            key("stable_androidview_fullscreen") {
+                AndroidView(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(24.dp),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Card(
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.errorContainer
-                        )
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(24.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Text(
-                                text = "Error",
-                                style = MaterialTheme.typography.headlineSmall,
-                                color = MaterialTheme.colorScheme.onErrorContainer
-                            )
-                            Spacer(Modifier.height(8.dp))
-                            Text(
-                                text = message,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onErrorContainer
-                            )
-                            Spacer(Modifier.height(16.dp))
-                            Button(onClick = {
-                                viewModel.clearError()
-                                viewModel.reload()
-                            }) { Text("Reintentar") }
-                        }
-                    }
-                }
+                        .background(MaterialTheme.colorScheme.background),
+                    factory = { webView },
+                    update = { /* instancia estable */ }
+                )
             }
+
+            // Puedes pintar overlays con state.isLoading / state.error si quieres
         }
     }
 }
