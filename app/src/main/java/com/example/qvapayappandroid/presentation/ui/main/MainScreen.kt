@@ -24,6 +24,7 @@ import com.example.qvapayappandroid.presentation.ui.p2p.CreateP2POfferViewModel
 import com.example.qvapayappandroid.presentation.ui.p2p.P2PScreen
 import com.example.qvapayappandroid.presentation.ui.p2p.P2POfferDetailScreen
 import com.example.qvapayappandroid.presentation.ui.p2p.P2POfferDetailViewModel
+import com.example.qvapayappandroid.presentation.ui.p2p.P2PWebViewScreen
 import com.example.qvapayappandroid.presentation.ui.settings.SettingsScreen
 import com.example.qvapayappandroid.presentation.ui.profile.UserProfileScreen
 import com.example.qvapayappandroid.presentation.ui.home.HomeViewModel
@@ -160,9 +161,11 @@ fun MainScreen(
                                 offer = uiState.offer!!,
                                 onBackClick = offerDetailViewModel::onBackClick,
                                 onContactUser = offerDetailViewModel::onContactUser,
-//                                onAcceptOffer = offerDetailViewModel::onAcceptOffer,
-//                                isApplying = uiState.isApplying,
-//                                applicationSuccessMessage = uiState.applicationSuccessMessage
+                                onAcceptOffer = {
+                                    uiState.offer?.uuid?.let { uuid ->
+                                        navController.navigate(AppDestinations.P2PWebView.createRoute(uuid))
+                                    }
+                                }
                             )
                         }
                         uiState.errorMessage != null -> {
@@ -238,6 +241,23 @@ fun MainScreen(
                     },
                     initialUrl = "https://qvapay.com"
                 )
+            }
+            
+            composable(AppDestinations.P2PWebView.route) { backStackEntry ->
+                val offerId = backStackEntry.arguments?.getString("offerId")
+                
+                if (offerId != null) {
+                    P2PWebViewScreen(
+                        offerId = offerId,
+                        onClose = {
+                            navController.popBackStack()
+                        }
+                    )
+                } else {
+                    LaunchedEffect(Unit) {
+                        navController.popBackStack()
+                    }
+                }
             }
             
             composable(AppDestinations.Settings.route) {

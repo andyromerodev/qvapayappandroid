@@ -36,9 +36,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -48,7 +45,6 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.example.qvapayappandroid.data.model.P2POffer
 import com.example.qvapayappandroid.presentation.ui.p2p.components.KycChipMiniM3
-import com.example.qvapayappandroid.presentation.ui.webview.WebViewScreen
 import com.example.qvapayappandroid.presentation.ui.p2p.components.MiniCardM3
 import com.example.qvapayappandroid.presentation.ui.p2p.components.OfferChipMiniM3
 import com.example.qvapayappandroid.presentation.ui.p2p.components.getRatio
@@ -63,14 +59,11 @@ fun P2POfferDetailScreen(
     offer: P2POffer,
     onBackClick: () -> Unit,
     onContactUser: () -> Unit = {},
+    onAcceptOffer: () -> Unit = {},
     viewModel: P2POfferDetailViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     
-    // Estado para controlar la visibilidad del WebView y el diálogo
-    var showWebView by remember { mutableStateOf(false) }
-    var showConfirmDialog by remember { mutableStateOf(false) }
-    var isOfferApplied by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         viewModel.effect.collect { effect ->
@@ -86,44 +79,14 @@ fun P2POfferDetailScreen(
         }
     }
 
-    if (showWebView) {
-        WebViewScreen(
-            onClose = { 
-                showWebView = false
-                showConfirmDialog = false
-            },
-            customUrl = "https://qvapay.com/p2p/${offer.uuid}",
-            showConfirmDialog = showConfirmDialog,
-            offer = offer,
-            onAcceptOffer = {
-                // El WebViewScreen ya maneja la llamada a executeButtonClick
-                // Solo necesitamos cerrar el diálogo después
-                showConfirmDialog = false
-                showWebView = false
-            },
-            onCancelOffer = {
-                showConfirmDialog = false
-                showWebView = false
-            },
-            onOfferApplied = {
-                // Callback cuando la oferta se aplica exitosamente
-                isOfferApplied = true
-            }
-        )
-    } else {
-        P2POfferDetailContent(
-            offer = offer,
-            uiState = uiState,
-            onBackClick = { viewModel.onBackClick() },
-            onContactUser = onContactUser,
-            onAcceptOffer = { 
-                showWebView = true
-                showConfirmDialog = true
-            },
-            isOfferApplied = isOfferApplied,
-            modifier = modifier
-        )
-    }
+    P2POfferDetailContent(
+        offer = offer,
+        uiState = uiState,
+        onBackClick = onBackClick,
+        onContactUser = onContactUser,
+        onAcceptOffer = onAcceptOffer,
+        modifier = modifier
+    )
 
 }
 
@@ -136,7 +99,6 @@ private fun P2POfferDetailContent(
     onBackClick: () -> Unit,
     onContactUser: () -> Unit,
     onAcceptOffer: () -> Unit,
-    isOfferApplied: Boolean = false,
 ) {
     Scaffold(
         topBar = {
@@ -190,7 +152,7 @@ private fun P2POfferDetailContent(
                 onContactUser = onContactUser,
                 onAcceptOffer = onAcceptOffer,
                 isApplying = uiState.isApplying,
-                isOfferApplied = isOfferApplied
+                isOfferApplied = false
             )
         }
     }

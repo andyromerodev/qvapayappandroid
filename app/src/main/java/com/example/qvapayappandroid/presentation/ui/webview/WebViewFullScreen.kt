@@ -33,9 +33,9 @@ import org.koin.androidx.compose.koinViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WebViewFullScreen(
-    viewModel: WebViewViewModel = koinViewModel(),
+    viewModel: WebViewFullScreenViewModel = koinViewModel(),
     onBackClick: () -> Unit,
-    initialUrl: String = WebViewScreenState.QVAPAY_LOGIN_URL
+    initialUrl: String = WebViewFullScreenState.QVAPAY_LOGIN_URL
 ) {
     val state by viewModel.state.collectAsState()
 
