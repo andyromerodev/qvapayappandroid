@@ -989,6 +989,138 @@ presentation/ui/home/
 - **Performance Metrics**: Measure scroll performance and loading times
 - **A/B Testing**: Test different pagination strategies
 
+## 🚀 v2.8.0 - Independent WebView Architecture with SOLID Principles (2025-08-11)
+
+### ✨ Complete WebView System Refactoring
+
+#### 🏗️ Separation of Concerns Implementation
+- **P2PWebViewScreen**: Dedicated WebView implementation for P2P offer interactions
+  - Embedded AndroidView with complete lifecycle management
+  - P2P-specific URL handling and state management
+  - Independent of general WebView functionality
+  - Scaffold with TopAppBar and close functionality
+
+- **WebViewFullScreen**: General-purpose WebView for login and navigation
+  - Maintains existing functionality for general web access
+  - Login URL defaults and general navigation support
+  - Separate instance management from P2P WebView
+
+#### 🎯 Independent ViewModel Architecture
+- **P2PWebViewViewModel**: Completely independent ViewModel for P2P WebView
+  - Removed WebViewViewModel dependency
+  - Direct WebView state management implementation
+  - P2P-specific logic and URL handling
+  - Eliminated ApplyToP2POfferWebViewUseCase dependency
+
+- **WebViewFullScreenViewModel**: Dedicated ViewModel for general WebView usage
+  - Clean separation from P2P functionality
+  - General web navigation and login handling
+  - Independent state and lifecycle management
+
+#### 🔧 Separate State Management Classes
+- **P2PWebViewState**: P2P-specific state class
+  - P2P base URL constants and helper methods
+  - P2P-focused state properties and functions
+  - Complete independence from general WebView state
+
+- **WebViewFullScreenState**: General WebView state management
+  - Renamed from WebViewScreenState for clarity
+  - Login URL constants and general navigation helpers
+  - Focused on general web access functionality
+
+#### 🧭 Navigation Architecture Enhancement
+- **P2PWebView Route**: New navigation destination for P2P WebView
+  - Parameter-based routing with offer ID
+  - Independent navigation stack management
+  - Browser tab-like behavior with state persistence
+
+#### 🛠️ Clean Architecture Implementation
+- **SOLID Principles Applied**:
+  - Single Responsibility: Each ViewModel handles one WebView type
+  - Open/Closed: Components extensible without modification
+  - Dependency Inversion: No shared ViewModel dependencies
+  - Interface Segregation: Separate state classes for different use cases
+
+- **Dependency Injection Updates**:
+  - Independent ViewModel registration in Koin
+  - Removed cross-dependencies between WebView components
+  - Clean separation of concerns in DI container
+
+### 🔄 Technical Implementation Details
+
+#### 📱 WebView Lifecycle Management
+- **Independent WebView Instances**: Each screen maintains its own WebView instance
+- **Proper Lifecycle Handling**: DisposableEffect for pause/resume states
+- **State Persistence**: SaveState functionality for navigation preservation
+- **Memory Management**: Proper cleanup on ViewModel clearing
+
+#### 🚀 Performance Optimizations
+- **Shimmer Loading States**: Native HTML shimmer implementation for both WebViews
+- **Stable AndroidView Keys**: Prevents unnecessary recompositions
+- **Efficient State Management**: StateFlow-based reactive state updates
+
+### 🐛 Architecture Issues Resolved
+- **Shared Dependency Conflicts**: Eliminated WebViewViewModel usage in P2PWebViewViewModel
+- **State Class Conflicts**: Separate state classes prevent cross-contamination
+- **Navigation State Management**: Independent WebView instances maintain separate states
+- **UseCase Dependency Cycles**: Removed ApplyToP2POfferWebViewUseCase dependency
+
+### 📁 Files Created
+```
+├── presentation/ui/p2p/
+│   ├── P2PWebViewScreen.kt (complete P2P WebView implementation)
+│   ├── P2PWebViewState.kt (P2P-specific state management)
+│   └── P2PWebViewViewModel.kt (independent P2P ViewModel)
+├── presentation/ui/webview/
+│   ├── WebViewFullScreenState.kt (renamed from WebViewScreenState)
+│   └── WebViewFullScreenViewModel.kt (general WebView ViewModel)
+```
+
+### 📁 Files Removed
+```
+├── presentation/ui/webview/
+│   ├── WebViewAcceptDialog.kt (deprecated dialog)
+│   ├── WebViewErrorDialog.kt (deprecated dialog) 
+│   ├── WebViewScreen.kt (replaced by specific implementations)
+│   ├── WebViewShimmer.kt (integrated into ViewModels)
+│   ├── WebViewScreenState.kt (renamed to WebViewFullScreenState)
+│   └── WebViewViewModel.kt (replaced by specific ViewModels)
+```
+
+### 📁 Files Modified
+```
+├── navigation/
+│   └── AppDestinations.kt (P2PWebView route added)
+├── presentation/ui/main/
+│   └── MainScreen.kt (navigation updates)
+├── presentation/ui/p2p/
+│   └── P2POfferDetailScreen.kt (navigation integration)
+├── presentation/ui/webview/
+│   └── WebViewFullScreen.kt (ViewModel updates)
+└── di/
+    └── PresentationModule.kt (independent ViewModel registration)
+```
+
+### 🎯 Architecture Benefits
+1. **Browser Tab Behavior**: Each WebView maintains independent state like browser tabs
+2. **SOLID Compliance**: Proper separation of concerns following SOLID principles
+3. **Clean Architecture**: Clear separation between P2P and general WebView functionality
+4. **Maintainability**: Independent components can be modified without affecting others
+5. **Testability**: Isolated ViewModels enable better unit testing
+6. **Scalability**: Easy to add new WebView types without modifying existing ones
+
+### 🔒 State Management Improvements
+- **No Shared State**: P2PWebViewState and WebViewFullScreenState are completely independent
+- **Clear Ownership**: Each ViewModel owns its specific state class
+- **Type Safety**: Strong typing prevents state confusion between WebView types
+- **Reactive Updates**: StateFlow-based state management for both ViewModels
+
+### 🚀 Future Enhancement Ready
+- **Easy Extension**: New WebView types can be added following the same pattern
+- **Component Reusability**: WebView components can be reused across different features
+- **Independent Updates**: Each WebView implementation can be updated independently
+- **Clear API Boundaries**: Well-defined interfaces between components
+
 ---
 
 ## 🏗️ Future Architecture Considerations
