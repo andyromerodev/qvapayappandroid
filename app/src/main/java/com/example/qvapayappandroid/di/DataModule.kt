@@ -15,19 +15,24 @@ import com.example.qvapayappandroid.data.repository.P2PRepositoryImpl
 import com.example.qvapayappandroid.data.repository.SessionRepositoryImpl
 import com.example.qvapayappandroid.data.repository.SettingsRepositoryImpl
 import com.example.qvapayappandroid.data.repository.WebViewRepositoryImpl
+import com.example.qvapayappandroid.data.throttling.ThrottlingManagerImpl
 import com.example.qvapayappandroid.domain.repository.AuthRepository
 import com.example.qvapayappandroid.domain.repository.P2PRepository
 import com.example.qvapayappandroid.domain.repository.SessionRepository
 import com.example.qvapayappandroid.domain.repository.SettingsRepository
 import com.example.qvapayappandroid.domain.repository.WebViewRepository
+import com.example.qvapayappandroid.domain.throttling.ThrottlingManager
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 
 val dataModule = module {
+    // Throttling Manager
+    single<ThrottlingManager> { ThrottlingManagerImpl() }
+    
     // DataSources
     single<LoginDataSource> { LoginDataSourceImpl(get()) }
     single<SessionLocalDataSource> { SessionLocalDataSourceImpl(get(), get()) }
-    single<P2PDataSource> { P2PDataSourceImpl(get()) }
+    single<P2PDataSource> { P2PDataSourceImpl(get(), get()) }
     single<SettingsLocalDataSource> { SettingsLocalDataSourceImpl(get()) }
 
     // WebView DataSource
