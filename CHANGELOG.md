@@ -989,6 +989,191 @@ presentation/ui/home/
 - **Performance Metrics**: Measure scroll performance and loading times
 - **A/B Testing**: Test different pagination strategies
 
+## 🚀 v2.9.0 - Enterprise-Grade Throttling System and MVI Architecture Enhancement (2025-08-12)
+
+### ✨ Comprehensive Throttling System Implementation
+
+#### 🏗️ Clean Architecture Throttling Framework
+- **ThrottlingManager Interface**: SOLID-compliant throttling system following dependency inversion principle
+- **ThrottlingManagerImpl**: Thread-safe implementation using Mutex and ConcurrentHashMap
+- **ThrottlingConfig**: Configurable throttling rules with predefined configurations:
+  - `DEFAULT_API_CONFIG` (1 second intervals)
+  - `HEAVY_API_CONFIG` (5 second intervals)  
+  - `CREATE_OPERATIONS_CONFIG` (10 second intervals)
+  - `RATE_LIMITED_CONFIG` (10 requests per minute windows)
+- **ThrottlingResult**: Comprehensive result structure with remaining time and reasons
+- **ThrottlingOperations**: Centralized operation constants for consistency
+
+#### 🎯 Advanced Throttling Features
+- **Per-Operation Configuration**: Individual throttling rules for each API endpoint
+- **Rate Limiting Windows**: Support for max executions per time window
+- **Thread-Safe Operations**: Concurrent request handling with proper synchronization
+- **Extension Functions**: Easy ViewModel integration with executeWithThrottling()
+- **Smart Error Handling**: Automatic detection and delay application for network errors
+
+#### 🔧 Backend Protection Implementation
+- **P2P Operations Throttling**:
+  - Create offers: 10 seconds (prevents spam creation)
+  - Get offers: 5 seconds (listing optimization)
+  - Get offer details: 2 seconds (faster navigation)
+  - Apply to offers: 10 seconds (prevents multiple applications)
+  - Cancel offers: 5 seconds (reasonable cancel frequency)
+  - My offers: 3 seconds (dashboard refresh rate)
+
+### 🏛️ MVI Architecture Pattern Implementation
+
+#### 🔄 Intent-Effect Pattern for WebView Components
+- **WebViewIntent**: Centralized action definitions for WebView operations
+  - ShowWebView, HideWebView, Reload, NavigateBack intents
+  - Type-safe action handling with sealed interface
+- **WebViewEffect**: Side effect management for WebView interactions
+  - NavigationCompleted, NavigationError, WebViewLoaded effects
+  - Proper separation of UI state from navigation effects
+- **WebViewFullScreenViewModel**: Refactored with handleIntent() method for centralized processing
+
+#### 🎯 P2P Components MVI Transformation
+- **P2PWebView Architecture**: Complete MVI implementation in dedicated directory
+  - P2PWebViewIntent, P2PWebViewEffect, P2PWebViewState separation
+  - Independent P2P-specific WebView handling
+  - Clean separation from general WebView functionality
+- **CreateP2POffer MVI Refactoring**: 
+  - Extracted UiState renamed to CreateP2POfferState
+  - Comprehensive Intent definitions for all user actions
+  - Effect-based navigation and error handling
+
+### 💰 Enhanced Coin Selection System
+
+#### 🪙 Professional Coin Dropdown Implementation
+- **18 Available Coins**: Complete coin ecosystem support
+  - USDT (TRC20), CUP, CUP Cash, Bolsa TM, SberBank, Solana
+  - Zelle, TropiPay, Saldo ETECSA, USD Cash, CLASICA, MLC
+  - NeoMoon, EUR Bank, QvaPay, BANDEC PREPAGO, EUR Cash, USDT (BSC)
+- **ExposedDropdownMenuBox UI**: Material 3 dropdown with coin names and tickers
+- **AvailableCoin Model**: Structured coin data with ID, name, and ticker
+- **State Synchronization**: Selected coin automatically updates coinId field
+
+### 🔄 Pull-to-Refresh Enhancement
+
+#### 📱 P2P Screen User Experience Improvements
+- **PullToRefreshBox Integration**: Native Material 3 pull-to-refresh implementation
+- **Filter Preservation**: Refresh maintains applied filters (offer type, selected coins)
+- **Smart Loading States**: Separate isRefreshing state from initial loading
+- **Lazy Loading Implementation**: P2P data loads only when screen is opened
+- **Enhanced Error Recovery**: User-friendly error messages with retry functionality
+
+#### ⚡ Performance Optimizations
+- **Lazy Screen Initialization**: Prevents unnecessary API calls on app startup
+- **Throttling Integration**: Pull-to-refresh respects 10-second throttling intervals
+- **State Management**: Proper separation of refresh vs initial load states
+- **Navigation Flow**: Fixed dual effect issues causing navigation conflicts
+
+### 🏗️ Directory Structure Reorganization
+
+#### 📁 MVI Component Organization
+```
+presentation/ui/p2p/
+├── createp2poffer/
+│   ├── CreateP2POfferIntent.kt
+│   ├── CreateP2POfferEffect.kt
+│   ├── CreateP2POfferState.kt
+│   ├── CreateP2POfferViewModel.kt
+│   └── CreateP2POfferScreen.kt
+├── p2pWebView/
+│   ├── P2PWebViewIntent.kt
+│   ├── P2PWebViewEffect.kt
+│   ├── P2PWebViewState.kt
+│   ├── P2PWebViewViewModel.kt
+│   └── P2PWebViewScreen.kt
+└── [existing P2P files]
+```
+
+#### 🛡️ Domain Layer Throttling
+```
+domain/throttling/
+├── ThrottlingManager.kt (interface)
+├── ThrottlingConfig.kt (configuration models)
+├── ThrottlingResult.kt (result structures)
+├── ThrottlingOperations.kt (operation constants)
+├── ThrottlingExtensions.kt (utility functions)
+└── README.md (comprehensive documentation)
+```
+
+### 🔧 Technical Implementation Details
+
+#### 🚀 Dependency Injection Updates
+- **ThrottlingManager Registration**: Singleton pattern in Koin container
+- **P2PDataSourceImpl Enhancement**: Integrated throttling manager dependency
+- **Component Path Updates**: Fixed imports for reorganized directory structure
+- **ViewModel Registration**: Updated presentation module for new components
+
+#### 🎯 SOLID Principles Application
+- **Single Responsibility**: Each component handles one specific concern
+- **Open/Closed**: Components extensible without modification
+- **Liskov Substitution**: Interfaces allow seamless implementation swapping
+- **Interface Segregation**: Focused interfaces for specific functionalities
+- **Dependency Inversion**: High-level modules depend on abstractions
+
+### 🐛 Critical Issues Resolved
+- **Throttling Conflicts**: Eliminated interference between different API endpoints
+- **Navigation Dual Effects**: Fixed CreateP2POffer success navigation causing blank screens
+- **Circular References**: Resolved state initialization dependencies
+- **Component Isolation**: Proper separation prevents cross-component state pollution
+- **Memory Leaks**: Enhanced ViewModel cleanup and proper coroutine management
+
+### 📁 Files Created
+```
+├── data/throttling/
+│   └── ThrottlingManagerImpl.kt
+├── domain/throttling/
+│   ├── ThrottlingManager.kt
+│   ├── ThrottlingConfig.kt
+│   ├── ThrottlingResult.kt
+│   ├── ThrottlingOperations.kt
+│   ├── ThrottlingExtensions.kt
+│   └── README.md
+├── presentation/ui/p2p/createp2poffer/
+│   ├── CreateP2POfferIntent.kt
+│   ├── CreateP2POfferEffect.kt
+│   ├── CreateP2POfferState.kt
+│   ├── CreateP2POfferViewModel.kt
+│   └── CreateP2POfferScreen.kt
+├── presentation/ui/p2p/p2pWebView/
+│   ├── P2PWebViewIntent.kt
+│   ├── P2PWebViewEffect.kt
+│   ├── P2PWebViewState.kt
+│   ├── P2PWebViewViewModel.kt
+│   └── P2PWebViewScreen.kt
+└── presentation/ui/webview/
+    ├── WebViewIntent.kt
+    └── WebViewEffect.kt
+```
+
+### 📁 Files Enhanced
+```
+├── data/datasource/P2PDataSourceImpl.kt (throttling integration)
+├── di/DataModule.kt (throttling manager registration)
+├── di/PresentationModule.kt (component path updates)
+├── presentation/ui/main/MainScreen.kt (navigation fixes)
+├── presentation/ui/p2p/P2PScreen.kt (pull-to-refresh)
+├── presentation/ui/p2p/P2PViewModel.kt (lazy loading, refresh)
+└── presentation/ui/webview/WebViewFullScreenViewModel.kt (MVI pattern)
+```
+
+### 🎯 User Experience Improvements
+- **Backend Protection**: 10-second throttling prevents API rate limiting
+- **Professional Coin Selection**: Dropdown with 18 coins instead of manual ID entry
+- **Pull-to-Refresh**: Intuitive refresh mechanism maintaining filters
+- **Lazy Loading**: Faster app startup with on-demand P2P data loading
+- **Enhanced Error Handling**: Clear messages with retry options and time indicators
+- **Seamless Navigation**: Fixed blank screen issues in CreateP2POffer flow
+
+### 🔒 Enterprise-Grade Features
+- **Centralized Throttling**: Single source of truth for all API rate limiting
+- **Configurable Rules**: Easy adjustment of throttling intervals per operation
+- **Thread Safety**: Production-ready concurrent request handling
+- **Documentation**: Comprehensive usage examples and best practices
+- **Extension Ready**: Framework prepared for future throttling requirements
+
 ## 🚀 v2.8.0 - Independent WebView Architecture with SOLID Principles (2025-08-11)
 
 ### ✨ Complete WebView System Refactoring
