@@ -25,7 +25,7 @@ interface ThrottlingManager {
      * 
      * @param operationKey Clave única que identifica el tipo de operación
      */
-    suspend fun recordExecution(operationKey: String)
+    suspend fun recordExecution(operationKey: String): Int
     
     /**
      * Configura las reglas de throttling para una operación específica

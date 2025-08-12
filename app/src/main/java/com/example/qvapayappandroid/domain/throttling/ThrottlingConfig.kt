@@ -18,9 +18,9 @@ data class ThrottlingConfig(
         /**
          * Configuraciones predefinidas para casos comunes
          */
-        val DEFAULT_API_CONFIG = ThrottlingConfig(intervalMs = 1000L) // 1 segundo
+        val DEFAULT_API_CONFIG = ThrottlingConfig(intervalMs = 15000L) // 5 segundo
         val HEAVY_API_CONFIG = ThrottlingConfig(intervalMs = 5000L) // 5 segundos
-        val CREATE_OPERATIONS_CONFIG = ThrottlingConfig(intervalMs = 10000L) // 10 segundos
+        val CREATE_OPERATIONS_CONFIG = ThrottlingConfig(intervalMs = 15000L) // 15 segundos
         val RATE_LIMITED_CONFIG = ThrottlingConfig(
             intervalMs = 1000L,
             maxExecutionsPerWindow = 10,
