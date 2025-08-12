@@ -15,8 +15,6 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
 
 class P2PViewModel(
     private val getP2POffersUseCase: GetP2POffersUseCase
@@ -37,8 +35,8 @@ class P2PViewModel(
         loadDataJob?.cancel()
         
         loadDataJob = viewModelScope.launch {
-            // Add small delay to prevent rapid successive calls
-            delay(300)
+            // Increased delay to prevent rapid successive calls when filtering
+            delay(1000)
             
             _uiState.value = _uiState.value.copy(isLoading = true)
             
@@ -293,43 +291,61 @@ class P2PViewModel(
                 
                 Log.d("P2PViewModel", "Loading P2P offers for coins: $coinsToQuery")
                 
-                // Hacer peticiones paralelas para cada moneda
-                val deferredResults = coinsToQuery.map { coin ->
-                    async {
-                        val filters = P2PFilterRequest(
-                            type = if (currentState.selectedOfferType == "all") null else currentState.selectedOfferType,
-                            coin = if (coin == "all") null else coin,
-                            page = currentState.currentPage
-                        )
-                        
-                        Log.d("P2PViewModel", "Loading P2P offers with filters: $filters")
-                        getP2POffersUseCase(filters)
-                    }
-                }
-                
-                // Esperar a que todas las peticiones se completen
-                val results = deferredResults.awaitAll()
-                
-                // Combinar resultados exitosos
+                // Hacer peticiones SECUENCIALES para respetar el throttling
                 val allOffers = mutableListOf<P2POffer>()
                 var totalOffersCount = 0
                 var maxPages = 1
                 var hasError = false
                 var errorMessage = ""
                 
-                results.forEach { result ->
-                    result.fold(
-                        onSuccess = { response ->
-                            allOffers.addAll(response.data)
-                            totalOffersCount += response.total
-                            maxPages = maxOf(maxPages, response.lastPage)
-                        },
-                        onFailure = { error ->
-                            hasError = true
-                            errorMessage = "Error loading P2P offers: ${error.message}"
-                            Log.e("P2PViewModel", "Error loading P2P offers", error)
+                for (coin in coinsToQuery) {
+                    try {
+                        val filters = P2PFilterRequest(
+                            type = if (currentState.selectedOfferType == "all") null else currentState.selectedOfferType,
+                            coin = if (coin == "all") null else coin,
+                            page = currentState.currentPage
+                        )
+                        
+                        Log.d("P2PViewModel", "Loading P2P offers sequentially with filters: $filters")
+                        
+                        getP2POffersUseCase(filters).fold(
+                            onSuccess = { response ->
+                                allOffers.addAll(response.data)
+                                totalOffersCount += response.total
+                                maxPages = maxOf(maxPages, response.lastPage)
+                                Log.d("P2PViewModel", "Successfully loaded ${response.data.size} offers for coin: $coin")
+                            },
+                            onFailure = { error ->
+                                hasError = true
+                                val isRateLimitError = error.message?.contains("429") == true || 
+                                                     error.message?.contains("Too Many") == true
+                                errorMessage = if (isRateLimitError) {
+                                    "API rate limit reached. Please wait before filtering again."
+                                } else {
+                                    "Error loading P2P offers for coin $coin: ${error.message}"
+                                }
+                                Log.e("P2PViewModel", "Error loading P2P offers for coin: $coin (Rate limit: $isRateLimitError)", error)
+                                
+                                // If rate limited, break the loop to prevent further requests
+                                if (isRateLimitError) {
+                                    Log.w("P2PViewModel", "Rate limit detected - stopping further coin requests")
+                                    return@fold // Exit the fold, but continue in the loop
+                                }
+                            }
+                        )
+                        
+                        // Add small delay between sequential requests to be extra safe
+                        if (coin != coinsToQuery.last()) {
+                            Log.d("P2PViewModel", "Waiting 1s before next coin request...")
+                            delay(1000)
                         }
-                    )
+                        
+                    } catch (e: Exception) {
+                        hasError = true
+                        errorMessage = "Unexpected error for coin $coin: ${e.message}"
+                        Log.e("P2PViewModel", "Unexpected error for coin: $coin", e)
+                        // Continue with other coins
+                    }
                 }
                 
                 if (hasError) {
