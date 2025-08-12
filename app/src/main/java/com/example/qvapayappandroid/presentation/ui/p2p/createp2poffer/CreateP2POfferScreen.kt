@@ -1,4 +1,4 @@
-package com.example.qvapayappandroid.presentation.ui.p2p
+package com.example.qvapayappandroid.presentation.ui.p2p.createp2poffer
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -6,7 +6,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -14,7 +14,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import com.example.qvapayappandroid.presentation.ui.p2p.P2POfferDetailViewModel.Effect.NavigateBack
 import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -26,16 +25,32 @@ fun CreateP2POfferScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
+    // Manejo de effects
     LaunchedEffect(Unit) {
         viewModel.effect.collect { effect ->
             when (effect) {
-                is CreateP2PEffect.NavigateBack -> onBackClick()
-                is CreateP2PEffect.ShowSuccess -> {
-                    // Aquí podrías mostrar un snackbar o similar
+                is CreateP2POfferEffect.NavigateBack -> onBackClick()
+                is CreateP2POfferEffect.ShowSuccess -> {
+                    // Este effect no se usa actualmente
+                }
+                is CreateP2POfferEffect.ShowError -> {
+                    // Error ya está siendo manejado por el estado en el ViewModel
+                }
+                is CreateP2POfferEffect.OfferCreatedSuccessfully -> {
+                    // Oferta creada exitosamente - podrías navegar o mostrar detalles
                     onSuccess()
                 }
-                is CreateP2PEffect.ShowError -> {
-                    // Error será manejado por el estado
+                is CreateP2POfferEffect.ValidationError -> {
+                    // Error de validación específico - podría resaltar el campo
+                }
+                is CreateP2POfferEffect.ShowLoading -> {
+                    // Loading mostrado - manejado por estado
+                }
+                is CreateP2POfferEffect.HideLoading -> {
+                    // Loading oculto - manejado por estado
+                }
+                is CreateP2POfferEffect.ClearForm -> {
+                    // Limpiar formulario - podría resetear campos
                 }
             }
         }
@@ -46,7 +61,7 @@ fun CreateP2POfferScreen(
             TopAppBar(
                 title = { Text("Crear Oferta P2P") },
                 navigationIcon = {
-                    IconButton(onClick = { viewModel.onBackClick() }) {
+                    IconButton(onClick = { viewModel.handleIntent(CreateP2POfferIntent.NavigateBack) }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver")
                     }
                 }
@@ -80,13 +95,13 @@ fun CreateP2POfferScreen(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         FilterChip(
-                            onClick = { viewModel.onTypeChanged("sell") },
+                            onClick = { viewModel.handleIntent(CreateP2POfferIntent.ChangeType("sell")) },
                             label = { Text("Vender") },
                             selected = uiState.type == "sell",
                             modifier = Modifier.weight(1f)
                         )
                         FilterChip(
-                            onClick = { viewModel.onTypeChanged("buy") },
+                            onClick = { viewModel.handleIntent(CreateP2POfferIntent.ChangeType("buy")) },
                             label = { Text("Comprar") },
                             selected = uiState.type == "buy",
                             modifier = Modifier.weight(1f)
@@ -109,17 +124,50 @@ fun CreateP2POfferScreen(
                         fontWeight = FontWeight.Bold
                     )
                     
-                    OutlinedTextField(
-                        value = uiState.coinId,
-                        onValueChange = viewModel::onCoinIdChanged,
-                        label = { Text("ID de Moneda") },
-                        modifier = Modifier.fillMaxWidth(),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-                    )
+                    // Selector de Moneda
+                    var expanded by remember { mutableStateOf(false) }
+                    
+                    ExposedDropdownMenuBox(
+                        expanded = expanded,
+                        onExpandedChange = { expanded = !expanded },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        OutlinedTextField(
+                            value = "${uiState.selectedCoin.name} (${uiState.selectedCoin.tick})",
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text("Moneda") },
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                            modifier = Modifier.menuAnchor().fillMaxWidth()
+                        )
+                        
+                        ExposedDropdownMenu(
+                            expanded = expanded,
+                            onDismissRequest = { expanded = false }
+                        ) {
+                            uiState.availableCoins.forEach { coin ->
+                                DropdownMenuItem(
+                                    text = { 
+                                        Column {
+                                            Text(
+                                                text = coin.name,
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                fontWeight = FontWeight.Medium
+                                            )
+                                        }
+                                    },
+                                    onClick = {
+                                        viewModel.handleIntent(CreateP2POfferIntent.SelectCoin(coin))
+                                        expanded = false
+                                    }
+                                )
+                            }
+                        }
+                    }
                     
                     OutlinedTextField(
                         value = uiState.amount,
-                        onValueChange = viewModel::onAmountChanged,
+                        onValueChange = { viewModel.handleIntent(CreateP2POfferIntent.ChangeAmount(it)) },
                         label = { Text("Monto") },
                         modifier = Modifier.fillMaxWidth(),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
@@ -127,7 +175,7 @@ fun CreateP2POfferScreen(
                     
                     OutlinedTextField(
                         value = uiState.receive,
-                        onValueChange = viewModel::onReceiveChanged,
+                        onValueChange = { viewModel.handleIntent(CreateP2POfferIntent.ChangeReceive(it)) },
                         label = { Text("Monto a Recibir") },
                         modifier = Modifier.fillMaxWidth(),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
@@ -152,7 +200,7 @@ fun CreateP2POfferScreen(
                     uiState.details.forEachIndexed { index, detail ->
                         OutlinedTextField(
                             value = detail.value,
-                            onValueChange = { viewModel.onDetailChanged(index, it) },
+                            onValueChange = { viewModel.handleIntent(CreateP2POfferIntent.ChangeDetail(index, it)) },
                             label = { Text(detail.name) },
                             modifier = Modifier.fillMaxWidth()
                         )
@@ -182,7 +230,7 @@ fun CreateP2POfferScreen(
                         Text("Solo usuarios KYC")
                         Switch(
                             checked = uiState.onlyKyc,
-                            onCheckedChange = viewModel::onOnlyKycChanged
+                            onCheckedChange = { viewModel.handleIntent(CreateP2POfferIntent.ChangeOnlyKyc(it)) }
                         )
                     }
                     
@@ -194,7 +242,7 @@ fun CreateP2POfferScreen(
                         Text("Oferta privada")
                         Switch(
                             checked = uiState.private,
-                            onCheckedChange = viewModel::onPrivateChanged
+                            onCheckedChange = { viewModel.handleIntent(CreateP2POfferIntent.ChangePrivate(it)) }
                         )
                     }
                     
@@ -206,7 +254,7 @@ fun CreateP2POfferScreen(
                         Text("Promocionar oferta")
                         Switch(
                             checked = uiState.promoteOffer,
-                            onCheckedChange = viewModel::onPromoteOfferChanged
+                            onCheckedChange = { viewModel.handleIntent(CreateP2POfferIntent.ChangePromoteOffer(it)) }
                         )
                     }
                     
@@ -218,7 +266,7 @@ fun CreateP2POfferScreen(
                         Text("Solo usuarios VIP")
                         Switch(
                             checked = uiState.onlyVip,
-                            onCheckedChange = viewModel::onOnlyVipChanged
+                            onCheckedChange = { viewModel.handleIntent(CreateP2POfferIntent.ChangeOnlyVip(it)) }
                         )
                     }
                 }
@@ -240,7 +288,7 @@ fun CreateP2POfferScreen(
                     
                     OutlinedTextField(
                         value = uiState.message,
-                        onValueChange = viewModel::onMessageChanged,
+                        onValueChange = { viewModel.handleIntent(CreateP2POfferIntent.ChangeMessage(it)) },
                         label = { Text("Mensaje") },
                         modifier = Modifier.fillMaxWidth(),
                         minLines = 3,
@@ -249,7 +297,7 @@ fun CreateP2POfferScreen(
                     
                     OutlinedTextField(
                         value = uiState.webhook,
-                        onValueChange = viewModel::onWebhookChanged,
+                        onValueChange = { viewModel.handleIntent(CreateP2POfferIntent.ChangeWebhook(it)) },
                         label = { Text("Webhook (opcional)") },
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -279,7 +327,7 @@ fun CreateP2POfferScreen(
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         TextButton(
-                            onClick = { viewModel.dismissError() }
+                            onClick = { viewModel.handleIntent(CreateP2POfferIntent.DismissError) }
                         ) {
                             Text("Cerrar")
                         }
@@ -310,7 +358,7 @@ fun CreateP2POfferScreen(
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         TextButton(
-                            onClick = { viewModel.dismissSuccessMessage() }
+                            onClick = { viewModel.handleIntent(CreateP2POfferIntent.DismissSuccessMessage) }
                         ) {
                             Text("Cerrar")
                         }
@@ -320,7 +368,7 @@ fun CreateP2POfferScreen(
 
             // Botón crear
             Button(
-                onClick = { viewModel.createOffer() },
+                onClick = { viewModel.handleIntent(CreateP2POfferIntent.CreateOffer) },
                 modifier = Modifier.fillMaxWidth(),
                 enabled = !uiState.isLoading
             ) {

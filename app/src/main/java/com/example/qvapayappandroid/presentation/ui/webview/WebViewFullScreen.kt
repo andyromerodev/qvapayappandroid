@@ -40,7 +40,39 @@ fun WebViewFullScreen(
     val state by viewModel.state.collectAsState()
 
     LaunchedEffect(initialUrl) {
-        viewModel.showWebView(initialUrl)
+        viewModel.handleIntent(WebViewIntent.ShowWebView(initialUrl))
+    }
+
+    // Manejo de effects
+    LaunchedEffect(Unit) {
+        viewModel.effect.collect { effect ->
+            when (effect) {
+                is WebViewEffect.NavigationCompleted -> {
+                    // Navigation completed - could show success indicator
+                }
+                is WebViewEffect.NavigationError -> {
+                    // Navigation error - handled by state.error
+                }
+                is WebViewEffect.WebViewLoaded -> {
+                    // WebView loaded completely
+                }
+                is WebViewEffect.ShowMessage -> {
+                    // Show message to user - could implement snackbar
+                }
+                is WebViewEffect.CloseWebView -> {
+                    onBackClick()
+                }
+                is WebViewEffect.PageStarted -> {
+                    // Page started loading
+                }
+                is WebViewEffect.HttpError -> {
+                    // HTTP error occurred
+                }
+                is WebViewEffect.WebViewUnavailable -> {
+                    // WebView not available - handled by state.error
+                }
+            }
+        }
     }
 
     Scaffold(
@@ -53,7 +85,7 @@ fun WebViewFullScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { viewModel.reload() }) {
+                    IconButton(onClick = { viewModel.handleIntent(WebViewIntent.Reload) }) {
                         Icon(Icons.Default.Refresh, contentDescription = "Recargar")
                     }
                 },

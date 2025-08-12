@@ -13,8 +13,11 @@ import android.webkit.WebViewClient
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.lang.ref.WeakReference
@@ -23,31 +26,69 @@ class WebViewFullScreenViewModel : ViewModel() {
 
     private val _state = MutableStateFlow(WebViewFullScreenState())
     val state: StateFlow<WebViewFullScreenState> = _state.asStateFlow()
+    
+    private val _effect = MutableSharedFlow<WebViewEffect>()
+    val effect: SharedFlow<WebViewEffect> = _effect.asSharedFlow()
 
     private var webViewRef: WeakReference<WebView>? = null
     private var savedStateBundle: Bundle? = null
     private var hasCommittedFrame: Boolean = false
     private var isShowingShimmer: Boolean = false
 
-    fun showWebView(url: String = WebViewFullScreenState.QVAPAY_LOGIN_URL) {
+    /**
+     * Maneja todos los intents del WebView
+     */
+    fun handleIntent(intent: WebViewIntent) {
+        when (intent) {
+            is WebViewIntent.ShowWebView -> showWebView(intent.url)
+            is WebViewIntent.HideWebView -> hideWebView()
+            is WebViewIntent.Reload -> reload()
+            is WebViewIntent.ClearError -> clearError()
+            is WebViewIntent.MarkNavigatingToNewUrl -> markNavigatingToNewUrl()
+            is WebViewIntent.OnWebViewUnavailable -> onWebViewUnavailable()
+            is WebViewIntent.SetLoading -> setLoading(intent.isLoading)
+            is WebViewIntent.SetError -> setError(intent.error)
+        }
+    }
+
+    private fun showWebView(url: String = WebViewFullScreenState.QVAPAY_LOGIN_URL) {
         _state.value = _state.value.copy(
             isVisible = true,
             url = url,
             isLoading = true,
             error = null
         )
+        emitEffect(WebViewEffect.PageStarted(url))
     }
 
-    fun hideWebView() {
-        _state.value = WebViewFullScreenState.hide()
+    private fun hideWebView() {
+        _state.value = WebViewFullScreenState(
+            isVisible = false,
+            url = "",
+            isLoading = false,
+            error = null
+        )
+        emitEffect(WebViewEffect.CloseWebView)
     }
 
-    fun setLoading(isLoading: Boolean) {
+    private fun setLoading(isLoading: Boolean) {
         _state.value = _state.value.copy(isLoading = isLoading)
     }
 
-    fun setError(error: String?) {
+    private fun setError(error: String?) {
         _state.value = _state.value.copy(error = error, isLoading = false)
+        if (error != null) {
+            emitEffect(WebViewEffect.NavigationError(error))
+        }
+    }
+
+    /**
+     * Emite un efecto
+     */
+    private fun emitEffect(effect: WebViewEffect) {
+        viewModelScope.launch {
+            _effect.emit(effect)
+        }
     }
 
     fun getOrCreateWebView(ctx: Context, initialUrl: String): WebView {
@@ -81,6 +122,7 @@ class WebViewFullScreenViewModel : ViewModel() {
                     hasCommittedFrame = true
                     isShowingShimmer = false
                     setLoading(false)
+                    emitEffect(WebViewEffect.NavigationCompleted)
                 }
 
                 override fun onReceivedError(
@@ -105,6 +147,7 @@ class WebViewFullScreenViewModel : ViewModel() {
                     if (code == 204 || code == 304) return
                     setLoading(false)
                     setError("HTTP $code")
+                    emitEffect(WebViewEffect.HttpError(code, request?.url?.toString() ?: ""))
                 }
             }
         }
@@ -137,23 +180,24 @@ class WebViewFullScreenViewModel : ViewModel() {
         savedStateBundle = out
     }
 
-    fun markNavigatingToNewUrl() {
+    private fun markNavigatingToNewUrl() {
         hasCommittedFrame = false
         setLoading(true)
     }
 
-    fun onWebViewUnavailable() {
+    private fun onWebViewUnavailable() {
         setError("WebView no está disponible en este dispositivo")
+        emitEffect(WebViewEffect.WebViewUnavailable)
     }
 
-    fun reload() {
+    private fun reload() {
         webViewRef?.get()?.let {
             markNavigatingToNewUrl()
             it.reload()
         }
     }
 
-    fun clearError() {
+    private fun clearError() {
         _state.value = _state.value.copy(error = null)
     }
 

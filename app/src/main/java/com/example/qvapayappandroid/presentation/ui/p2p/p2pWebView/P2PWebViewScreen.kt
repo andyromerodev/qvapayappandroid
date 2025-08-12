@@ -1,4 +1,4 @@
-package com.example.qvapayappandroid.presentation.ui.p2p
+package com.example.qvapayappandroid.presentation.ui.p2p.p2pWebView
 
 import android.util.Log
 import androidx.compose.foundation.background
@@ -26,11 +26,51 @@ fun P2PWebViewScreen(
     val lifecycleOwner = LocalLifecycleOwner.current
     val state by viewModel.state.collectAsState()
     
-    val customUrl = "https://qvapay.com/p2p/$offerId"
+    val customUrl = "${P2PWebViewState.QVAPAY_P2P_BASE_URL}/$offerId"
 
     // Inicializar WebView con URL
     LaunchedEffect(offerId) {
-        viewModel.showP2POfferWebView(offerId)
+        viewModel.handleIntent(P2PWebViewIntent.ShowP2POfferWebView(offerId))
+    }
+
+    // Manejo de effects
+    LaunchedEffect(Unit) {
+        viewModel.effect.collect { effect ->
+            when (effect) {
+                is P2PWebViewEffect.P2POfferNavigationCompleted -> {
+                    // Navegación completada - podrías mostrar indicador de éxito
+                }
+                is P2PWebViewEffect.P2POfferNavigationError -> {
+                    // Error de navegación - manejado por state.error
+                }
+                is P2PWebViewEffect.P2PWebViewLoaded -> {
+                    // P2P WebView cargado completamente
+                }
+                is P2PWebViewEffect.ShowP2PMessage -> {
+                    // Mostrar mensaje al usuario - podrías implementar snackbar
+                }
+                is P2PWebViewEffect.CloseP2PWebView -> {
+                    onClose()
+                }
+                is P2PWebViewEffect.P2POfferPageStarted -> {
+                    // Página de oferta P2P comenzó a cargar
+                    Log.d("P2PWebView", "Cargando oferta P2P: ${effect.offerId}")
+                }
+                is P2PWebViewEffect.P2POfferHttpError -> {
+                    // Error HTTP en oferta P2P
+                    Log.e("P2PWebView", "Error HTTP ${effect.code} en oferta ${effect.offerId}")
+                }
+                is P2PWebViewEffect.P2PWebViewUnavailable -> {
+                    // WebView no disponible - manejado por state.error
+                }
+                is P2PWebViewEffect.P2POfferProcessed -> {
+                    // Oferta P2P procesada - para futuras integraciones
+                }
+                is P2PWebViewEffect.P2POfferInteraction -> {
+                    // Interacción del usuario con la oferta P2P
+                }
+            }
+        }
     }
 
     Scaffold(
@@ -38,7 +78,11 @@ fun P2PWebViewScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = state.url.takeIf { it.isNotBlank() } ?: "Oferta P2P",
+                        text = if (state.offerId != null) {
+                            "Oferta P2P - ${state.offerId}"
+                        } else {
+                            "Oferta P2P"
+                        },
                         maxLines = 1
                     )
                 },
@@ -72,7 +116,7 @@ fun P2PWebViewScreen(
             }
 
             if (webView == null) {
-                SideEffect { viewModel.onWebViewUnavailable() }
+                SideEffect { viewModel.handleIntent(P2PWebViewIntent.OnWebViewUnavailable) }
             } else {
                 // Ciclo de vida del WebView
                 DisposableEffect(lifecycleOwner) {

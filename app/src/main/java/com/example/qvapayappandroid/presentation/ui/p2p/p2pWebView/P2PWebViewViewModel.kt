@@ -1,4 +1,4 @@
-package com.example.qvapayappandroid.presentation.ui.p2p
+package com.example.qvapayappandroid.presentation.ui.p2p.p2pWebView
 
 import android.content.Context
 import android.graphics.Bitmap
@@ -12,8 +12,11 @@ import android.webkit.WebViewClient
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.lang.ref.WeakReference
@@ -22,24 +25,52 @@ class P2PWebViewViewModel : ViewModel() {
 
     private val _state = MutableStateFlow(P2PWebViewState())
     val state: StateFlow<P2PWebViewState> = _state.asStateFlow()
+    
+    private val _effect = MutableSharedFlow<P2PWebViewEffect>()
+    val effect: SharedFlow<P2PWebViewEffect> = _effect.asSharedFlow()
 
     private var webViewRef: WeakReference<WebView>? = null
     private var savedStateBundle: Bundle? = null
     private var hasCommittedFrame: Boolean = false
     private var isShowingShimmer: Boolean = false
 
-    fun showP2POfferWebView(offerId: String) {
-        val p2pUrl = "https://qvapay.com/p2p/$offerId"
+    /**
+     * Maneja todos los intents del P2P WebView
+     */
+    fun handleIntent(intent: P2PWebViewIntent) {
+        when (intent) {
+            is P2PWebViewIntent.ShowP2POfferWebView -> showP2POfferWebView(intent.offerId)
+            is P2PWebViewIntent.HideWebView -> hideWebView()
+            is P2PWebViewIntent.Reload -> reload()
+            is P2PWebViewIntent.ClearError -> clearError()
+            is P2PWebViewIntent.MarkNavigatingToNewUrl -> markNavigatingToNewUrl()
+            is P2PWebViewIntent.OnWebViewUnavailable -> onWebViewUnavailable()
+            is P2PWebViewIntent.SetLoading -> setLoading(intent.isLoading)
+            is P2PWebViewIntent.SetError -> setError(intent.error)
+        }
+    }
+
+    private fun showP2POfferWebView(offerId: String) {
+        val p2pUrl = "${P2PWebViewState.QVAPAY_P2P_BASE_URL}/$offerId"
         _state.value = _state.value.copy(
             isVisible = true,
             url = p2pUrl,
             isLoading = true,
-            error = null
+            error = null,
+            offerId = offerId
         )
+        emitEffect(P2PWebViewEffect.P2POfferPageStarted(p2pUrl, offerId))
     }
 
-    fun hideWebView() {
-        _state.value = P2PWebViewState.hide()
+    private fun hideWebView() {
+        _state.value = P2PWebViewState(
+            isVisible = false,
+            url = "",
+            isLoading = false,
+            error = null,
+            offerId = null
+        )
+        emitEffect(P2PWebViewEffect.CloseP2PWebView)
     }
 
     private fun setLoading(isLoading: Boolean) {
@@ -48,6 +79,39 @@ class P2PWebViewViewModel : ViewModel() {
 
     private fun setError(error: String?) {
         _state.value = _state.value.copy(error = error, isLoading = false)
+        if (error != null) {
+            emitEffect(P2PWebViewEffect.P2POfferNavigationError(error))
+        }
+    }
+
+    private fun markNavigatingToNewUrl() {
+        hasCommittedFrame = false
+        setLoading(true)
+    }
+
+    private fun onWebViewUnavailable() {
+        setError("WebView no está disponible en este dispositivo")
+        emitEffect(P2PWebViewEffect.P2PWebViewUnavailable)
+    }
+
+    private fun reload() {
+        webViewRef?.get()?.let {
+            markNavigatingToNewUrl()
+            it.reload()
+        }
+    }
+
+    private fun clearError() {
+        _state.value = _state.value.copy(error = null)
+    }
+
+    /**
+     * Emite un efecto
+     */
+    private fun emitEffect(effect: P2PWebViewEffect) {
+        viewModelScope.launch {
+            _effect.emit(effect)
+        }
     }
 
     fun getOrCreateWebView(ctx: Context, initialUrl: String): WebView {
@@ -81,6 +145,7 @@ class P2PWebViewViewModel : ViewModel() {
                     hasCommittedFrame = true
                     isShowingShimmer = false
                     setLoading(false)
+                    emitEffect(P2PWebViewEffect.P2POfferNavigationCompleted)
                 }
 
                 override fun onReceivedError(
@@ -105,6 +170,8 @@ class P2PWebViewViewModel : ViewModel() {
                     if (code == 204 || code == 304) return
                     setLoading(false)
                     setError("HTTP $code")
+                    val currentOfferId = _state.value.offerId ?: ""
+                    emitEffect(P2PWebViewEffect.P2POfferHttpError(code, request.url?.toString() ?: "", currentOfferId))
                 }
             }
         }
@@ -135,22 +202,6 @@ class P2PWebViewViewModel : ViewModel() {
         val out = Bundle()
         wv.saveState(out)
         savedStateBundle = out
-    }
-
-    fun onWebViewUnavailable() {
-        setError("WebView no está disponible en este dispositivo")
-    }
-
-    fun reload() {
-        webViewRef?.get()?.let {
-            hasCommittedFrame = false
-            setLoading(true)
-            it.reload()
-        }
-    }
-
-    fun clearError() {
-        _state.value = _state.value.copy(error = null)
     }
 
     override fun onCleared() {
