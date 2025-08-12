@@ -30,9 +30,7 @@ class P2PViewModel(
     
     private var loadDataJob: Job? = null
     
-    init {
-        loadP2PData()
-    }
+    // Removed automatic loading from init - now loads only when P2PScreen is opened
     
     private fun loadP2PDataDebounced() {
         // Cancel previous request if still running
@@ -118,8 +116,58 @@ class P2PViewModel(
         }
     }
     
-    private fun loadP2PData() {
+    /**
+     * Carga las ofertas P2P. Se debe llamar manualmente cuando se abra P2PScreen
+     */
+    fun loadP2PData() {
         loadP2PDataDebounced()
+    }
+    
+    /**
+     * Refresca las ofertas P2P manteniendo los filtros aplicados
+     */
+    fun refresh() {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isRefreshing = true)
+            
+            try {
+                val currentState = _uiState.value
+                val filters = P2PFilterRequest(
+                    type = if (currentState.selectedOfferType == "all") null else currentState.selectedOfferType,
+                    coin = if (currentState.selectedCoins.isEmpty()) null else currentState.selectedCoins.joinToString(","),
+                    page = 1 // Resetear a la primera página en refresh
+                )
+                
+                Log.d("P2PViewModel", "Refreshing P2P offers with filters: $filters")
+                
+                getP2POffersUseCase(filters).fold(
+                    onSuccess = { response ->
+                        _uiState.value = _uiState.value.copy(
+                            isRefreshing = false,
+                            offers = response.data,
+                            currentPage = response.currentPage,
+                            totalPages = response.lastPage,
+                            totalOffers = response.total,
+                            errorMessage = null
+                        )
+                        Log.d("P2PViewModel", "Refresh successful - ${response.data.size} offers loaded")
+                    },
+                    onFailure = { error ->
+                        _uiState.value = _uiState.value.copy(
+                            isRefreshing = false,
+                            errorMessage = error.message
+                        )
+                        Log.e("P2PViewModel", "Refresh failed: ${error.message}")
+                    }
+                )
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    isRefreshing = false,
+                    errorMessage = "Error inesperado al refrescar: ${e.message}"
+                )
+                Log.e("P2PViewModel", "Refresh error: ${e.message}", e)
+            }
+        }
     }
     
     fun onSendMoney() {
@@ -199,14 +247,6 @@ class P2PViewModel(
             
             loadP2PData()
         }
-    }
-    
-    fun refreshData() {
-        _uiState.value = _uiState.value.copy(
-            currentPage = 1,
-            offers = emptyList() // Clear offers when refreshing
-        )
-        loadP2PData()
     }
     
     fun onOfferTypeChanged(offerType: String) {
@@ -405,6 +445,7 @@ class P2PViewModel(
 data class P2PUiState(
     val isLoading: Boolean = true,
     val isLoadingMore: Boolean = false,
+    val isRefreshing: Boolean = false,
     val errorMessage: String? = null,
     val loadMoreError: String? = null,
     val isRetrying: Boolean = false,

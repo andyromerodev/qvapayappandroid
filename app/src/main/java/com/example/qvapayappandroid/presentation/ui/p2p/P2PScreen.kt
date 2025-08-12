@@ -28,6 +28,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -63,6 +65,12 @@ fun P2PScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var showFilters by remember { mutableStateOf(false) }
+
+    // Cargar datos cuando se abre P2PScreen
+    LaunchedEffect(Unit) {
+        Log.d("P2PScreen", "P2PScreen opened - loading P2P data")
+        viewModel.loadP2PData()
+    }
 
     Column(
         modifier = Modifier
@@ -124,7 +132,7 @@ fun P2PScreen(
                         onCoinChanged = { viewModel.onCoinChanged(it) },
                         onNextPage = { viewModel.onNextPage() },
                         onPreviousPage = { viewModel.onPreviousPage() },
-                        onRefresh = { viewModel.refreshData() },
+                        onRefresh = { viewModel.refresh() },
                         onOfferClick = onOfferClick,
                         onSortByChanged = { viewModel.onSortByChanged(it) },
                         onSortOrderToggled = { viewModel.onSortOrderToggled() },
@@ -190,9 +198,14 @@ private fun P2PContent(
             onNextPage()
         }
     }
-    Column(
-        modifier = modifier.fillMaxSize().padding(horizontal = 12.dp)
+    PullToRefreshBox(
+        isRefreshing = uiState.isRefreshing,
+        onRefresh = onRefresh,
+        modifier = modifier.fillMaxSize()
     ) {
+        Column(
+            modifier = Modifier.fillMaxSize().padding(horizontal = 12.dp)
+        ) {
         Spacer(modifier = Modifier.height(8.dp))
 
         // Header con contador de ofertas
@@ -325,8 +338,7 @@ private fun P2PContent(
             }
         }
         }
-
-
+        }
     }
 }
 
