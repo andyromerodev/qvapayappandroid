@@ -19,12 +19,12 @@ import androidx.navigation.compose.rememberNavController
 import com.example.qvapayappandroid.navigation.AppDestinations
 import com.example.qvapayappandroid.presentation.ui.components.BottomNavigationBar
 import com.example.qvapayappandroid.presentation.ui.home.HomeScreen
-import com.example.qvapayappandroid.presentation.ui.p2p.CreateP2POfferScreen
-import com.example.qvapayappandroid.presentation.ui.p2p.CreateP2POfferViewModel
+import com.example.qvapayappandroid.presentation.ui.p2p.createp2poffer.CreateP2POfferScreen
+import com.example.qvapayappandroid.presentation.ui.p2p.createp2poffer.CreateP2POfferViewModel
 import com.example.qvapayappandroid.presentation.ui.p2p.P2PScreen
 import com.example.qvapayappandroid.presentation.ui.p2p.P2POfferDetailScreen
 import com.example.qvapayappandroid.presentation.ui.p2p.P2POfferDetailViewModel
-import com.example.qvapayappandroid.presentation.ui.p2p.P2PWebViewScreen
+import com.example.qvapayappandroid.presentation.ui.p2p.p2pWebView.P2PWebViewScreen
 import com.example.qvapayappandroid.presentation.ui.settings.SettingsScreen
 import com.example.qvapayappandroid.presentation.ui.profile.UserProfileScreen
 import com.example.qvapayappandroid.presentation.ui.home.HomeViewModel
