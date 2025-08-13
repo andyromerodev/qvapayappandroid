@@ -1,6 +1,7 @@
 package com.example.qvapayappandroid.presentation.ui.p2p
 
 import P2POfferCard
+import com.example.qvapayappandroid.presentation.ui.p2p.components.P2PShimmerEffect
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -32,6 +33,7 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -72,26 +74,23 @@ fun P2PScreen(
         viewModel.loadP2PData()
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-        // .verticalScroll(rememberScrollState()) // QUÍTALO
-    ) {
-        // TopAppBar
-        TopAppBar(
-            title = { Text("P2P Transactions") },
-            actions = {
-                IconButton(onClick = { 
-                    showFilters = true
-                }) {
-                    Icon(
-                        imageVector = Icons.Default.FilterList,
-                        contentDescription = "Filtros"
-                    )
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("P2P Transactions") },
+                actions = {
+                    IconButton(onClick = {
+                        showFilters = true
+                    }) {
+                        Icon(
+                            imageVector = Icons.Default.FilterList,
+                            contentDescription = "Filtros"
+                        )
+                    }
                 }
-            }
-        )
-
+            )
+        }
+    ) { paddingValues ->
         if (showFilters) {
             P2PFiltersScreen(
                 onBackClick = { showFilters = false },
@@ -104,27 +103,23 @@ fun P2PScreen(
             )
         } else {
             when {
-                uiState.isLoading && uiState.offers.isEmpty() -> {
+                (uiState.isLoading || uiState.isRefreshing) && uiState.offers.isEmpty() -> {
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(16.dp),
-                        contentAlignment = Alignment.Center
+                            .padding(paddingValues)
+                            .padding(16.dp)
                     ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            CircularProgressIndicator()
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Text("Cargando datos P2P...")
-                        }
+                        P2PShimmerEffect()
                     }
                 }
 
                 else -> {
                     P2PContent(
                         uiState = uiState,
-                        modifier = Modifier.weight(1f), // <- Toma el espacio disponible
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(paddingValues),
                         onSendMoney = { viewModel.onSendMoney() },
                         onReceiveMoney = { viewModel.onReceiveMoney() },
                         onViewHistory = { viewModel.onViewHistory() },
@@ -142,7 +137,6 @@ fun P2PScreen(
                 }
             }
         }
-
     }
 }
 
@@ -166,7 +160,7 @@ private fun P2PContent(
     onRetryFirstLoad: () -> Unit,
 ) {
     val listState = rememberLazyListState()
-    
+
     val shouldLoadMore by remember {
         derivedStateOf {
             val layoutInfo = listState.layoutInfo
@@ -180,11 +174,18 @@ private fun P2PContent(
             val condition5 = !uiState.isLoading
             val condition6 = uiState.errorMessage == null
 
-            val result = condition1 && condition2 && condition3 && condition4 && condition5 && condition6
-            
+            val result =
+                condition1 && condition2 && condition3 && condition4 && condition5 && condition6
+
             if (totalItemsNumber > 0) {
-                Log.d("P2PScreen", "shouldLoadMore check - total: $totalItemsNumber, lastVisible: $lastVisibleItemIndex, currentPage: ${uiState.currentPage}, totalPages: ${uiState.totalPages}, isLoadingMore: ${uiState.isLoadingMore}, isLoading: ${uiState.isLoading}, error: ${uiState.errorMessage}")
-                Log.d("P2PScreen", "Conditions - 1: $condition1, 2: $condition2, 3: $condition3, 4: $condition4, 5: $condition5, 6: $condition6, RESULT: $result")
+                Log.d(
+                    "P2PScreen",
+                    "shouldLoadMore check - total: $totalItemsNumber, lastVisible: $lastVisibleItemIndex, currentPage: ${uiState.currentPage}, totalPages: ${uiState.totalPages}, isLoadingMore: ${uiState.isLoadingMore}, isLoading: ${uiState.isLoading}, error: ${uiState.errorMessage}"
+                )
+                Log.d(
+                    "P2PScreen",
+                    "Conditions - 1: $condition1, 2: $condition2, 3: $condition3, 4: $condition4, 5: $condition5, 6: $condition6, RESULT: $result"
+                )
             }
 
             result
@@ -204,140 +205,151 @@ private fun P2PContent(
         modifier = modifier.fillMaxSize()
     ) {
         Column(
-            modifier = Modifier.fillMaxSize().padding(horizontal = 12.dp)
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 12.dp)
         ) {
-        Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
-        // Header con contador de ofertas
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "Ofertas P2P",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                text = "${uiState.totalOffers} ofertas",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-
-        Spacer(modifier = Modifier.height(6.dp))
-
-        // CHIPS DE ORDENACIÓN
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            FilterChip(
-                selected = uiState.sortBy == "ratio",
-                onClick = { onSortByChanged("ratio") },
-                label = { Text("Ratio", fontSize = 13.sp) }
-            )
-            FilterChip(
-                selected = uiState.sortBy == "nombre",
-                onClick = { onSortByChanged("nombre") },
-                label = { Text("Nombre", fontSize = 13.sp) }
-            )
-            AssistChip(
-                onClick = { onSortOrderToggled() },
-                label = {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = if (uiState.sortAsc) Icons.Filled.ArrowUpward else Icons.Filled.ArrowDownward,
-                            contentDescription = if (uiState.sortAsc) "Ascendente" else "Descendente",
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(Modifier.width(3.dp))
-                        Text(
-                            if (uiState.sortAsc) "Ascendente" else "Descendente",
-                            fontSize = 13.sp
-                        )
-                    }
-                }
-            )
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // Ordenar lista localmente antes de mostrar
-        val sortedOffers = remember(uiState.offers, uiState.sortBy, uiState.sortAsc) {
-            when (uiState.sortBy) {
-                "ratio" -> {
-                    val list = uiState.offers.sortedBy { it.getRatio()?.toDoubleOrNull() ?: 0.0 }
-                    if (uiState.sortAsc) list else list.reversed()
-                }
-                "nombre" -> {
-                    val list = uiState.offers.sortedBy { it.owner?.username?.lowercase() ?: "" }
-                    if (uiState.sortAsc) list else list.reversed()
-                }
-                else -> uiState.offers
-            }
-        }
-
-        // Ofertas, error o mensaje de vacío
-        when {
-            uiState.errorMessage != null || uiState.isRetryingFirstLoad -> {
-                Box(
-                    modifier = Modifier.weight(1f),
-                    contentAlignment = Alignment.Center
-                ) {
-                    ErrorRetryState(
-                        errorMessage = uiState.errorMessage ?: "",
-                        onRetry = onRetryFirstLoad,
-                        isRetrying = uiState.isRetryingFirstLoad
-                    )
-                }
-            }
-            sortedOffers.isEmpty() -> {
-                Box(
-                    modifier = Modifier.weight(1f),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "No hay ofertas disponibles",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-            else -> {
-            LazyColumn(
-                state = listState,
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                contentPadding = PaddingValues(vertical = 12.dp)
+            // Header con contador de ofertas
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                items(sortedOffers) { offer ->
-                    P2POfferCard(
-                        offer = offer,
-                        onClick = onOfferClick
-                    )
-                }
-                
-                if (uiState.isLoadingMore) {
-                    item {
-                        LoadingMoreIndicator()
+                Text(
+                    text = "Ofertas P2P",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "${uiState.totalOffers} ofertas",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            Spacer(modifier = Modifier.height(6.dp))
+
+            // CHIPS DE ORDENACIÓN
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                FilterChip(
+                    selected = uiState.sortBy == "ratio",
+                    onClick = { onSortByChanged("ratio") },
+                    label = { Text("Ratio", fontSize = 13.sp) }
+                )
+                FilterChip(
+                    selected = uiState.sortBy == "nombre",
+                    onClick = { onSortByChanged("nombre") },
+                    label = { Text("Nombre", fontSize = 13.sp) }
+                )
+                AssistChip(
+                    onClick = { onSortOrderToggled() },
+                    label = {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = if (uiState.sortAsc) Icons.Filled.ArrowUpward else Icons.Filled.ArrowDownward,
+                                contentDescription = if (uiState.sortAsc) "Ascendente" else "Descendente",
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(Modifier.width(3.dp))
+                            Text(
+                                if (uiState.sortAsc) "Ascendente" else "Descendente",
+                                fontSize = 13.sp
+                            )
+                        }
                     }
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Ordenar lista localmente antes de mostrar
+            val sortedOffers = remember(uiState.offers, uiState.sortBy, uiState.sortAsc) {
+                when (uiState.sortBy) {
+                    "ratio" -> {
+                        val list =
+                            uiState.offers.sortedBy { it.getRatio()?.toDoubleOrNull() ?: 0.0 }
+                        if (uiState.sortAsc) list else list.reversed()
+                    }
+
+                    "nombre" -> {
+                        val list = uiState.offers.sortedBy { it.owner?.username?.lowercase() ?: "" }
+                        if (uiState.sortAsc) list else list.reversed()
+                    }
+
+                    else -> uiState.offers
+                }
+            }
+
+            // Ofertas, error o mensaje de vacío
+            when {
+                uiState.isRefreshing -> {
+                    P2PShimmerEffect()
                 }
                 
-                if (uiState.loadMoreError != null || uiState.isRetrying) {
-                    item {
-                        LoadMoreRetryIndicator(
-                            errorMessage = uiState.loadMoreError ?: "Reintentando...",
-                            onRetry = onRetryLoadMore,
-                            isRetrying = uiState.isRetrying
+                uiState.errorMessage != null || uiState.isRetryingFirstLoad -> {
+                    Box(
+                        modifier = Modifier.weight(1f),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        ErrorRetryState(
+                            errorMessage = uiState.errorMessage ?: "",
+                            onRetry = onRetryFirstLoad,
+                            isRetrying = uiState.isRetryingFirstLoad
                         )
                     }
                 }
+
+                sortedOffers.isEmpty() -> {
+                    Box(
+                        modifier = Modifier.weight(1f),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "No hay ofertas disponibles",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+
+                else -> {
+                    LazyColumn(
+                        state = listState,
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        contentPadding = PaddingValues(vertical = 12.dp)
+                    ) {
+                        items(sortedOffers) { offer ->
+                            P2POfferCard(
+                                offer = offer,
+                                onClick = onOfferClick
+                            )
+                        }
+
+                        if (uiState.isLoadingMore) {
+                            item {
+                                LoadingMoreIndicator()
+                            }
+                        }
+
+                        if (uiState.loadMoreError != null || uiState.isRetrying) {
+                            item {
+                                LoadMoreRetryIndicator(
+                                    errorMessage = uiState.loadMoreError ?: "Reintentando...",
+                                    onRetry = onRetryLoadMore,
+                                    isRetrying = uiState.isRetrying
+                                )
+                            }
+                        }
+                    }
+                }
             }
-        }
-        }
         }
     }
 }

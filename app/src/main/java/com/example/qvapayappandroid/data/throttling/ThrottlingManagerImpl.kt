@@ -27,6 +27,11 @@ class ThrottlingManagerImpl : ThrottlingManager {
     private val operationConfigs = ConcurrentHashMap<String, ThrottlingConfig>()
     private val lastExecutionTimes = ConcurrentHashMap<String, Long>()
     private val executionHistory = ConcurrentHashMap<String, MutableList<Long>>()
+    
+    // Global API throttling
+    private var globalApiConfig = ThrottlingConfig.DEFAULT_API_CONFIG
+    private var lastGlobalApiExecution = 0L
+    private val globalApiHistory = mutableListOf<Long>()
 
     override suspend fun canExecute(operationKey: String): ThrottlingResult = mutex.withLock {
         Log.d(TAG, "🔍 canExecute() - operationKey: '$operationKey'")
@@ -47,6 +52,14 @@ class ThrottlingManagerImpl : ThrottlingManager {
         Log.d(TAG, "   • Current time: $currentTime")
         Log.d(TAG, "   • Last execution: $lastExecution")
         Log.d(TAG, "   • Time since last execution: ${if (timeSinceLastExecution >= 0) "${timeSinceLastExecution}ms" else "NEVER"}")
+
+        // First check global API throttling
+        val globalResult = checkGlobalApiThrottling(currentTime)
+        if (!globalResult.canExecute) {
+            Log.d(TAG, "❌ BLOCKED by global API throttling - ${globalResult.reason}")
+            Log.d(TAG, "⏳ Remaining time: ${globalResult.remainingTimeMs}ms (${globalResult.remainingTimeMs/1000.0}s)")
+            return globalResult
+        }
 
         // Verificar throttling por intervalo simple
         val intervalResult = checkIntervalThrottling(operationKey, currentTime, config)
@@ -96,6 +109,65 @@ class ThrottlingManagerImpl : ThrottlingManager {
         }
     }
 
+    private fun checkGlobalApiThrottling(currentTime: Long): ThrottlingResult {
+        Log.d(TAG, "🌍 checkGlobalApiThrottling() - checking global API throttling")
+        
+        if (!globalApiConfig.enabled) {
+            Log.d(TAG, "✅ Global API throttling DISABLED - ALLOWED immediately")
+            return ThrottlingResult.allowed()
+        }
+        
+        val timeSinceLastExecution = if (lastGlobalApiExecution > 0) currentTime - lastGlobalApiExecution else -1L
+        
+        Log.d(TAG, "⏱️ Global API time analysis:")
+        Log.d(TAG, "   • Current time: $currentTime")
+        Log.d(TAG, "   • Last global API execution: $lastGlobalApiExecution")
+        Log.d(TAG, "   • Time since last global execution: ${if (timeSinceLastExecution >= 0) "${timeSinceLastExecution}ms" else "NEVER"}")
+        
+        // Check interval throttling
+        if (lastGlobalApiExecution > 0) {
+            val timeSinceLastGlobal = currentTime - lastGlobalApiExecution
+            if (timeSinceLastGlobal < globalApiConfig.intervalMs) {
+                val remainingTime = globalApiConfig.intervalMs - timeSinceLastGlobal
+                Log.d(TAG, "❌ BLOCKED by global API throttling - need to wait ${remainingTime}ms more")
+                return ThrottlingResult.blocked(
+                    remainingTimeMs = remainingTime,
+                    reason = "Global API throttling: ${globalApiConfig.intervalMs}ms required between any API calls"
+                )
+            }
+        }
+        
+        // Check window throttling if configured
+        globalApiConfig.maxExecutionsPerWindow?.let { maxExecutions ->
+            val windowSize = globalApiConfig.windowSizeMs ?: return@let
+            
+            Log.d(TAG, "🪟 Global API window throttling check:")
+            Log.d(TAG, "   • Window size: ${windowSize}ms")
+            Log.d(TAG, "   • Max executions per window: $maxExecutions")
+            Log.d(TAG, "   • History before cleanup: ${globalApiHistory.size} executions")
+            
+            // Clean old executions
+            val sizeBefore = globalApiHistory.size
+            globalApiHistory.removeAll { it < currentTime - windowSize }
+            val sizeAfter = globalApiHistory.size
+            
+            Log.d(TAG, "   • History after cleanup: $sizeAfter executions (removed ${sizeBefore - sizeAfter} old)")
+            
+            if (globalApiHistory.size >= maxExecutions) {
+                val oldestInWindow = globalApiHistory.minOrNull() ?: currentTime
+                val remainingTime = windowSize - (currentTime - oldestInWindow)
+                Log.d(TAG, "❌ BLOCKED by global API window throttling - reached max $maxExecutions executions")
+                return ThrottlingResult.blocked(
+                    remainingTimeMs = remainingTime,
+                    reason = "Global API rate limit: max $maxExecutions API calls per ${windowSize}ms window"
+                )
+            }
+        }
+        
+        Log.d(TAG, "✅ Global API - ALLOWED to execute")
+        return ThrottlingResult.allowed()
+    }
+
     private fun checkWindowThrottling(
         operationKey: String,
         currentTime: Long,
@@ -134,7 +206,7 @@ class ThrottlingManagerImpl : ThrottlingManager {
         }
     }
 
-    override suspend fun recordExecution(operationKey: String) = mutex.withLock {
+    override suspend fun recordExecution(operationKey: String): Unit = mutex.withLock {
         val currentTime = System.currentTimeMillis()
 
         Log.d(TAG, "📝 recordExecution() - operationKey: '$operationKey'")
@@ -168,7 +240,30 @@ class ThrottlingManagerImpl : ThrottlingManager {
             Log.d(TAG, "   • No window config - execution not added to history")
         }
 
-        Log.d(TAG, "✅ Execution recorded successfully for '$operationKey'")
+        // Also record global API execution (inline to avoid nested mutex)
+        val previousGlobalTime = lastGlobalApiExecution
+        lastGlobalApiExecution = currentTime
+        
+        if (previousGlobalTime > 0) {
+            Log.d(TAG, "   • Global execution time between calls: ${currentTime - previousGlobalTime}ms")
+        }
+        
+        // Add to global history if window config exists
+        globalApiConfig.maxExecutionsPerWindow?.let { maxExecutions ->
+            val sizeBefore = globalApiHistory.size
+            globalApiHistory.add(currentTime)
+            
+            Log.d(TAG, "   • Added to global history (size: ${sizeBefore} -> ${globalApiHistory.size})")
+            
+            // Keep only executions within the window
+            globalApiConfig.windowSizeMs?.let { windowSize ->
+                val sizeBeforeCleanup = globalApiHistory.size
+                globalApiHistory.removeAll { it < currentTime - windowSize }
+                Log.d(TAG, "   • Cleaned old global executions: ${sizeBeforeCleanup} -> ${globalApiHistory.size} (window: ${windowSize}ms)")
+            }
+        }
+        
+        Log.d(TAG, "✅ Execution recorded successfully for '$operationKey' (including global)")
     }
 
     override suspend fun configureOperation(operationKey: String, config: ThrottlingConfig) {
@@ -231,7 +326,59 @@ class ThrottlingManagerImpl : ThrottlingManager {
 
             Log.d(TAG, "   • Cleared $executionCount execution times")
             Log.d(TAG, "   • Cleared $historyCount execution histories")
+            
+            // Clear global API throttling too
+            lastGlobalApiExecution = 0L
+            globalApiHistory.clear()
+            
+            Log.d(TAG, "   • Cleared global API throttling")
             Log.d(TAG, "✅ All throttling cleared")
         }
+    }
+    
+    override suspend fun canExecuteGlobalApi(): ThrottlingResult = mutex.withLock {
+        val currentTime = System.currentTimeMillis()
+        return checkGlobalApiThrottling(currentTime)
+    }
+    
+    override suspend fun recordGlobalApiExecution(): Unit = mutex.withLock {
+        val currentTime = System.currentTimeMillis()
+        
+        Log.d(TAG, "📝 recordGlobalApiExecution()")
+        Log.d(TAG, "   • Execution time: $currentTime")
+        Log.d(TAG, "   • Previous global execution: ${if (lastGlobalApiExecution > 0) lastGlobalApiExecution.toString() else "NONE"}")
+        
+        val previousTime = lastGlobalApiExecution
+        lastGlobalApiExecution = currentTime
+        
+        if (previousTime > 0) {
+            Log.d(TAG, "   • Time between global executions: ${currentTime - previousTime}ms")
+        }
+        
+        // Add to history if window config exists
+        globalApiConfig.maxExecutionsPerWindow?.let { maxExecutions ->
+            val sizeBefore = globalApiHistory.size
+            globalApiHistory.add(currentTime)
+            
+            Log.d(TAG, "   • Added to global history (size: ${sizeBefore} -> ${globalApiHistory.size})")
+            
+            // Keep only executions within the window
+            globalApiConfig.windowSizeMs?.let { windowSize ->
+                val sizeBeforeCleanup = globalApiHistory.size
+                globalApiHistory.removeAll { it < currentTime - windowSize }
+                Log.d(TAG, "   • Cleaned old global executions: ${sizeBeforeCleanup} -> ${globalApiHistory.size} (window: ${windowSize}ms)")
+            }
+        }
+        
+        Log.d(TAG, "✅ Global API execution recorded successfully")
+    }
+    
+    override suspend fun configureGlobalApi(config: ThrottlingConfig) {
+        Log.d(TAG, "🔧 configureGlobalApi()")
+        Log.d(TAG, "   • Config: intervalMs=${config.intervalMs}, enabled=${config.enabled}")
+        Log.d(TAG, "   • Window: maxExecutions=${config.maxExecutionsPerWindow}, windowSize=${config.windowSizeMs}ms")
+        
+        globalApiConfig = config
+        Log.d(TAG, "✅ Global API configuration saved")
     }
 }

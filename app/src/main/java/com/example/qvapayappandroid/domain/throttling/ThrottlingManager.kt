@@ -25,7 +25,7 @@ interface ThrottlingManager {
      * 
      * @param operationKey Clave única que identifica el tipo de operación
      */
-    suspend fun recordExecution(operationKey: String): Int
+    suspend fun recordExecution(operationKey: String)
     
     /**
      * Configura las reglas de throttling para una operación específica
@@ -54,4 +54,24 @@ interface ThrottlingManager {
      * Limpia todo el historial de throttling
      */
     suspend fun clearAllThrottling()
+    
+    /**
+     * Verifica si cualquier operación de API puede ejecutarse según throttling global
+     * Esto es útil cuando el servidor tiene límites globales independientes de la operación específica
+     * 
+     * @return ThrottlingResult con información sobre si puede ejecutarse y tiempo restante
+     */
+    suspend fun canExecuteGlobalApi(): ThrottlingResult
+    
+    /**
+     * Registra que cualquier operación de API se ha ejecutado (para throttling global)
+     */
+    suspend fun recordGlobalApiExecution()
+
+    /**
+     * Configura las reglas de throttling global para todas las operaciones de API
+     * 
+     * @param config Configuración de throttling global
+     */
+    suspend fun configureGlobalApi(config: ThrottlingConfig)
 }

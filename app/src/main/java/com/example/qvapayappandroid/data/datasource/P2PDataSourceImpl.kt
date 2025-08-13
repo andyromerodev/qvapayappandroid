@@ -73,6 +73,12 @@ class P2PDataSourceImpl(
                 ThrottlingConfig.DEFAULT_API_CONFIG // 3 segundos para mis ofertas
             )
             
+            // Configure global API throttling to prevent 429 errors
+            Log.d(TAG, "   • Configuring Global API throttling: 15000ms interval")
+            throttlingManager.configureGlobalApi(
+                ThrottlingConfig.DEFAULT_API_CONFIG // 15 segundos entre cualquier llamada a la API
+            )
+            
             Log.d(TAG, "✅ All P2P throttling configurations completed")
         }
     }

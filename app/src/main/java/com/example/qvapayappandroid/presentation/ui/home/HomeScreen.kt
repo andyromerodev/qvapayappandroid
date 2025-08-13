@@ -33,6 +33,7 @@ import com.example.qvapayappandroid.presentation.ui.home.components.EmptyOffersS
 import com.example.qvapayappandroid.presentation.ui.home.components.ErrorCard
 import com.example.qvapayappandroid.presentation.ui.home.components.LoadingMoreIndicator
 import com.example.qvapayappandroid.presentation.ui.home.components.MyOfferCard
+import com.example.qvapayappandroid.presentation.ui.home.components.MyOfferShimmerEffect
 import com.example.qvapayappandroid.presentation.ui.home.components.StatusFilterChips
 import org.koin.androidx.compose.koinViewModel
 
@@ -152,7 +153,11 @@ private fun MyP2POffersSection(
                     )
                 }
                 
-                uiState.myOffers.isEmpty() && !uiState.isLoadingOffers -> {
+                uiState.isLoadingOffers -> {
+                    MyOfferShimmerEffect()
+                }
+                
+                uiState.myOffers.isEmpty() -> {
                     EmptyOffersState(
                         onRetry = onRefresh
                     )
