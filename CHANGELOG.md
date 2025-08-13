@@ -989,6 +989,119 @@ presentation/ui/home/
 - **Performance Metrics**: Measure scroll performance and loading times
 - **A/B Testing**: Test different pagination strategies
 
+## 🚀 v3.1.0 - Enhanced Loading Experience with Shimmer Effects and Global API Throttling (2025-08-13)
+
+### ✨ Advanced Loading States with Shimmer Effects
+
+#### 🎨 P2P Screen Shimmer Implementation
+- **P2PShimmerEffect Component**: Professional animated loading placeholders
+  - 4 shimmer cards with realistic P2P offer structure
+  - Avatar, username, message, mini-cards, and chips placeholders
+  - LazyColumn with 12dp spacing for smooth scrolling
+  - Integrated with both initial loading and pull-to-refresh states
+- **Consistent Design**: Matches P2POfferCard visual structure exactly
+- **Smart Display Logic**: Shows during `isLoading` or `isRefreshing` when offers are empty
+
+#### 🏠 Home Screen Shimmer Enhancement  
+- **MyOfferShimmerEffect Component**: Dedicated shimmer for user's offers
+  - 4 shimmer cards matching MyOfferCard layout structure
+  - Owner → Peer transaction flow with avatars and arrow
+  - Status chip, mini-cards grid, and offer type chips
+  - Optimized for 8dp spacing consistency with HomeScreen
+- **Loading State Integration**: Displays during initial offers loading
+
+#### 🏗️ P2P Screen Architecture Upgrade
+- **Scaffold Implementation**: Upgraded from Column to Scaffold structure
+  - TopAppBar moved to Scaffold topBar parameter
+  - Consistent padding handling with `paddingValues`
+  - Matches HomeScreen architecture for design consistency
+- **Enhanced Layout Structure**: Professional app structure following Material 3 guidelines
+
+### 🛡️ Global API Throttling System
+
+#### 🔧 Enterprise-Grade Throttling Enhancement
+- **ThrottlingManager Global API Support**: 
+  - `canExecuteGlobalApi()` - checks global throttling across all operations
+  - `recordGlobalApiExecution()` - tracks global API usage
+  - `configureGlobalApi()` - sets global throttling rules
+- **Global State Management**: Separate tracking for global vs operation-specific throttling
+- **Dual-Layer Protection**: Global + operation-specific throttling prevents all rate limiting
+
+#### 🚨 HTTP 429 Error Prevention
+- **Root Cause Resolution**: Different operations could bypass individual throttling
+  - `p2p_get_offers` followed immediately by `p2p_get_offer_by_id` = 429 error
+  - Global throttling ensures 15-second minimum between ANY API calls
+- **Smart Throttling Flow**:
+  1. Check global API throttling (15s between any calls)
+  2. Check operation-specific throttling (individual limits)
+  3. Record both global and specific execution
+- **P2PDataSource Integration**: Global throttling configured alongside operation-specific rules
+
+#### 🔄 Technical Implementation
+- **Mutex Deadlock Resolution**: Fixed `JobCancellationException` caused by nested mutex locks
+- **Inline Global Recording**: Prevents recursive mutex calls in `recordExecution()`
+- **Interface Consistency**: Corrected return types for `recordExecution()` and `recordGlobalApiExecution()`
+- **Thread-Safe Operations**: Proper synchronization for concurrent global tracking
+
+### 🎯 User Experience Improvements
+
+#### 📱 Loading State Consistency
+- **Visual Uniformity**: Both P2P and Home screens now show professional shimmer effects
+- **No More Blank Screens**: Elegant loading states replace empty/spinning indicators
+- **Responsive Feedback**: Users see realistic content placeholders during loading
+
+#### 🚀 Reliability Enhancement
+- **Eliminated API Errors**: Global throttling prevents 429 "Too Many Attempts" errors
+- **Stable Operation**: No more request cancellations or throttling conflicts
+- **Seamless Navigation**: Smooth transitions between different P2P operations
+
+### 📁 New Files Created
+```
+├── presentation/ui/p2p/components/
+│   └── P2PShimmerEffect.kt (animated P2P loading placeholders)
+├── presentation/ui/home/components/
+│   └── MyOfferShimmerEffect.kt (animated user offers placeholders)
+```
+
+### 📁 Files Enhanced
+```
+├── data/datasource/
+│   └── P2PDataSourceImpl.kt (global throttling configuration)
+├── data/throttling/
+│   └── ThrottlingManagerImpl.kt (global API support, deadlock fixes)
+├── domain/throttling/
+│   └── ThrottlingManager.kt (global API interface methods)
+├── presentation/ui/home/
+│   └── HomeScreen.kt (MyOfferShimmerEffect integration)
+├── presentation/ui/p2p/
+│   └── P2PScreen.kt (Scaffold architecture, P2PShimmerEffect integration)
+```
+
+### 🐛 Critical Fixes
+- **JobCancellationException**: Resolved mutex deadlock preventing API requests
+- **HTTP 429 Rate Limiting**: Global throttling prevents cross-operation rate limits
+- **Loading State Gaps**: Shimmer effects fill empty loading periods
+- **Architecture Inconsistency**: P2PScreen now matches HomeScreen Scaffold structure
+
+### 🎨 Design System Benefits
+- **Material 3 Compliance**: Shimmer effects follow Material 3 design principles
+- **Visual Consistency**: Shimmer cards match their corresponding real cards exactly
+- **Professional Feel**: App now has enterprise-grade loading experiences
+- **Performance**: Efficient shimmer animations with proper cleanup
+
+### 🔒 Stability Improvements
+- **Throttling Reliability**: 15-second global intervals prevent all API conflicts
+- **Error Prevention**: Smart detection and prevention of rate limiting scenarios
+- **Request Management**: Proper coordination between different API operations
+- **State Consistency**: Clean separation of loading states and error handling
+
+### 🎯 User Impact
+- **✅ No More API Errors**: Global throttling eliminates 429 errors completely
+- **✅ Professional Loading**: Beautiful shimmer effects during data loading
+- **✅ Consistent Experience**: Uniform loading behavior across P2P and Home screens
+- **✅ Reliable Performance**: Stable API interactions with proper throttling
+- **✅ Enhanced Visual Polish**: Enterprise-grade loading states improve app perception
+
 ## 🚀 v3.0.0 - Advanced Throttling System with Comprehensive Logging and Sequential Request Handling (2025-08-12)
 
 ### ✨ Comprehensive Throttling System Enhancement
