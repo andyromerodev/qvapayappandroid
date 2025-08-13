@@ -77,7 +77,7 @@ fun P2PScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("P2P Transactions") },
+                title = { Text("Ofertas P2P") },
                 actions = {
                     IconButton(onClick = {
                         showFilters = true
@@ -209,8 +209,6 @@ private fun P2PContent(
                 .fillMaxSize()
                 .padding(horizontal = 12.dp)
         ) {
-            Spacer(modifier = Modifier.height(8.dp))
-
             // Header con contador de ofertas
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -218,18 +216,11 @@ private fun P2PContent(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Ofertas P2P",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
                     text = "${uiState.totalOffers} ofertas",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-
-            Spacer(modifier = Modifier.height(6.dp))
 
             // CHIPS DE ORDENACIÓN
             Row(
