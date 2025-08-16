@@ -13,13 +13,16 @@ import com.example.qvapayappandroid.data.datasource.SettingsLocalDataSourceImpl
 import com.example.qvapayappandroid.data.datasource.WebViewLoginDataSource
 import com.example.qvapayappandroid.data.datasource.WebViewLoginDataSourceImpl
 import com.example.qvapayappandroid.data.repository.AuthRepositoryImpl
+import com.example.qvapayappandroid.data.repository.OfferAlertRepositoryImpl
 import com.example.qvapayappandroid.data.repository.OfferTemplateRepositoryImpl
 import com.example.qvapayappandroid.data.repository.P2PRepositoryImpl
 import com.example.qvapayappandroid.data.repository.SessionRepositoryImpl
 import com.example.qvapayappandroid.data.repository.SettingsRepositoryImpl
 import com.example.qvapayappandroid.data.repository.WebViewRepositoryImpl
 import com.example.qvapayappandroid.data.throttling.ThrottlingManagerImpl
+import com.example.qvapayappandroid.data.work.OfferAlertWorkManager
 import com.example.qvapayappandroid.domain.repository.AuthRepository
+import com.example.qvapayappandroid.domain.repository.OfferAlertRepository
 import com.example.qvapayappandroid.domain.repository.OfferTemplateRepository
 import com.example.qvapayappandroid.domain.repository.P2PRepository
 import com.example.qvapayappandroid.domain.repository.SessionRepository
@@ -43,6 +46,9 @@ val dataModule = module {
     // WebView DataSource
     single<WebViewLoginDataSource> { WebViewLoginDataSourceImpl() }
 
+    // Work Manager
+    single { OfferAlertWorkManager(androidContext()) }
+
     // Repositories
     single<SessionRepository> { SessionRepositoryImpl(get()) }
     single<AuthRepository> { AuthRepositoryImpl(get(), get()) }
@@ -50,4 +56,5 @@ val dataModule = module {
     single<SettingsRepository> { SettingsRepositoryImpl(get()) }
     single<WebViewRepository> { WebViewRepositoryImpl(get()) }
     single<OfferTemplateRepository> { OfferTemplateRepositoryImpl(get()) }
+    single<OfferAlertRepository> { OfferAlertRepositoryImpl(get()) }
 }

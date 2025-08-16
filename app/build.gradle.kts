@@ -78,6 +78,9 @@ dependencies {
     
     // Material Icons Extended
     implementation(libs.androidx.material.icons.extended)
+    
+    // WorkManager
+    implementation(libs.androidx.work.runtime.ktx)
 
 
     testImplementation(libs.junit)

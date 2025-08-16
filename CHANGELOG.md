@@ -1102,6 +1102,173 @@ presentation/ui/home/
 - **✅ Reliable Performance**: Stable API interactions with proper throttling
 - **✅ Enhanced Visual Polish**: Enterprise-grade loading states improve app perception
 
+## 🚀 v3.3.0 - Advanced P2P Offer Notification System with WorkManager (2025-08-16)
+
+### ✨ Complete Offer Notification System Implementation
+
+#### 🔔 WorkManager Background Processing System
+- **OfferCheckWorker**: Enterprise-grade background worker for periodic offer checking
+  - Automatic offer monitoring even when app is closed
+  - Configurable check intervals (15-30 minutes minimum)
+  - Battery and network-aware constraints
+  - Comprehensive error handling with retry mechanisms
+  - Smart criteria matching for multiple filter types
+
+- **OfferAlertWorkManager**: Professional WorkManager configuration and scheduling
+  - Battery optimization compliance (RequiresBatteryNotLow)
+  - Network connectivity requirements (RequiredNetworkType.CONNECTED)
+  - Periodic execution with intelligent constraint handling
+  - Background processing lifecycle management
+
+#### 🎯 Advanced Alert Configuration System
+- **OfferAlert Domain Model**: Complete alert criteria definition
+  - Multi-currency support with flexible coin type filtering
+  - Offer type filtering (buy/sell/both) with intelligent matching
+  - Amount range filtering (min/max) with optional boundaries
+  - Rate comparison system (greater/less/equal) with precision control
+  - KYC and VIP filtering for verified users only
+  - Individual alert activation/deactivation controls
+
+- **AlertNotification Model**: Comprehensive notification tracking
+  - Detailed offer information capture (ID, type, amount, rate)
+  - Owner username and message preservation
+  - Read/unread status management with timestamps
+  - Complete audit trail for triggered notifications
+
+#### 🗄️ Database Schema Enhancement
+- **Room Database v4→v5 Migration**: Seamless database upgrade
+  - `offer_alerts` table creation with complete schema
+  - Foreign key relationships and indexing optimization
+  - Migration script preserves all existing user data
+  - Backward compatibility maintenance
+
+- **OfferAlertEntity**: Complete database persistence layer
+  - All alert criteria fields with proper data types
+  - Timestamp tracking for creation, last check, last trigger
+  - Boolean flags for active status and user preferences
+  - Optimized database queries with Flow support
+
+#### 🏗️ Clean Architecture Implementation
+##### **Domain Layer**
+- **OfferAlertRepository**: Abstract interface for alert data management
+- **Domain Models**: Pure Kotlin models without Android dependencies
+- **Use Cases**: Business logic separation (planned for future implementation)
+
+##### **Data Layer**
+- **OfferAlertDao**: Complete CRUD operations with reactive Flow queries
+- **OfferAlertRepositoryImpl**: Repository pattern with entity-model mapping
+- **Database Integration**: Seamless AppDatabase integration with proper DAOs
+
+##### **Infrastructure Layer**
+- **WorkManager Integration**: Background processing with system constraints
+- **Notification Channel**: Android-compliant notification system
+- **Permission Handling**: POST_NOTIFICATIONS for Android 13+ compliance
+
+#### 🚨 Smart Notification System
+- **Intelligent Offer Matching**: Advanced criteria evaluation system
+  - Currency type validation with exact matching
+  - Offer type filtering (buy/sell/both) with flexible logic
+  - Amount range checking with optional min/max boundaries
+  - Rate comparison with configurable operators and precision
+  - KYC/VIP status verification for premium filtering
+
+- **Rich Notification Content**: Professional notification presentation
+  - Emoji-enhanced titles for visual impact (🎯 Nueva oferta encontrada!)
+  - Detailed offer information in notification text
+  - BigTextStyle with complete offer details and messages
+  - Deep linking to specific offers with UUID parameters
+  - Auto-cancel and high priority for important alerts
+
+#### 🔧 Technical Implementation
+- **P2P API Integration**: Complete integration with existing P2P repository
+  - Bearer token authentication for secure API access
+  - Rate limiting compliance with existing throttling system
+  - Error handling for network issues and API failures
+  - Session validation before making API requests
+
+- **Notification Channel Management**: Android-compliant notification setup
+  - High importance notification channel for critical alerts
+  - Vibration and light effects for attention-getting
+  - Proper channel naming and description in Spanish
+  - Notification manager integration with proper permissions
+
+#### 🛡️ Error Handling and Resilience
+- **Comprehensive Error Management**: Production-ready error handling
+  - Network connectivity validation before API calls
+  - Session token validation and graceful fallback
+  - WorkManager retry logic for transient failures
+  - Detailed logging for debugging and monitoring
+
+- **Battery and Performance Optimization**: System-friendly implementation
+  - Battery optimization compliance with proper constraints
+  - Network-aware scheduling to prevent unnecessary battery drain
+  - Efficient database queries with indexed columns
+  - Memory-conscious offer processing with batch limits
+
+### 📁 New Files Created
+```
+├── domain/model/
+│   ├── OfferAlert.kt (complete alert criteria model)
+│   └── AlertNotification.kt (notification tracking model)
+├── data/work/
+│   ├── OfferCheckWorker.kt (background processing worker)
+│   └── OfferAlertWorkManager.kt (WorkManager configuration)
+├── data/database/
+│   ├── dao/OfferAlertDao.kt (database operations)
+│   └── entities/OfferAlertEntity.kt (Room entity)
+├── data/datasource/
+│   ├── OfferAlertLocalDataSource.kt (interface)
+│   └── OfferAlertLocalDataSourceImpl.kt (implementation)
+├── data/repository/
+│   └── OfferAlertRepositoryImpl.kt (repository implementation)
+└── domain/repository/
+    └── OfferAlertRepository.kt (repository interface)
+```
+
+### 📁 Files Enhanced
+```
+├── app/build.gradle.kts (WorkManager dependency)
+├── gradle/libs.versions.toml (WorkManager version)
+├── app/src/main/AndroidManifest.xml (POST_NOTIFICATIONS permission)
+├── data/database/AppDatabase.kt (v5 migration, OfferAlertDao)
+├── di/
+│   ├── DatabaseModule.kt (OfferAlertDao injection)
+│   └── DataModule.kt (WorkManager and repository injection)
+```
+
+### 🎯 User Experience Flow
+1. **Alert Configuration**: Users configure offer criteria and preferences
+2. **Background Monitoring**: WorkManager checks offers every 15-30 minutes
+3. **Smart Matching**: Intelligent filtering based on user-defined criteria
+4. **Instant Notifications**: Real-time alerts when matching offers found
+5. **Deep Linking**: Direct navigation to specific offers from notifications
+6. **Status Tracking**: Complete audit trail of alerts and notifications
+
+### 🔒 Security and Privacy Features
+- **Bearer Token Security**: Secure API authentication for all requests
+- **Permission Compliance**: Proper Android 13+ notification permissions
+- **Data Privacy**: Local storage only, no external data transmission
+- **Session Validation**: Automatic session checking before API operations
+
+### 🚀 Technical Benefits
+- **Enterprise-Grade Background Processing**: Production-ready WorkManager implementation
+- **Clean Architecture Compliance**: Proper separation of concerns across layers
+- **Database Migration Safety**: Seamless v4→v5 upgrade without data loss
+- **Battery Optimization**: System-friendly constraints and scheduling
+- **Comprehensive Error Handling**: Robust error management and recovery
+
+### 🎨 Future Enhancement Ready
+- **UI Configuration Screen**: Ready for alert management interface
+- **Advanced Filtering**: Support for additional criteria and operators
+- **Notification Customization**: Expandable notification content and actions
+- **Analytics Integration**: Usage tracking and performance monitoring
+
+### ⚡ Performance Optimizations
+- **Efficient Database Queries**: Indexed columns and optimized Flow operations
+- **Smart Rate Limiting**: Compliance with existing API throttling system
+- **Memory Management**: Proper cleanup and lifecycle handling
+- **Battery Awareness**: Intelligent scheduling based on device constraints
+
 ## 🚀 v3.2.0 - Template Management System with P2P Integration and Context Menus (2025-08-16)
 
 ### ✨ Complete Template Management System Implementation
