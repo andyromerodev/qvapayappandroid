@@ -44,4 +44,9 @@ sealed interface CreateP2POfferEffect {
      * Limpiar formulario después de creación exitosa
      */
     data object ClearForm : CreateP2POfferEffect
+    
+    /**
+     * Proporcionar estado actual para crear plantilla
+     */
+    data class CurrentStateForTemplate(val state: CreateP2POfferState) : CreateP2POfferEffect
 }

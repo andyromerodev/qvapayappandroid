@@ -1,4 +1,4 @@
-package com.example.qvapayappandroid.presentation.ui.p2p.createp2poffer
+package com.example.qvapayappandroid.presentation.ui.templates
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -6,9 +6,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.BookmarkAdd
-import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -20,12 +17,10 @@ import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CreateP2POfferScreen(
+fun SaveOfferTemplateScreen(
     onBackClick: () -> Unit = {},
     onSuccess: () -> Unit = {},
-    onLoadTemplates: () -> Unit = {},
-    onSaveAsTemplate: (CreateP2POfferState) -> Unit = {},
-    viewModel: CreateP2POfferViewModel = koinViewModel()
+    viewModel: SaveOfferTemplateViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -33,32 +28,15 @@ fun CreateP2POfferScreen(
     LaunchedEffect(Unit) {
         viewModel.effect.collect { effect ->
             when (effect) {
-                is CreateP2POfferEffect.NavigateBack -> onBackClick()
-                is CreateP2POfferEffect.ShowSuccess -> {
-                    // Este effect no se usa actualmente
+                is SaveOfferTemplateEffect.NavigateBack -> onBackClick()
+                is SaveOfferTemplateEffect.ShowSuccess -> {
+                    // Mensaje de éxito manejado por el estado
                 }
-                is CreateP2POfferEffect.ShowError -> {
-                    // Error ya está siendo manejado por el estado en el ViewModel
+                is SaveOfferTemplateEffect.ShowError -> {
+                    // Error manejado por el estado
                 }
-                is CreateP2POfferEffect.OfferCreatedSuccessfully -> {
-                    // Oferta creada exitosamente - podrías navegar o mostrar detalles
+                is SaveOfferTemplateEffect.TemplateSavedSuccessfully -> {
                     onSuccess()
-                }
-                is CreateP2POfferEffect.ValidationError -> {
-                    // Error de validación específico - podría resaltar el campo
-                }
-                is CreateP2POfferEffect.ShowLoading -> {
-                    // Loading mostrado - manejado por estado
-                }
-                is CreateP2POfferEffect.HideLoading -> {
-                    // Loading oculto - manejado por estado
-                }
-                is CreateP2POfferEffect.ClearForm -> {
-                    // Limpiar formulario - podría resetear campos
-                }
-                is CreateP2POfferEffect.CurrentStateForTemplate -> {
-                    // Proporcionar estado actual para crear plantilla
-                    onSaveAsTemplate(effect.state)
                 }
             }
         }
@@ -67,18 +45,12 @@ fun CreateP2POfferScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Crear Oferta P2P") },
-                navigationIcon = {
-                    IconButton(onClick = { viewModel.handleIntent(CreateP2POfferIntent.NavigateBack) }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver")
-                    }
+                title = { 
+                    Text(if (uiState.isEditing) "Editar Plantilla" else "Nueva Plantilla") 
                 },
-                actions = {
-                    IconButton(onClick = onLoadTemplates) {
-                        Icon(Icons.Default.BookmarkAdd, contentDescription = "Cargar plantilla")
-                    }
-                    IconButton(onClick = { viewModel.handleIntent(CreateP2POfferIntent.RequestCurrentStateForTemplate) }) {
-                        Icon(Icons.Default.Save, contentDescription = "Guardar como plantilla")
+                navigationIcon = {
+                    IconButton(onClick = { viewModel.handleIntent(SaveOfferTemplateIntent.NavigateBack) }) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver")
                     }
                 }
             )
@@ -92,6 +64,39 @@ fun CreateP2POfferScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            // Información básica de la plantilla
+            Card(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text(
+                        text = "Información de la Plantilla",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    
+                    OutlinedTextField(
+                        value = uiState.name,
+                        onValueChange = { viewModel.handleIntent(SaveOfferTemplateIntent.ChangeName(it)) },
+                        label = { Text("Nombre de la plantilla *") },
+                        modifier = Modifier.fillMaxWidth(),
+                        isError = uiState.name.isBlank() && uiState.errorMessage != null
+                    )
+                    
+                    OutlinedTextField(
+                        value = uiState.description,
+                        onValueChange = { viewModel.handleIntent(SaveOfferTemplateIntent.ChangeDescription(it)) },
+                        label = { Text("Descripción (opcional)") },
+                        modifier = Modifier.fillMaxWidth(),
+                        minLines = 2,
+                        maxLines = 3
+                    )
+                }
+            }
+
             // Tipo de oferta
             Card(
                 modifier = Modifier.fillMaxWidth()
@@ -111,13 +116,13 @@ fun CreateP2POfferScreen(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         FilterChip(
-                            onClick = { viewModel.handleIntent(CreateP2POfferIntent.ChangeType("sell")) },
+                            onClick = { viewModel.handleIntent(SaveOfferTemplateIntent.ChangeType("sell")) },
                             label = { Text("Vender") },
                             selected = uiState.type == "sell",
                             modifier = Modifier.weight(1f)
                         )
                         FilterChip(
-                            onClick = { viewModel.handleIntent(CreateP2POfferIntent.ChangeType("buy")) },
+                            onClick = { viewModel.handleIntent(SaveOfferTemplateIntent.ChangeType("buy")) },
                             label = { Text("Comprar") },
                             selected = uiState.type == "buy",
                             modifier = Modifier.weight(1f)
@@ -173,7 +178,7 @@ fun CreateP2POfferScreen(
                                         }
                                     },
                                     onClick = {
-                                        viewModel.handleIntent(CreateP2POfferIntent.SelectCoin(coin))
+                                        viewModel.handleIntent(SaveOfferTemplateIntent.SelectCoin(coin))
                                         expanded = false
                                     }
                                 )
@@ -183,7 +188,7 @@ fun CreateP2POfferScreen(
                     
                     OutlinedTextField(
                         value = uiState.amount,
-                        onValueChange = { viewModel.handleIntent(CreateP2POfferIntent.ChangeAmount(it)) },
+                        onValueChange = { viewModel.handleIntent(SaveOfferTemplateIntent.ChangeAmount(it)) },
                         label = { Text("Monto") },
                         modifier = Modifier.fillMaxWidth(),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
@@ -191,7 +196,7 @@ fun CreateP2POfferScreen(
                     
                     OutlinedTextField(
                         value = uiState.receive,
-                        onValueChange = { viewModel.handleIntent(CreateP2POfferIntent.ChangeReceive(it)) },
+                        onValueChange = { viewModel.handleIntent(SaveOfferTemplateIntent.ChangeReceive(it)) },
                         label = { Text("Monto a Recibir") },
                         modifier = Modifier.fillMaxWidth(),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
@@ -216,7 +221,7 @@ fun CreateP2POfferScreen(
                     uiState.details.forEachIndexed { index, detail ->
                         OutlinedTextField(
                             value = detail.value,
-                            onValueChange = { viewModel.handleIntent(CreateP2POfferIntent.ChangeDetail(index, it)) },
+                            onValueChange = { viewModel.handleIntent(SaveOfferTemplateIntent.ChangeDetail(index, it)) },
                             label = { Text(detail.name) },
                             modifier = Modifier.fillMaxWidth()
                         )
@@ -246,7 +251,7 @@ fun CreateP2POfferScreen(
                         Text("Solo usuarios KYC")
                         Switch(
                             checked = uiState.onlyKyc,
-                            onCheckedChange = { viewModel.handleIntent(CreateP2POfferIntent.ChangeOnlyKyc(it)) }
+                            onCheckedChange = { viewModel.handleIntent(SaveOfferTemplateIntent.ChangeOnlyKyc(it)) }
                         )
                     }
                     
@@ -258,7 +263,7 @@ fun CreateP2POfferScreen(
                         Text("Oferta privada")
                         Switch(
                             checked = uiState.private,
-                            onCheckedChange = { viewModel.handleIntent(CreateP2POfferIntent.ChangePrivate(it)) }
+                            onCheckedChange = { viewModel.handleIntent(SaveOfferTemplateIntent.ChangePrivate(it)) }
                         )
                     }
                     
@@ -270,7 +275,7 @@ fun CreateP2POfferScreen(
                         Text("Promocionar oferta")
                         Switch(
                             checked = uiState.promoteOffer,
-                            onCheckedChange = { viewModel.handleIntent(CreateP2POfferIntent.ChangePromoteOffer(it)) }
+                            onCheckedChange = { viewModel.handleIntent(SaveOfferTemplateIntent.ChangePromoteOffer(it)) }
                         )
                     }
                     
@@ -282,7 +287,7 @@ fun CreateP2POfferScreen(
                         Text("Solo usuarios VIP")
                         Switch(
                             checked = uiState.onlyVip,
-                            onCheckedChange = { viewModel.handleIntent(CreateP2POfferIntent.ChangeOnlyVip(it)) }
+                            onCheckedChange = { viewModel.handleIntent(SaveOfferTemplateIntent.ChangeOnlyVip(it)) }
                         )
                     }
                 }
@@ -304,7 +309,7 @@ fun CreateP2POfferScreen(
                     
                     OutlinedTextField(
                         value = uiState.message,
-                        onValueChange = { viewModel.handleIntent(CreateP2POfferIntent.ChangeMessage(it)) },
+                        onValueChange = { viewModel.handleIntent(SaveOfferTemplateIntent.ChangeMessage(it)) },
                         label = { Text("Mensaje") },
                         modifier = Modifier.fillMaxWidth(),
                         minLines = 3,
@@ -313,7 +318,7 @@ fun CreateP2POfferScreen(
                     
                     OutlinedTextField(
                         value = uiState.webhook,
-                        onValueChange = { viewModel.handleIntent(CreateP2POfferIntent.ChangeWebhook(it)) },
+                        onValueChange = { viewModel.handleIntent(SaveOfferTemplateIntent.ChangeWebhook(it)) },
                         label = { Text("Webhook (opcional)") },
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -343,7 +348,7 @@ fun CreateP2POfferScreen(
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         TextButton(
-                            onClick = { viewModel.handleIntent(CreateP2POfferIntent.DismissError) }
+                            onClick = { viewModel.handleIntent(SaveOfferTemplateIntent.DismissError) }
                         ) {
                             Text("Cerrar")
                         }
@@ -374,7 +379,7 @@ fun CreateP2POfferScreen(
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         TextButton(
-                            onClick = { viewModel.handleIntent(CreateP2POfferIntent.DismissSuccessMessage) }
+                            onClick = { viewModel.handleIntent(SaveOfferTemplateIntent.DismissSuccessMessage) }
                         ) {
                             Text("Cerrar")
                         }
@@ -382,11 +387,11 @@ fun CreateP2POfferScreen(
                 }
             }
 
-            // Botón crear
+            // Botón guardar
             Button(
-                onClick = { viewModel.handleIntent(CreateP2POfferIntent.CreateOffer) },
+                onClick = { viewModel.handleIntent(SaveOfferTemplateIntent.SaveTemplate) },
                 modifier = Modifier.fillMaxWidth(),
-                enabled = !uiState.isLoading
+                enabled = !uiState.isLoading && uiState.isValid
             ) {
                 if (uiState.isLoading) {
                     Row(
@@ -398,10 +403,10 @@ fun CreateP2POfferScreen(
                             strokeWidth = 2.dp
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Creando...")
+                        Text(if (uiState.isEditing) "Actualizando..." else "Guardando...")
                     }
                 } else {
-                    Text("Crear Oferta")
+                    Text(if (uiState.isEditing) "Actualizar Plantilla" else "Guardar Plantilla")
                 }
             }
 

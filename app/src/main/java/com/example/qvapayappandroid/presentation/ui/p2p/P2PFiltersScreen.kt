@@ -19,12 +19,12 @@ import androidx.compose.ui.unit.sp
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun P2PFiltersScreen(
-    onBackClick: () -> Unit,
     modifier: Modifier = Modifier,
+    onBackClick: () -> Unit,
+    onApplyFilters: (String, List<String>) -> Unit,
     selectedOfferType: String,
     selectedCoins: List<String>,
-    availableCoins: List<String>,
-    onApplyFilters: (String, List<String>) -> Unit
+    availableCoins: List<String>
 ) {
     var localSelectedOfferType by remember { mutableStateOf(selectedOfferType) }
     var localSelectedCoins by remember { mutableStateOf(selectedCoins.toSet()) }
@@ -34,24 +34,24 @@ fun P2PFiltersScreen(
         localSelectedCoins = selectedCoins.toSet()
     }
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-    ) {
-        TopAppBar(
-            title = { Text("Filtros P2P", fontSize = 18.sp) },
-            navigationIcon = {
-                IconButton(onClick = onBackClick) {
-                    Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Filtros P2P", fontSize = 18.sp) },
+                navigationIcon = {
+                    IconButton(onClick = onBackClick) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
+                    }
                 }
-            }
-        )
-
+            )
+        }
+    ) { paddingValues ->
         Column(
-            modifier = Modifier
+            modifier = modifier
                 .fillMaxSize()
+                .padding(paddingValues)
                 .padding(10.dp)
+                .verticalScroll(rememberScrollState())
         ) {
             // Tipo de oferta
             Card(

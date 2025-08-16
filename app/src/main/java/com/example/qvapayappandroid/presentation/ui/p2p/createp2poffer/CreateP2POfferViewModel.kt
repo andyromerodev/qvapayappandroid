@@ -50,6 +50,8 @@ class CreateP2POfferViewModel(
             is CreateP2POfferIntent.NavigateBack -> navigateBack()
             is CreateP2POfferIntent.DismissError -> dismissError()
             is CreateP2POfferIntent.DismissSuccessMessage -> dismissSuccessMessage()
+            is CreateP2POfferIntent.LoadFromTemplate -> loadFromTemplate(intent.template)
+            is CreateP2POfferIntent.RequestCurrentStateForTemplate -> requestCurrentStateForTemplate()
         }
     }
 
@@ -240,6 +242,36 @@ class CreateP2POfferViewModel(
         }
     }
 
+    /**
+     * Carga datos desde una plantilla
+     */
+    private fun loadFromTemplate(template: com.example.qvapayappandroid.domain.model.OfferTemplate) {
+        val availableCoin = template.toAvailableCoin()
+        
+        _uiState.value = _uiState.value.copy(
+            type = template.type,
+            selectedCoin = availableCoin,
+            coinId = template.coinId,
+            amount = template.amount,
+            receive = template.receive,
+            details = template.details,
+            onlyKyc = template.onlyKyc,
+            private = template.private,
+            promoteOffer = template.promoteOffer,
+            onlyVip = template.onlyVip,
+            message = template.message,
+            webhook = template.webhook,
+            successMessage = "Plantilla '${template.name}' cargada exitosamente"
+        )
+    }
+    
+    /**
+     * Proporciona el estado actual para crear una plantilla
+     */
+    private fun requestCurrentStateForTemplate() {
+        emitEffect(CreateP2POfferEffect.CurrentStateForTemplate(_uiState.value))
+    }
+    
     /**
      * Emite un efecto
      */

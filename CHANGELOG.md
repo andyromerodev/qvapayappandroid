@@ -1102,6 +1102,193 @@ presentation/ui/home/
 - **✅ Reliable Performance**: Stable API interactions with proper throttling
 - **✅ Enhanced Visual Polish**: Enterprise-grade loading states improve app perception
 
+## 🚀 v3.2.0 - Template Management System with P2P Integration and Context Menus (2025-08-16)
+
+### ✨ Complete Template Management System Implementation
+
+#### 🏗️ Clean Architecture Template System
+- **Domain Layer**:
+  - `OfferTemplate` model with complete P2P offer structure
+  - `OfferTemplateRepository` interface for data abstraction
+  - Use cases: `GetOfferTemplatesUseCase`, `SaveOfferTemplateUseCase`, `LoadOfferTemplateUseCase`, `DeleteOfferTemplateUseCase`, `UpdateOfferTemplateUseCase`
+
+- **Data Layer**:
+  - `OfferTemplateEntity` with Room database integration
+  - `OfferTemplateDao` with complete CRUD operations and search functionality
+  - `OfferTemplateLocalDataSource` with Flow-based reactive data access
+  - `OfferTemplateRepositoryImpl` with entity-model mapping
+
+- **Presentation Layer**:
+  - `OfferTemplatesScreen` with search, filtering, and CRUD operations
+  - `OfferTemplatesViewModel` following MVI pattern with Intent/Effect/State
+  - Professional Material 3 UI with cards, chips, and status indicators
+
+#### 🎯 Advanced Template Features
+- **Template Creation**: Save P2P offer configurations as reusable templates
+- **Search System**: Real-time template search with 300ms debouncing
+- **Type Filtering**: Filter templates by offer type (Todas/Vender/Comprar)
+- **Template Cards**: Rich UI showing template details, configuration, and status
+- **Template Operations**: Create, edit, delete, use, and duplicate templates
+
+#### 🔄 P2P Integration System
+- **Direct P2P Creation**: Templates can create P2P offers directly without navigation
+- **CreateP2POfferUseCase Integration**: Seamless template-to-offer conversion
+- **Loading States**: Visual feedback during P2P offer creation from templates
+- **Success/Error Handling**: User feedback for template operations and P2P creation
+
+### 🎨 Advanced UI Components and Interactions
+
+#### 📱 Template Card Enhancements
+- **Material 3 Design**: Professional card layout with elevation and theming
+- **Comprehensive Information Display**:
+  - Template name, description, creation date
+  - Offer type badges (VENTA/COMPRA) with color coding
+  - Mini-card grid showing MONTO, RATIO, TIPO, RECIBE
+  - Configuration chips for KYC, VIP, Private, Promoted offers
+- **Interactive Elements**: Click to edit, use button with loading states
+
+#### 🖱️ Context Menu System Implementation
+- **Long Click Detection**: `combinedClickable` with `ExperimentalFoundationApi`
+- **DropdownMenu Context**: Professional context menu on long press
+- **Duplicate Functionality**: Template duplication with "Copy - " prefix
+- **Smart State Management**: Context menu visibility with proper dismiss handling
+- **Material 3 Menu Items**: Proper menu item layout with icons and text
+
+#### 🔍 Search and Filter System
+- **Real-time Search**: Instant template search across name and description
+- **Advanced Filtering**: Type-based filtering with FilterChips
+- **Combined Filters**: Search + type filtering working simultaneously
+- **Search State Management**: Proper debouncing and state coordination
+- **Empty States**: Professional empty state handling with clear messaging
+
+### 🛠️ Database and State Management
+
+#### 💾 Room Database Integration
+- **OfferTemplateEntity**: Complete database schema with all template fields
+- **Advanced Queries**: Search, filter, and sorting capabilities in DAO
+- **Flow Support**: Reactive data access with proper lifecycle management
+- **Database Migration**: Seamless integration with existing AppDatabase
+
+#### 🔄 MVI Architecture Implementation
+- **OfferTemplatesIntent**: Complete intent system for all user actions
+  - LoadTemplates, RefreshTemplates, SearchTemplates, FilterByType
+  - CreateNewTemplate, EditTemplate, UseTemplate, DuplicateTemplate
+  - DeleteTemplate, ClearSearch, DismissError
+- **OfferTemplatesEffect**: Navigation and user feedback effects
+- **OfferTemplatesState**: Comprehensive state management with computed properties
+- **Reactive State Flow**: Real-time UI updates with StateFlow/SharedFlow
+
+### 🚀 Advanced Template Operations
+
+#### 🔨 Template Creation and Management
+- **Complete Template Model**: All P2P offer fields supported
+- **Template Validation**: Proper data validation and error handling
+- **Timestamp Management**: Created/updated timestamps for tracking
+- **Template Persistence**: Reliable data storage with Room database
+
+#### 📋 Template Duplication System
+- **Smart Duplication**: Load original template with `LoadOfferTemplateUseCase`
+- **Automatic Naming**: "Copy - " prefix with timestamp updates
+- **State Preservation**: All template data preserved except ID and timestamps
+- **Error Handling**: Comprehensive error handling with user feedback
+
+#### ⚡ Direct P2P Offer Creation
+- **Template-to-P2P Conversion**: Seamless data mapping from template to P2P request
+- **Real-time Feedback**: Loading states and success/error messages
+- **Button State Management**: Disable buttons during creation, show loading spinners
+- **Integration**: Uses existing `CreateP2POfferUseCase` for consistency
+
+### 🔧 Snackbar and Error Handling Enhancement
+
+#### 💬 Professional Snackbar System
+- **Fixed Implementation**: Resolved complex snackbar state management issues
+- **Simplified Architecture**: Direct `SnackbarHostState` usage without intermediate state
+- **Immediate Feedback**: Real-time success/error messages for all operations
+- **Material 3 Design**: Consistent snackbar styling across the app
+
+#### 🛡️ Error Handling Improvements
+- **Comprehensive Error Messages**: Clear Spanish messages for all error scenarios
+- **Success Confirmations**: Positive feedback for successful operations
+- **State Management**: Proper error state cleanup and recovery
+- **User Experience**: Non-blocking error handling with clear recovery paths
+
+### 📁 Files Created
+```
+├── data/
+│   ├── database/
+│   │   ├── dao/OfferTemplateDao.kt
+│   │   └── entities/OfferTemplateEntity.kt
+│   ├── datasource/
+│   │   ├── OfferTemplateLocalDataSource.kt
+│   │   └── OfferTemplateLocalDataSourceImpl.kt
+│   └── repository/
+│       └── OfferTemplateRepositoryImpl.kt
+├── domain/
+│   ├── model/OfferTemplate.kt
+│   ├── repository/OfferTemplateRepository.kt
+│   └── usecase/
+│       ├── GetOfferTemplatesUseCase.kt
+│       ├── SaveOfferTemplateUseCase.kt
+│       ├── LoadOfferTemplateUseCase.kt
+│       ├── DeleteOfferTemplateUseCase.kt
+│       └── UpdateOfferTemplateUseCase.kt
+└── presentation/ui/templates/
+    ├── OfferTemplatesScreen.kt
+    ├── OfferTemplatesViewModel.kt
+    ├── OfferTemplatesIntent.kt
+    ├── OfferTemplatesEffect.kt
+    ├── OfferTemplatesState.kt
+    ├── SaveOfferTemplateViewModel.kt
+    └── components/
+        └── TemplateCard.kt
+```
+
+### 📁 Files Enhanced
+```
+├── data/database/
+│   └── AppDatabase.kt (OfferTemplateDao integration)
+├── di/
+│   ├── DatabaseModule.kt (OfferTemplateDao)
+│   ├── DataModule.kt (template repository and data sources)
+│   ├── DomainModule.kt (template use cases)
+│   └── PresentationModule.kt (template ViewModels)
+├── navigation/
+│   └── AppDestinations.kt (templates routes)
+├── presentation/ui/main/
+│   └── MainScreen.kt (templates navigation)
+└── presentation/ui/components/
+    └── BottomNavigationBar.kt (templates tab)
+```
+
+### 🎯 User Experience Flow
+1. **Access Templates**: Navigate to Templates tab in bottom navigation
+2. **Browse Templates**: View saved templates with search and filtering
+3. **Create Template**: Save P2P offer configurations for reuse
+4. **Use Template**: Direct P2P offer creation from templates with loading feedback
+5. **Duplicate Template**: Long press → context menu → duplicate with "Copy -" prefix
+6. **Manage Templates**: Edit, delete, or organize templates with professional UI
+
+### 🚀 Technical Benefits
+- **Clean Architecture**: Proper separation of concerns across all layers
+- **MVI Pattern**: Predictable state management with Intent/Effect/State
+- **Database Integration**: Reliable data persistence with Room
+- **P2P Integration**: Seamless template-to-offer conversion
+- **Professional UI**: Material 3 design with advanced interactions
+- **Error Handling**: Comprehensive error management with user feedback
+
+### 🔒 Data Management
+- **Template Persistence**: Reliable storage with Room database
+- **State Synchronization**: Real-time UI updates with Flow
+- **Search Performance**: Efficient search with database queries
+- **Memory Management**: Proper lifecycle handling and cleanup
+
+### 🎨 Design System Compliance
+- **Material 3**: Full compliance with Material 3 design principles
+- **Color Theming**: Proper use of color roles and theming
+- **Typography**: Consistent text styles across all components
+- **Spacing**: Standardized spacing following Material 3 guidelines
+- **Accessibility**: Proper content descriptions and interaction feedback
+
 ## 🚀 v3.0.0 - Advanced Throttling System with Comprehensive Logging and Sequential Request Handling (2025-08-12)
 
 ### ✨ Comprehensive Throttling System Enhancement

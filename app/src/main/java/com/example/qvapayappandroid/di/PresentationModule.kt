@@ -10,6 +10,8 @@ import com.example.qvapayappandroid.presentation.ui.p2p.p2pWebView.P2PWebViewVie
 import com.example.qvapayappandroid.presentation.ui.profile.UserProfileViewModel
 import com.example.qvapayappandroid.presentation.ui.settings.SettingsViewModel
 import com.example.qvapayappandroid.presentation.ui.splash.SplashViewModel
+import com.example.qvapayappandroid.presentation.ui.templates.OfferTemplatesViewModel
+import com.example.qvapayappandroid.presentation.ui.templates.SaveOfferTemplateViewModel
 import com.example.qvapayappandroid.presentation.ui.webview.WebViewFullScreenViewModel
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
@@ -27,4 +29,8 @@ val presentationModule = module {
     viewModel { SettingsViewModel(get(), get(), get(), get(), get()) }
     viewModel { WebViewFullScreenViewModel() }
     viewModel { P2PWebViewViewModel() }
+    
+    // Templates ViewModels
+    viewModel { OfferTemplatesViewModel(get(), get(), get(), get(), get()) }
+    viewModel { SaveOfferTemplateViewModel(get(), get(), get(), get()) }
 }

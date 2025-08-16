@@ -84,4 +84,14 @@ sealed interface CreateP2POfferIntent {
      * Descartar mensaje de éxito
      */
     data object DismissSuccessMessage : CreateP2POfferIntent
+    
+    /**
+     * Cargar datos desde una plantilla
+     */
+    data class LoadFromTemplate(val template: com.example.qvapayappandroid.domain.model.OfferTemplate) : CreateP2POfferIntent
+    
+    /**
+     * Obtener el estado actual para guardar como plantilla
+     */
+    data object RequestCurrentStateForTemplate : CreateP2POfferIntent
 }

@@ -22,6 +22,7 @@ import com.example.qvapayappandroid.presentation.ui.home.HomeScreen
 import com.example.qvapayappandroid.presentation.ui.p2p.createp2poffer.CreateP2POfferScreen
 import com.example.qvapayappandroid.presentation.ui.p2p.createp2poffer.CreateP2POfferViewModel
 import com.example.qvapayappandroid.presentation.ui.p2p.P2PScreen
+import com.example.qvapayappandroid.presentation.ui.p2p.P2PFiltersScreen
 import com.example.qvapayappandroid.presentation.ui.p2p.P2POfferDetailScreen
 import com.example.qvapayappandroid.presentation.ui.p2p.P2POfferDetailViewModel
 import com.example.qvapayappandroid.presentation.ui.p2p.p2pWebView.P2PWebViewScreen
@@ -32,6 +33,8 @@ import com.example.qvapayappandroid.presentation.ui.home.MyOfferDetailScreen
 import com.example.qvapayappandroid.presentation.ui.webview.WebViewFullScreen
 import androidx.compose.runtime.LaunchedEffect
 import com.example.qvapayappandroid.presentation.ui.p2p.P2PViewModel
+import com.example.qvapayappandroid.presentation.ui.templates.OfferTemplatesScreen
+import com.example.qvapayappandroid.presentation.ui.templates.SaveOfferTemplateScreen
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
@@ -114,11 +117,29 @@ fun MainScreen(
                             navController.navigate(AppDestinations.P2POfferDetail.createRoute(uuid))
                         }
                     },
+                    onFiltersClick = {
+                        navController.navigate(AppDestinations.P2PFilters.route)
+                    },
                     navController = navController,
                     viewModel = p2pViewModel
                 )
             }
             
+            composable(AppDestinations.P2PFilters.route) {
+                val uiState by p2pViewModel.uiState.collectAsState()
+                
+                P2PFiltersScreen(
+                    onBackClick = {
+                        navController.popBackStack()
+                    },
+                    onApplyFilters = { offerType, coins ->
+                        p2pViewModel.applyFilters(offerType, coins)
+                    },
+                    selectedOfferType = uiState.selectedOfferType,
+                    selectedCoins = uiState.selectedCoins,
+                    availableCoins = uiState.availableCoins
+                )
+            }
             
             composable(AppDestinations.P2POfferDetail.route) { backStackEntry ->
                 val offerId = backStackEntry.arguments?.getString("offerId")
@@ -230,6 +251,12 @@ fun MainScreen(
                     onSuccess = {
                         navController.popBackStack()
                     },
+                    onLoadTemplates = {
+                        navController.navigate(AppDestinations.Templates.route)
+                    },
+                    onSaveAsTemplate = { state ->
+                        navController.navigate(AppDestinations.SaveOfferTemplate.route)
+                    },
                     viewModel = createOfferViewModel
                 )
             }
@@ -272,6 +299,44 @@ fun MainScreen(
             composable(AppDestinations.UserProfile.route) {
                 UserProfileScreen(
                     onLogout = onLogout
+                )
+            }
+            
+            composable(AppDestinations.Templates.route) {
+                OfferTemplatesScreen(
+                    onNavigateToEditTemplate = { templateId ->
+                        navController.navigate(AppDestinations.EditOfferTemplate.createRoute(templateId))
+                    },
+                    onNavigateToCreateTemplate = {
+                        navController.navigate(AppDestinations.SaveOfferTemplate.route)
+                    },
+                    onNavigateToCreateOffer = { template ->
+                        navController.navigate(AppDestinations.CreateP2POffer.route)
+                    }
+                )
+            }
+            
+            composable(AppDestinations.SaveOfferTemplate.route) {
+                SaveOfferTemplateScreen(
+                    onBackClick = {
+                        navController.popBackStack()
+                    },
+                    onSuccess = {
+                        navController.popBackStack()
+                    }
+                )
+            }
+            
+            composable(AppDestinations.EditOfferTemplate.route) { backStackEntry ->
+                val templateId = backStackEntry.arguments?.getString("templateId")?.toLongOrNull()
+                
+                SaveOfferTemplateScreen(
+                    onBackClick = {
+                        navController.popBackStack()
+                    },
+                    onSuccess = {
+                        navController.popBackStack()
+                    }
                 )
             }
         }

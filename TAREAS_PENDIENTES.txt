@@ -1,0 +1,86 @@
+TAREAS PENDIENTES - QvaPay Android App
+=============================================
+
+Fecha: 2025-08-11
+Proyecto: QvaPay Android App
+Branch actual: feature/p2p-cancel-offer
+
+ESTADO ACTUAL:
+- ✅ WebView architecture refactoring completado
+- ✅ SOLID principles implementados
+- ✅ Separación de ViewModels independientes
+- ✅ Estados separados (P2PWebViewState / WebViewFullScreenState)
+- ✅ Clean Architecture aplicada
+
+TAREAS PARA MAÑANA:
+==================
+
+0.1 Comenzar a usar los Intents, Effect y States separados en cada archivo .kt.
+
+1. [ ] TESTING Y VALIDACIÓN
+   - Probar navegación P2P → WebView → Volver
+   - Validar que ambos WebViews mantienen estado independiente
+   - Verificar lifecycle management (pause/resume)
+   - Comprobar que no hay memory leaks
+
+2. [ ] FUNCIONALIDAD P2P WEBVIEW
+   - Implementar lógica de cancelación de ofertas P2P
+   - Agregar JavaScript injection para detectar acciones
+   - Validar integración con backend de QvaPay
+   - Testing de cancelación exitosa/fallida
+
+3. [ ] UI/UX IMPROVEMENTS
+   - Mejorar shimmer loading states
+   - Agregar indicadores de progreso más claros
+   - Implementar pull-to-refresh en WebViews
+   - Optimizar transiciones entre pantallas
+
+4. [ ] ERROR HANDLING
+   - Mejorar manejo de errores de red en WebViews
+   - Implementar retry automático
+   - Agregar offline detection
+   - Mensajes de error más específicos
+
+5. [ ] PERFORMANCE OPTIMIZATION
+   - Revisar memoria usage de WebViews
+   - Optimizar bundle size
+   - Lazy loading de WebView components
+   - Cache management improvements
+
+6. [ ] CODE QUALITY
+   - Agregar unit tests para nuevos ViewModels
+   - Documentar APIs públicas
+   - Code review y refactoring si necesario
+   - Lint y formato de código
+
+7. [ ] DEPLOYMENT PREP
+   - Merge a master si todo funciona
+   - Preparar release notes
+   - Testing en diferentes dispositivos
+   - Validación QA final
+
+NOTAS TÉCNICAS:
+===============
+- Usar StateFlow/SharedFlow pattern
+- Mantener SOLID principles
+- Separación clara de responsabilidades
+- Testing exhaustivo antes de merge
+
+COMANDOS ÚTILES:
+================
+./gradlew assembleDebug        # Build debug APK
+./gradlew test                 # Run unit tests
+./gradlew lint                 # Code quality check
+git status                     # Check changes
+git push                       # Push to remote
+
+CONTACTO/REFERENCIAS:
+====================
+- CLAUDE.md: Guías del proyecto
+- CHANGELOG.md: Historial detallado
+- Branch: feature/p2p-cancel-offer
+- Documentación: /docs (si existe)
+
+============================================
+Actualizar este archivo conforme se completen las tareas.
+Fecha última actualización: 2025-08-11
