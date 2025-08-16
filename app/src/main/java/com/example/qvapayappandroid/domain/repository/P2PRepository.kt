@@ -4,6 +4,7 @@ import com.example.qvapayappandroid.data.model.P2PFilterRequest
 import com.example.qvapayappandroid.data.model.P2POfferResponse
 import com.example.qvapayappandroid.data.model.P2POffer
 import com.example.qvapayappandroid.data.model.P2PApplyResponse
+import com.example.qvapayappandroid.data.model.P2PCancelResponse
 import com.example.qvapayappandroid.data.model.P2PCreateRequest
 import com.example.qvapayappandroid.data.model.P2PCreateResponse
 
@@ -32,4 +33,9 @@ interface P2PRepository {
         accessToken: String,
         page: Int? = null
     ): Result<P2POfferResponse>
+
+    suspend fun cancelP2POffer(
+        offerId: String,
+        accessToken: String? = null
+    ): Result<P2PCancelResponse>
 }

@@ -19,17 +19,22 @@ import androidx.navigation.compose.rememberNavController
 import com.example.qvapayappandroid.navigation.AppDestinations
 import com.example.qvapayappandroid.presentation.ui.components.BottomNavigationBar
 import com.example.qvapayappandroid.presentation.ui.home.HomeScreen
-import com.example.qvapayappandroid.presentation.ui.home.HomeViewModel
-import com.example.qvapayappandroid.presentation.ui.home.MyOfferDetailScreen
-import com.example.qvapayappandroid.presentation.ui.p2p.CreateP2POfferScreen
-import com.example.qvapayappandroid.presentation.ui.p2p.CreateP2POfferViewModel
+import com.example.qvapayappandroid.presentation.ui.p2p.createp2poffer.CreateP2POfferScreen
+import com.example.qvapayappandroid.presentation.ui.p2p.createp2poffer.CreateP2POfferViewModel
 import com.example.qvapayappandroid.presentation.ui.p2p.P2PScreen
-import com.example.qvapayappandroid.presentation.ui.p2p.P2POfferDetailScreen
 import com.example.qvapayappandroid.presentation.ui.p2p.P2PFiltersScreen
-import com.example.qvapayappandroid.presentation.ui.p2p.P2PViewModel
+import com.example.qvapayappandroid.presentation.ui.p2p.P2POfferDetailScreen
 import com.example.qvapayappandroid.presentation.ui.p2p.P2POfferDetailViewModel
+import com.example.qvapayappandroid.presentation.ui.p2p.p2pWebView.P2PWebViewScreen
 import com.example.qvapayappandroid.presentation.ui.settings.SettingsScreen
 import com.example.qvapayappandroid.presentation.ui.profile.UserProfileScreen
+import com.example.qvapayappandroid.presentation.ui.home.HomeViewModel
+import com.example.qvapayappandroid.presentation.ui.home.MyOfferDetailScreen
+import com.example.qvapayappandroid.presentation.ui.webview.WebViewFullScreen
+import androidx.compose.runtime.LaunchedEffect
+import com.example.qvapayappandroid.presentation.ui.p2p.P2PViewModel
+import com.example.qvapayappandroid.presentation.ui.templates.OfferTemplatesScreen
+import com.example.qvapayappandroid.presentation.ui.templates.SaveOfferTemplateScreen
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
@@ -39,14 +44,10 @@ fun MainScreen(
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
-    
-    
-    // Instancia compartida del ViewModel P2P
-    val sharedP2PViewModel: P2PViewModel = koinViewModel()
-    
-    // Instancia compartida del HomeViewModel
-    val sharedHomeViewModel: HomeViewModel = koinViewModel()
-    
+    val homeViewModel: HomeViewModel = koinViewModel()
+    val p2pViewModel: P2PViewModel = koinViewModel()
+    val offerDetailViewModel: P2POfferDetailViewModel = koinViewModel()
+
     Scaffold(
         bottomBar = {
             BottomNavigationBar(
@@ -65,26 +66,78 @@ fun MainScreen(
                     onCreateOffer = {
                         navController.navigate(AppDestinations.CreateP2POffer.route)
                     },
-                    onOfferClick = { offer ->
-                        offer.uuid?.let { uuid ->
-                            navController.navigate(AppDestinations.MyOfferDetail.createRoute(uuid))
-                        }
-                    },
-                    viewModel = sharedHomeViewModel
+                    navController = navController,
+                    viewModel = homeViewModel
                 )
+            }
+
+            composable(AppDestinations.MyOfferDetail.route) { backStackEntry ->
+                val offerId = backStackEntry.arguments?.getString("offerId")
+
+                if (offerId != null) {
+                    val uiState by homeViewModel.uiState.collectAsState()
+
+                    homeViewModel.getOfferById(offerId)?.let { offer ->
+                        MyOfferDetailScreen(
+                            offer = offer,
+                            onBackClick = {
+                                navController.navigateUp()
+                            },
+                            isCancellingOffer = uiState.isCancellingOffer,
+                            cancelOfferError = uiState.cancelOfferError,
+                            onCancelOffer = { id, onSuccess ->
+                                homeViewModel.cancelOffer(id, onSuccess)
+                            },
+                            onEditOffer = { offer ->
+                                // TODO: Implementar navegación a editar oferta
+                            },
+                            onShareOffer = { offer ->
+                                // TODO: Implementar compartir oferta
+                            },
+                            navController = navController
+                        )
+                    } ?: run {
+                        // Si no se encuentra la oferta, navegar de vuelta
+                        LaunchedEffect(Unit) {
+                            navController.navigateUp()
+                        }
+                    }
+                } else {
+                    // Si no hay offerId, navegar de vuelta
+                    LaunchedEffect(Unit) {
+                        navController.navigateUp()
+                    }
+                }
             }
             
             composable(AppDestinations.P2P.route) {
                 P2PScreen(
-                    viewModel = sharedP2PViewModel,
                     onOfferClick = { offer ->
                         offer.uuid?.let { uuid ->
                             navController.navigate(AppDestinations.P2POfferDetail.createRoute(uuid))
                         }
                     },
-                    onShowFilters = {
+                    onFiltersClick = {
                         navController.navigate(AppDestinations.P2PFilters.route)
-                    }
+                    },
+                    navController = navController,
+                    viewModel = p2pViewModel
+                )
+            }
+            
+            composable(AppDestinations.P2PFilters.route) {
+                val uiState by p2pViewModel.uiState.collectAsState()
+                
+                P2PFiltersScreen(
+                    onBackClick = {
+                        navController.popBackStack()
+                    },
+                    onApplyFilters = { offerType, coins ->
+                        p2pViewModel.applyFilters(offerType, coins)
+                    },
+                    selectedOfferType = uiState.selectedOfferType,
+                    selectedCoins = uiState.selectedCoins,
+                    availableCoins = uiState.availableCoins
                 )
             }
             
@@ -92,7 +145,7 @@ fun MainScreen(
                 val offerId = backStackEntry.arguments?.getString("offerId")
                 
                 if (offerId != null) {
-                    val offerDetailViewModel: P2POfferDetailViewModel = koinViewModel()
+
                     val uiState by offerDetailViewModel.uiState.collectAsState()
                     
                     LaunchedEffect(offerId) {
@@ -129,9 +182,11 @@ fun MainScreen(
                                 offer = uiState.offer!!,
                                 onBackClick = offerDetailViewModel::onBackClick,
                                 onContactUser = offerDetailViewModel::onContactUser,
-//                                onAcceptOffer = offerDetailViewModel::onAcceptOffer,
-//                                isApplying = uiState.isApplying,
-//                                applicationSuccessMessage = uiState.applicationSuccessMessage
+                                onAcceptOffer = {
+                                    uiState.offer?.uuid?.let { uuid ->
+                                        navController.navigate(AppDestinations.P2PWebView.createRoute(uuid))
+                                    }
+                                }
                             )
                         }
                         uiState.errorMessage != null -> {
@@ -185,88 +240,6 @@ fun MainScreen(
                 }
             }
             
-            composable(AppDestinations.MyOfferDetail.route) { backStackEntry ->
-                val offerId = backStackEntry.arguments?.getString("offerId")
-                
-                if (offerId != null) {
-                    val offer = sharedHomeViewModel.getOfferById(offerId)
-                    
-                    offer?.let { myOffer ->
-                        MyOfferDetailScreen(
-                            offer = myOffer,
-                            onBackClick = {
-                                navController.popBackStack()
-                            },
-                            onEditOffer = { offer ->
-                                // TODO: Implementar navegación a editar oferta
-                            },
-                            onShareOffer = { offer ->
-                                // TODO: Implementar compartir oferta
-                            }
-                        )
-                    } ?: run {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-                                Text(
-                                    text = "Oferta no encontrada",
-                                    style = MaterialTheme.typography.headlineSmall
-                                )
-                                Spacer(modifier = Modifier.height(8.dp))
-                                Text(
-                                    text = "La oferta que buscas no está disponible",
-                                    style = MaterialTheme.typography.bodyMedium
-                                )
-                                Spacer(modifier = Modifier.height(16.dp))
-                                Button(
-                                    onClick = { navController.popBackStack() }
-                                ) {
-                                    Text("Volver")
-                                }
-                            }
-                        }
-                    }
-                } else {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Text(
-                                text = "ID de oferta no válido",
-                                style = MaterialTheme.typography.headlineSmall
-                            )
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Button(
-                                onClick = { navController.popBackStack() }
-                            ) {
-                                Text("Volver")
-                            }
-                        }
-                    }
-                }
-            }
-            
-            composable(AppDestinations.P2PFilters.route) {
-                val uiState by sharedP2PViewModel.uiState.collectAsState()
-                
-                P2PFiltersScreen(
-                    uiState = uiState,
-                    onBackClick = {
-                        navController.popBackStack()
-                    },
-                    onApplyFilters = { offerType, coins ->
-                        sharedP2PViewModel.applyFilters(offerType, coins)
-                        navController.popBackStack()
-                    }
-                )
-            }
             
             composable(AppDestinations.CreateP2POffer.route) {
                 val createOfferViewModel: CreateP2POfferViewModel = koinViewModel()
@@ -278,8 +251,40 @@ fun MainScreen(
                     onSuccess = {
                         navController.popBackStack()
                     },
+                    onLoadTemplates = {
+                        navController.navigate(AppDestinations.Templates.route)
+                    },
+                    onSaveAsTemplate = { state ->
+                        navController.navigate(AppDestinations.SaveOfferTemplate.route)
+                    },
                     viewModel = createOfferViewModel
                 )
+            }
+            
+            composable(AppDestinations.WebView.route) {
+                WebViewFullScreen(
+                    onBackClick = {
+                        navController.popBackStack()
+                    },
+                    initialUrl = "https://qvapay.com"
+                )
+            }
+            
+            composable(AppDestinations.P2PWebView.route) { backStackEntry ->
+                val offerId = backStackEntry.arguments?.getString("offerId")
+                
+                if (offerId != null) {
+                    P2PWebViewScreen(
+                        offerId = offerId,
+                        onClose = {
+                            navController.popBackStack()
+                        }
+                    )
+                } else {
+                    LaunchedEffect(Unit) {
+                        navController.popBackStack()
+                    }
+                }
             }
             
             composable(AppDestinations.Settings.route) {
@@ -294,6 +299,44 @@ fun MainScreen(
             composable(AppDestinations.UserProfile.route) {
                 UserProfileScreen(
                     onLogout = onLogout
+                )
+            }
+            
+            composable(AppDestinations.Templates.route) {
+                OfferTemplatesScreen(
+                    onNavigateToEditTemplate = { templateId ->
+                        navController.navigate(AppDestinations.EditOfferTemplate.createRoute(templateId))
+                    },
+                    onNavigateToCreateTemplate = {
+                        navController.navigate(AppDestinations.SaveOfferTemplate.route)
+                    },
+                    onNavigateToCreateOffer = { template ->
+                        navController.navigate(AppDestinations.CreateP2POffer.route)
+                    }
+                )
+            }
+            
+            composable(AppDestinations.SaveOfferTemplate.route) {
+                SaveOfferTemplateScreen(
+                    onBackClick = {
+                        navController.popBackStack()
+                    },
+                    onSuccess = {
+                        navController.popBackStack()
+                    }
+                )
+            }
+            
+            composable(AppDestinations.EditOfferTemplate.route) { backStackEntry ->
+                val templateId = backStackEntry.arguments?.getString("templateId")?.toLongOrNull()
+                
+                SaveOfferTemplateScreen(
+                    onBackClick = {
+                        navController.popBackStack()
+                    },
+                    onSuccess = {
+                        navController.popBackStack()
+                    }
                 )
             }
         }

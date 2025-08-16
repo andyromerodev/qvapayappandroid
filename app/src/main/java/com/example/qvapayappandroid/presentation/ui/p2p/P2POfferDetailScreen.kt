@@ -36,9 +36,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -48,7 +45,6 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.example.qvapayappandroid.data.model.P2POffer
 import com.example.qvapayappandroid.presentation.ui.p2p.components.KycChipMiniM3
-import com.example.qvapayappandroid.presentation.ui.webview.WebViewScreen
 import com.example.qvapayappandroid.presentation.ui.p2p.components.MiniCardM3
 import com.example.qvapayappandroid.presentation.ui.p2p.components.OfferChipMiniM3
 import com.example.qvapayappandroid.presentation.ui.p2p.components.getRatio
@@ -63,13 +59,11 @@ fun P2POfferDetailScreen(
     offer: P2POffer,
     onBackClick: () -> Unit,
     onContactUser: () -> Unit = {},
+    onAcceptOffer: () -> Unit = {},
     viewModel: P2POfferDetailViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     
-    // Estado para controlar la visibilidad del WebView y el diálogo
-    var showWebView by remember { mutableStateOf(false) }
-    var showConfirmDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         viewModel.effect.collect { effect ->
@@ -85,51 +79,26 @@ fun P2POfferDetailScreen(
         }
     }
 
-    if (showWebView) {
-        WebViewScreen(
-            onClose = { 
-                showWebView = false
-                showConfirmDialog = false
-            },
-            customUrl = "https://qvapay.com/p2p/${offer.uuid}",
-            showConfirmDialog = showConfirmDialog,
-            offer = offer,
-            onAcceptOffer = {
-                // El WebViewScreen ya maneja la llamada a applyToP2POffer
-                // Solo necesitamos cerrar el diálogo después
-                showConfirmDialog = false
-                showWebView = false
-            },
-            onCancelOffer = {
-                showConfirmDialog = false
-                showWebView = false
-            }
-        )
-    } else {
-        P2POfferDetailContent(
-            offer = offer,
-            uiState = uiState,
-            onBackClick = { viewModel.onBackClick() },
-            onContactUser = onContactUser,
-            onAcceptOffer = { 
-                showWebView = true
-                showConfirmDialog = true
-            },
-            modifier = modifier
-        )
-    }
+    P2POfferDetailContent(
+        offer = offer,
+        uiState = uiState,
+        onBackClick = onBackClick,
+        onContactUser = onContactUser,
+        onAcceptOffer = onAcceptOffer,
+        modifier = modifier
+    )
 
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun P2POfferDetailContent(
+    modifier: Modifier = Modifier,
     offer: P2POffer,
     uiState: P2POfferDetailViewModel.UiState,
     onBackClick: () -> Unit,
     onContactUser: () -> Unit,
     onAcceptOffer: () -> Unit,
-    modifier: Modifier = Modifier
 ) {
     Scaffold(
         topBar = {
@@ -182,7 +151,8 @@ private fun P2POfferDetailContent(
             ActionButtonsRow(
                 onContactUser = onContactUser,
                 onAcceptOffer = onAcceptOffer,
-                isApplying = uiState.isApplying
+                isApplying = uiState.isApplying,
+                isOfferApplied = false
             )
         }
     }
@@ -600,10 +570,11 @@ private fun ErrorMessageCard(
 
 @Composable
 private fun ActionButtonsRow(
+    modifier: Modifier = Modifier,
     onContactUser: () -> Unit,
     onAcceptOffer: () -> Unit,
     isApplying: Boolean,
-    modifier: Modifier = Modifier
+    isOfferApplied: Boolean = false
 ) {
     Row(
         modifier = modifier.fillMaxWidth(),
@@ -621,20 +592,28 @@ private fun ActionButtonsRow(
         Button(
             onClick = onAcceptOffer,
             modifier = Modifier.weight(1f),
-            enabled = !isApplying
+            enabled = !isApplying && !isOfferApplied
         ) {
-            if (isApplying) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(16.dp),
-                    strokeWidth = 2.dp,
-                    color = MaterialTheme.colorScheme.onPrimary
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Aplicando...")
-            } else {
-                Icon(Icons.Default.Check, contentDescription = null)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Aceptar Oferta")
+            when {
+                isOfferApplied -> {
+                    Icon(Icons.Default.Check, contentDescription = null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Oferta Aplicada")
+                }
+                isApplying -> {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(16.dp),
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Aplicando...")
+                }
+                else -> {
+                    Icon(Icons.Default.Check, contentDescription = null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Aceptar Oferta")
+                }
             }
         }
     }

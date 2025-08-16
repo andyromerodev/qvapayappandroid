@@ -14,6 +14,15 @@ sealed class AppDestinations(val route: String) {
     }
     object P2PFilters : AppDestinations("p2p_filters")
     object CreateP2POffer : AppDestinations("create_p2p_offer")
+    object Templates : AppDestinations("templates")
+    object SaveOfferTemplate : AppDestinations("save_offer_template") 
+    object EditOfferTemplate : AppDestinations("edit_offer_template/{templateId}") {
+        fun createRoute(templateId: Long) = "edit_offer_template/$templateId"
+    }
+    object WebView : AppDestinations("webview")
+    object P2PWebView : AppDestinations("p2p_webview/{offerId}") {
+        fun createRoute(offerId: String) = "p2p_webview/$offerId"
+    }
     object Settings : AppDestinations("settings")
     object UserProfile : AppDestinations("user_profile")
     

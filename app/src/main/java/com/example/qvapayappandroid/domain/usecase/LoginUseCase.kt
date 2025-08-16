@@ -20,9 +20,9 @@ class LoginUseCase(
             return Result.failure(IllegalArgumentException("Password is required"))
         }
         
-        if (code.isBlank()) {
-            return Result.failure(IllegalArgumentException("Code is required"))
-        }
+//        if (code.isBlank()) {
+//            return Result.failure(IllegalArgumentException("Code is required"))
+//        }
         
         val request = LoginRequest(
             email = email.trim(),

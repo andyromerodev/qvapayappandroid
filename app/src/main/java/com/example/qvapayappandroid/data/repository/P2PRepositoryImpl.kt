@@ -6,6 +6,7 @@ import com.example.qvapayappandroid.data.model.P2PFilterRequest
 import com.example.qvapayappandroid.data.model.P2POfferResponse
 import com.example.qvapayappandroid.data.model.P2POffer
 import com.example.qvapayappandroid.data.model.P2PApplyResponse
+import com.example.qvapayappandroid.data.model.P2PCancelResponse
 import com.example.qvapayappandroid.data.model.P2PCreateRequest
 import com.example.qvapayappandroid.data.model.P2PCreateResponse
 import com.example.qvapayappandroid.domain.repository.P2PRepository
@@ -139,6 +140,29 @@ class P2PRepositoryImpl(
             
         } catch (e: Exception) {
             Log.e("P2PRepository", "P2P repository error for my offers: ${e.message}", e)
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun cancelP2POffer(
+        offerId: String,
+        accessToken: String?
+    ): Result<P2PCancelResponse> {
+        return try {
+            Log.d("P2PRepository", "Cancelling P2P offer ID: $offerId")
+            Log.d("P2PRepository", "Access token provided: ${accessToken != null}")
+            p2pDataSource.cancelP2POffer(offerId, accessToken).fold(
+                onSuccess = { response ->
+                    Log.d("P2PRepository", "P2P offer cancelled successfully - Message: ${response.msg}")
+                    Result.success(response)
+                },
+                onFailure = { error ->
+                    Log.e("P2PRepository", "Failed to cancel P2P offer: ${error.message}")
+                    Result.failure(error)
+                }
+            )
+        } catch (e: Exception) {
+            Log.e("P2PRepository", "P2P repository error for offer cancellation: ${e.message}", e)
             Result.failure(e)
         }
     }

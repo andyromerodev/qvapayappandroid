@@ -26,11 +26,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import android.util.Log
+import androidx.navigation.NavController
 import com.example.qvapayappandroid.data.model.P2POffer
+import com.example.qvapayappandroid.navigation.AppDestinations
 import com.example.qvapayappandroid.presentation.ui.home.components.EmptyOffersState
 import com.example.qvapayappandroid.presentation.ui.home.components.ErrorCard
 import com.example.qvapayappandroid.presentation.ui.home.components.LoadingMoreIndicator
 import com.example.qvapayappandroid.presentation.ui.home.components.MyOfferCard
+import com.example.qvapayappandroid.presentation.ui.home.components.MyOfferShimmerEffect
 import com.example.qvapayappandroid.presentation.ui.home.components.StatusFilterChips
 import org.koin.androidx.compose.koinViewModel
 
@@ -38,8 +41,8 @@ import org.koin.androidx.compose.koinViewModel
 @Composable
 fun HomeScreen(
     onCreateOffer: () -> Unit = {},
-    onOfferClick: (P2POffer) -> Unit = {},
-    viewModel: HomeViewModel = koinViewModel()
+    viewModel: HomeViewModel,
+    navController: NavController? = null
 ) {
     val uiState by viewModel.uiState.collectAsState()
     
@@ -66,7 +69,11 @@ fun HomeScreen(
             onLoadMore = { viewModel.loadMoreOffers() },
             onClearError = { viewModel.clearOffersError() },
             onStatusToggle = { viewModel.toggleStatusFilter(it) },
-            onOfferClick = onOfferClick,
+            onOfferClick = { offer ->
+                offer.uuid?.let { offerId ->
+                    navController?.navigate(AppDestinations.MyOfferDetail.createRoute(offerId))
+                }
+            },
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
@@ -146,7 +153,11 @@ private fun MyP2POffersSection(
                     )
                 }
                 
-                uiState.myOffers.isEmpty() && !uiState.isLoadingOffers -> {
+                uiState.isLoadingOffers -> {
+                    MyOfferShimmerEffect()
+                }
+                
+                uiState.myOffers.isEmpty() -> {
                     EmptyOffersState(
                         onRetry = onRefresh
                     )

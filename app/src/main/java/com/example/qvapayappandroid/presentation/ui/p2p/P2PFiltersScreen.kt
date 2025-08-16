@@ -19,37 +19,39 @@ import androidx.compose.ui.unit.sp
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun P2PFiltersScreen(
-    uiState: P2PUiState,
+    modifier: Modifier = Modifier,
     onBackClick: () -> Unit,
     onApplyFilters: (String, List<String>) -> Unit,
-    modifier: Modifier = Modifier
+    selectedOfferType: String,
+    selectedCoins: List<String>,
+    availableCoins: List<String>
 ) {
-    var selectedOfferType by remember { mutableStateOf(uiState.selectedOfferType) }
-    var selectedCoins by remember { mutableStateOf(uiState.selectedCoins.toSet()) }
+    var localSelectedOfferType by remember { mutableStateOf(selectedOfferType) }
+    var localSelectedCoins by remember { mutableStateOf(selectedCoins.toSet()) }
 
-    LaunchedEffect(uiState.selectedOfferType, uiState.selectedCoins) {
-        selectedOfferType = uiState.selectedOfferType
-        selectedCoins = uiState.selectedCoins.toSet()
+    LaunchedEffect(selectedOfferType, selectedCoins) {
+        localSelectedOfferType = selectedOfferType
+        localSelectedCoins = selectedCoins.toSet()
     }
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-    ) {
-        TopAppBar(
-            title = { Text("Filtros P2P", fontSize = 18.sp) },
-            navigationIcon = {
-                IconButton(onClick = onBackClick) {
-                    Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Filtros P2P", fontSize = 18.sp) },
+                navigationIcon = {
+                    IconButton(onClick = onBackClick) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
+                    }
                 }
-            }
-        )
-
+            )
+        }
+    ) { paddingValues ->
         Column(
-            modifier = Modifier
+            modifier = modifier
                 .fillMaxSize()
+                .padding(paddingValues)
                 .padding(10.dp)
+                .verticalScroll(rememberScrollState())
         ) {
             // Tipo de oferta
             Card(
@@ -82,9 +84,9 @@ fun P2PFiltersScreen(
                     ) {
                         listOf("all" to "Todas", "buy" to "Compra", "sell" to "Venta").forEach { (type, label) ->
                             FilterChip(
-                                onClick = { selectedOfferType = type },
+                                onClick = { localSelectedOfferType = type },
                                 label = { Text(label, fontSize = 13.sp) },
-                                selected = selectedOfferType == type,
+                                selected = localSelectedOfferType == type,
                                 modifier = Modifier.weight(1f)
                             )
                         }
@@ -130,19 +132,19 @@ fun P2PFiltersScreen(
                             fontWeight = FontWeight.Normal
                         )
                         Switch(
-                            checked = selectedCoins.isEmpty(),
+                            checked = localSelectedCoins.isEmpty(),
                             onCheckedChange = {
-                                if (it) selectedCoins = setOf()
+                                if (it) localSelectedCoins = setOf()
                             },
                             modifier = Modifier.scale(0.85f)
                         )
                     }
 
-                    if (selectedCoins.isNotEmpty() || uiState.availableCoins.isNotEmpty()) {
+                    if (localSelectedCoins.isNotEmpty() || availableCoins.isNotEmpty()) {
                         HorizontalDivider(modifier = Modifier.padding(vertical = 6.dp))
 
                         // Toggles para monedas específicas
-                        uiState.availableCoins.forEach { coin ->
+                        availableCoins.forEach { coin ->
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -153,18 +155,18 @@ fun P2PFiltersScreen(
                                     style = MaterialTheme.typography.bodySmall
                                 )
                                 Switch(
-                                    checked = selectedCoins.contains(coin),
+                                    checked = localSelectedCoins.contains(coin),
                                     onCheckedChange = { isChecked ->
-                                        selectedCoins = if (isChecked) {
-                                            selectedCoins + coin
+                                        localSelectedCoins = if (isChecked) {
+                                            localSelectedCoins + coin
                                         } else {
-                                            selectedCoins - coin
+                                            localSelectedCoins - coin
                                         }
                                     },
                                     modifier = Modifier.scale(0.85f)
                                 )
                             }
-                            if (coin != uiState.availableCoins.last()) {
+                            if (coin != availableCoins.last()) {
                                 Spacer(modifier = Modifier.height(4.dp))
                             }
                         }
@@ -181,8 +183,8 @@ fun P2PFiltersScreen(
             ) {
                 OutlinedButton(
                     onClick = {
-                        selectedOfferType = "all"
-                        selectedCoins = setOf()
+                        localSelectedOfferType = "all"
+                        localSelectedCoins = setOf()
                     },
                     modifier = Modifier.weight(1f),
                     contentPadding = PaddingValues(vertical = 7.dp)
@@ -192,7 +194,8 @@ fun P2PFiltersScreen(
 
                 Button(
                     onClick = {
-                        onApplyFilters(selectedOfferType, selectedCoins.toList())
+                        onApplyFilters(localSelectedOfferType, localSelectedCoins.toList())
+                        onBackClick()
                     },
                     modifier = Modifier.weight(1f),
                     contentPadding = PaddingValues(vertical = 7.dp)

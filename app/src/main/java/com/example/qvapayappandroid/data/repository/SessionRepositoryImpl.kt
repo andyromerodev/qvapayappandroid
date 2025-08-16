@@ -91,7 +91,15 @@ private fun User.toUserEntity(): UserEntity {
         nameVerified = nameVerified,
         coverPhotoUrl = coverPhotoUrl,
         profilePhotoUrl = profilePhotoUrl,
-        averageRating = averageRating
+        averageRating = averageRating,
+        twoFactorSecret = twoFactorSecret,
+        twoFactorResetCode = twoFactorResetCode,
+        phoneRequestId = phoneRequestId,
+        canWithdraw = canWithdraw,
+        canDeposit = canDeposit,
+        canTransfer = canTransfer,
+        canBuy = canBuy,
+        canSell = canSell
     )
 }
 
@@ -119,6 +127,14 @@ private fun UserEntity.toUser(): User {
         nameVerified = nameVerified,
         coverPhotoUrl = coverPhotoUrl,
         profilePhotoUrl = profilePhotoUrl,
-        averageRating = averageRating
+        averageRating = averageRating,
+        twoFactorSecret = twoFactorSecret,
+        twoFactorResetCode = twoFactorResetCode,
+        phoneRequestId = phoneRequestId,
+        canWithdraw = canWithdraw,
+        canDeposit = canDeposit,
+        canTransfer = canTransfer,
+        canBuy = canBuy,
+        canSell = canSell
     )
 }

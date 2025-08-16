@@ -18,20 +18,25 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.navigation.NavController
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -55,16 +60,23 @@ import java.util.Locale
 fun MyOfferDetailScreen(
     offer: P2POffer,
     onBackClick: () -> Unit,
+    modifier: Modifier = Modifier,
     onEditOffer: (P2POffer) -> Unit = {},
     onShareOffer: (P2POffer) -> Unit = {},
-    modifier: Modifier = Modifier
+    isCancellingOffer: String? = null,
+    cancelOfferError: String? = null,
+    onCancelOffer: (String, () -> Unit) -> Unit = { _, _ -> },
+    navController: NavController? = null
 ) {
+
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Detalles de mi Oferta") },
                 navigationIcon = {
-                    IconButton(onClick = onBackClick) {
+                    IconButton(onClick = { 
+                        navController?.navigateUp() ?: onBackClick()
+                    }) {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Volver"
@@ -102,20 +114,34 @@ fun MyOfferDetailScreen(
         ) {
             // Estado y participantes
             ParticipantsCard(offer = offer)
-            
+
             // Información de la transacción
             TransactionInfoCard(offer = offer)
-            
+
             // Detalles adicionales
             AdditionalDetailsCard(offer = offer)
-            
+
             // Mensaje si existe
             offer.message?.takeIf { it.isNotBlank() }?.let { message ->
                 MessageCard(message = message)
             }
-            
+
             // Información temporal
             DateInfoCard(offer = offer)
+
+            // Botón de cancelar si el status es "processing" o "open"
+            if (offer.status?.lowercase() == "processing" || offer.status?.lowercase() == "open") {
+                CancelOfferButton(
+                    offerId = offer.uuid ?: "",
+                    onCancelOffer = { offerId ->
+                        onCancelOffer(offerId) {
+                            navController?.navigateUp() ?: onBackClick()
+                        }
+                    },
+                    isCancellingOffer = isCancellingOffer,
+                    cancelOfferError = cancelOfferError
+                )
+            }
         }
     }
 }
@@ -148,9 +174,9 @@ private fun ParticipantsCard(
                 )
                 MyOfferStatusChip(status = offer.status)
             }
-            
+
             Spacer(modifier = Modifier.height(16.dp))
-            
+
             // Participantes
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -197,18 +223,18 @@ private fun ParticipantsCard(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-                
+
                 Spacer(modifier = Modifier.width(24.dp))
-                
+
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                     contentDescription = "hacia",
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(24.dp)
                 )
-                
+
                 Spacer(modifier = Modifier.width(24.dp))
-                
+
                 // Peer
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally
@@ -274,9 +300,9 @@ private fun TransactionInfoCard(
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
-            
+
             Spacer(modifier = Modifier.height(16.dp))
-            
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -296,9 +322,9 @@ private fun TransactionInfoCard(
                     )
                 }
             }
-            
+
             Spacer(modifier = Modifier.height(12.dp))
-            
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -306,8 +332,8 @@ private fun TransactionInfoCard(
                 Box(modifier = Modifier.weight(1f)) {
                     MiniCardM3(
                         label = "Tipo de Moneda",
-                        value = offer.coinData?.tick 
-                            ?: offer.coinData?.name 
+                        value = offer.coinData?.tick
+                            ?: offer.coinData?.name
                             ?: offer.coin ?: "N/A",
                         color = MaterialTheme.colorScheme.secondary,
                         isTag = true
@@ -345,9 +371,9 @@ private fun AdditionalDetailsCard(
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
-            
+
             Spacer(modifier = Modifier.height(16.dp))
-            
+
             // Chips
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -361,9 +387,9 @@ private fun AdditionalDetailsCard(
                     VipChipMiniM3()
                 }
             }
-            
+
             Spacer(modifier = Modifier.height(16.dp))
-            
+
             // Información adicional
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -412,9 +438,9 @@ private fun MessageCard(
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
-            
+
             Spacer(modifier = Modifier.height(8.dp))
-            
+
             Text(
                 text = message,
                 style = MaterialTheme.typography.bodyMedium,
@@ -444,9 +470,9 @@ private fun DateInfoCard(
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
-            
+
             Spacer(modifier = Modifier.height(16.dp))
-            
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -475,8 +501,86 @@ private fun DateInfoCard(
 }
 
 @Composable
+private fun CancelOfferButton(
+    offerId: String,
+    onCancelOffer: (String) -> Unit,
+    isCancellingOffer: String?,
+    cancelOfferError: String?,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = "Cancelar Oferta",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onErrorContainer
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = "Esta oferta está activa o en proceso. Puedes cancelarla si es necesario.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onErrorContainer
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            if (isCancellingOffer == offerId) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        color = MaterialTheme.colorScheme.onErrorContainer
+                    )
+                    Text(
+                        text = "Cancelando...",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onErrorContainer
+                    )
+                }
+            } else {
+                OutlinedButton(
+                    onClick = { onCancelOffer(offerId) },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Cancel,
+                        contentDescription = "Cancelar",
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Cancelar Oferta")
+                }
+            }
+
+            cancelOfferError?.let { error ->
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = error,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
+        }
+    }
+}
+
+@Composable
 private fun VipChipMiniM3() {
-    androidx.compose.material3.Surface(
+    Surface(
         color = MaterialTheme.colorScheme.secondaryContainer,
         shape = CircleShape
     ) {

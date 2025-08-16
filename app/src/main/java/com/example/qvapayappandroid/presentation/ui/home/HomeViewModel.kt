@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.qvapayappandroid.data.model.P2POffer
 import com.example.qvapayappandroid.domain.usecase.GetMyP2POffersUseCase
+import com.example.qvapayappandroid.domain.usecase.CancelP2POfferUseCase
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -12,7 +13,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class HomeViewModel(
-    private val getMyP2POffersUseCase: GetMyP2POffersUseCase
+    private val getMyP2POffersUseCase: GetMyP2POffersUseCase,
+    private val cancelP2POfferUseCase: CancelP2POfferUseCase
 ) : ViewModel() {
     
     private val _uiState = MutableStateFlow(HomeUiState())
@@ -199,6 +201,37 @@ class HomeViewModel(
     fun getOfferById(offerId: String): P2POffer? {
         return _uiState.value.myOffers.find { it.uuid == offerId }
     }
+    
+    fun cancelOffer(offerId: String, onSuccess: (() -> Unit)? = null) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isCancellingOffer = offerId)
+            
+            cancelP2POfferUseCase(offerId).fold(
+                onSuccess = { response ->
+                    Log.d("HomeViewModel", "Offer cancelled successfully: ${response.msg}")
+                    _uiState.value = _uiState.value.copy(
+                        isCancellingOffer = null,
+                        cancelOfferError = null
+                    )
+                    // Refresh offers to get updated status
+                    refreshOffers()
+                    // Execute navigation callback if provided
+                    onSuccess?.invoke()
+                },
+                onFailure = { error ->
+                    Log.e("HomeViewModel", "Failed to cancel offer: ${error.message}")
+                    _uiState.value = _uiState.value.copy(
+                        isCancellingOffer = null,
+                        cancelOfferError = error.message ?: "Error cancelando oferta"
+                    )
+                }
+            )
+        }
+    }
+    
+    fun clearCancelOfferError() {
+        _uiState.value = _uiState.value.copy(cancelOfferError = null)
+    }
 }
 
 data class HomeUiState(
@@ -209,5 +242,7 @@ data class HomeUiState(
     val offersError: String? = null,
     val currentPage: Int = 1,
     val hasNextPage: Boolean = true,
-    val isLoadingMore: Boolean = false
+    val isLoadingMore: Boolean = false,
+    val isCancellingOffer: String? = null,
+    val cancelOfferError: String? = null
 )
