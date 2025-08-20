@@ -12,6 +12,7 @@ import com.example.qvapayappandroid.data.datasource.SettingsLocalDataSource
 import com.example.qvapayappandroid.data.datasource.SettingsLocalDataSourceImpl
 import com.example.qvapayappandroid.data.datasource.WebViewLoginDataSource
 import com.example.qvapayappandroid.data.datasource.WebViewLoginDataSourceImpl
+import com.example.qvapayappandroid.data.permissions.NotificationPermissionManager
 import com.example.qvapayappandroid.data.repository.AuthRepositoryImpl
 import com.example.qvapayappandroid.data.repository.OfferAlertRepositoryImpl
 import com.example.qvapayappandroid.data.repository.OfferTemplateRepositoryImpl
@@ -45,6 +46,9 @@ val dataModule = module {
 
     // WebView DataSource
     single<WebViewLoginDataSource> { WebViewLoginDataSourceImpl() }
+
+    // Permissions Manager
+    single { NotificationPermissionManager(androidContext()) }
 
     // Work Manager
     single { OfferAlertWorkManager(androidContext()) }

@@ -12,6 +12,7 @@ import com.example.qvapayappandroid.MainActivity
 import com.example.qvapayappandroid.R
 import com.example.qvapayappandroid.data.model.P2PFilterRequest
 import com.example.qvapayappandroid.data.model.P2POffer
+import com.example.qvapayappandroid.data.permissions.NotificationPermissionManager
 import com.example.qvapayappandroid.domain.model.OfferAlert
 import com.example.qvapayappandroid.domain.repository.OfferAlertRepository
 import com.example.qvapayappandroid.domain.repository.P2PRepository
@@ -141,6 +142,21 @@ class OfferCheckWorker(
     }
 
     private fun sendOfferNotification(alert: OfferAlert, offer: P2POffer) {
+        // Verificar permisos de notificaciones antes de enviar
+        val permissionManager = NotificationPermissionManager(applicationContext)
+        val permissionStatus = permissionManager.getNotificationPermissionStatus()
+        
+        if (!permissionStatus.isFullyEnabled) {
+            android.util.Log.w(
+                "OfferCheckWorker", 
+                "Cannot send notification - permissions not granted. " +
+                "Granted: ${permissionStatus.isGranted}, " +
+                "Channel enabled: ${permissionStatus.isChannelEnabled}, " +
+                "Can show: ${permissionStatus.canShowNotifications}"
+            )
+            return
+        }
+
         createNotificationChannel()
 
         val intent = Intent(applicationContext, MainActivity::class.java).apply {
@@ -173,8 +189,13 @@ class OfferCheckWorker(
             .build()
 
         val notificationManager = applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        //Ajustar el sistema de notificacion para android +13
-        notificationManager.notify(alert.id.toInt(), notification)
+        
+        try {
+            notificationManager.notify(alert.id.toInt(), notification)
+            android.util.Log.d("OfferCheckWorker", "Notification sent successfully for alert ${alert.id}")
+        } catch (e: Exception) {
+            android.util.Log.e("OfferCheckWorker", "Failed to send notification", e)
+        }
     }
 
     private fun createNotificationChannel() {

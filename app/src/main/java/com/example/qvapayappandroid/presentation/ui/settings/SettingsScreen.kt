@@ -19,6 +19,7 @@ import org.koin.androidx.compose.koinViewModel
 fun SettingsScreen(
     onLogout: () -> Unit = {},
     onProfileClick: () -> Unit = {},
+    onAlertsClick: () -> Unit = {},
     viewModel: SettingsViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -72,6 +73,7 @@ fun SettingsScreen(
                     onThemeChange = { viewModel.changeTheme(it) },
                     onLanguageChange = { viewModel.changeLanguage(it) },
                     onProfileClick = onProfileClick,
+                    onAlertsClick = onAlertsClick,
                     onChangePassword = { viewModel.changePassword() },
                     onPrivacySettings = { viewModel.privacySettings() },
                     onAbout = { viewModel.showAbout() },
@@ -123,6 +125,7 @@ private fun SettingsContent(
     onThemeChange: (String) -> Unit,
     onLanguageChange: (String) -> Unit,
     onProfileClick: () -> Unit,
+    onAlertsClick: () -> Unit,
     onChangePassword: () -> Unit,
     onPrivacySettings: () -> Unit,
     onAbout: () -> Unit,
@@ -197,6 +200,18 @@ private fun SettingsContent(
                     )
                 },
                 onClick = { onLanguageChange("Español") }
+            )
+        }
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        // P2P Section
+        SettingsSection(title = "P2P") {
+            SettingsItem(
+                icon = Icons.Default.NotificationImportant,
+                title = "Alertas de Ofertas",
+                subtitle = "Configurar notificaciones para ofertas P2P",
+                onClick = onAlertsClick
             )
         }
         

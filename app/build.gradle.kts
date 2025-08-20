@@ -81,6 +81,9 @@ dependencies {
     
     // WorkManager
     implementation(libs.androidx.work.runtime.ktx)
+    
+    // Core for NotificationCompat
+    implementation(libs.androidx.core)
 
 
     testImplementation(libs.junit)

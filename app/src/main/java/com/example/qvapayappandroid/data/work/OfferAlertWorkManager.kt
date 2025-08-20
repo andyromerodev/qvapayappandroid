@@ -1,8 +1,9 @@
 package com.example.qvapayappandroid.data.work
 
 import android.content.Context
-import androidx.lifecycle.LiveData
 import androidx.work.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import java.util.concurrent.TimeUnit
 
 class OfferAlertWorkManager(private val context: Context) {
@@ -55,9 +56,9 @@ class OfferAlertWorkManager(private val context: Context) {
         WorkManager.getInstance(context).enqueue(workRequest)
     }
 
-    fun getWorkStatus(): LiveData<List<WorkInfo>> {
+    fun getWorkStatus(): Flow<List<WorkInfo>> {
         return WorkManager.getInstance(context)
-            .getWorkInfosForUniqueWorkLiveData(UNIQUE_WORK_NAME)
+            .getWorkInfosForUniqueWorkFlow(UNIQUE_WORK_NAME)
     }
 
     fun isWorkScheduled(): Boolean {
