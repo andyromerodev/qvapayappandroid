@@ -35,6 +35,7 @@ import androidx.compose.runtime.LaunchedEffect
 import com.example.qvapayappandroid.presentation.ui.p2p.P2PViewModel
 import com.example.qvapayappandroid.presentation.ui.templates.OfferTemplatesScreen
 import com.example.qvapayappandroid.presentation.ui.templates.SaveOfferTemplateScreen
+import com.example.qvapayappandroid.presentation.ui.alerts.OfferAlertsScreen
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
@@ -292,6 +293,9 @@ fun MainScreen(
                     onLogout = onLogout,
                     onProfileClick = {
                         navController.navigate(AppDestinations.UserProfile.route)
+                    },
+                    onAlertsClick = {
+                        navController.navigate(AppDestinations.OfferAlerts.route)
                     }
                 )
             }
@@ -299,6 +303,12 @@ fun MainScreen(
             composable(AppDestinations.UserProfile.route) {
                 UserProfileScreen(
                     onLogout = onLogout
+                )
+            }
+            
+            composable(AppDestinations.OfferAlerts.route) {
+                OfferAlertsScreen(
+                    navController = navController
                 )
             }
             

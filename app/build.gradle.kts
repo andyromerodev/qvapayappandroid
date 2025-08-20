@@ -78,6 +78,12 @@ dependencies {
     
     // Material Icons Extended
     implementation(libs.androidx.material.icons.extended)
+    
+    // WorkManager
+    implementation(libs.androidx.work.runtime.ktx)
+    
+    // Core for NotificationCompat
+    implementation(libs.androidx.core)
 
 
     testImplementation(libs.junit)

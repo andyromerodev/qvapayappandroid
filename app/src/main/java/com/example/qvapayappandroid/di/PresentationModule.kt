@@ -1,5 +1,6 @@
 package com.example.qvapayappandroid.di
 
+import com.example.qvapayappandroid.presentation.ui.alerts.OfferAlertsViewModel
 import com.example.qvapayappandroid.presentation.ui.home.HomeViewModel
 import com.example.qvapayappandroid.presentation.ui.login.LoginViewModel
 import com.example.qvapayappandroid.presentation.ui.main.MainViewModel
@@ -33,4 +34,7 @@ val presentationModule = module {
     // Templates ViewModels
     viewModel { OfferTemplatesViewModel(get(), get(), get(), get(), get()) }
     viewModel { SaveOfferTemplateViewModel(get(), get(), get(), get()) }
+    
+    // Alerts ViewModels
+    viewModel { OfferAlertsViewModel(get(), get(), get(), get(), get(), get(), get()) }
 }

@@ -24,6 +24,11 @@ sealed class AppDestinations(val route: String) {
         fun createRoute(offerId: String) = "p2p_webview/$offerId"
     }
     object Settings : AppDestinations("settings")
+    object OfferAlerts : AppDestinations("offer_alerts")
+    object CreateOfferAlert : AppDestinations("create_offer_alert")
+    object EditOfferAlert : AppDestinations("edit_offer_alert/{alertId}") {
+        fun createRoute(alertId: Long) = "edit_offer_alert/$alertId"
+    }
     object UserProfile : AppDestinations("user_profile")
     
     companion object {
