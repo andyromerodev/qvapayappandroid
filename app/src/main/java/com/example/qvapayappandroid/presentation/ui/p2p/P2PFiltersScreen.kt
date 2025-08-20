@@ -1,11 +1,12 @@
 package com.example.qvapayappandroid.presentation.ui.p2p
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -13,8 +14,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.material3.LocalMinimumInteractiveComponentSize
+import androidx.compose.ui.platform.LocalLayoutDirection
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -40,26 +44,59 @@ fun P2PFiltersScreen(
                 title = { Text("Filtros P2P", fontSize = 18.sp) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver")
                     }
                 }
             )
+        },
+
+        bottomBar = {
+            Surface(tonalElevation = 2.dp) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .navigationBarsPadding()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = {
+                            localSelectedOfferType = "all"
+                            localSelectedCoins = setOf()
+                        },
+                        modifier = Modifier.weight(1f),
+                        contentPadding = PaddingValues(vertical = 4.dp)
+                    ) { Text("Limpiar", fontSize = 13.sp) }
+
+                    Button(
+                        onClick = {
+                            onApplyFilters(localSelectedOfferType, localSelectedCoins.toList())
+                            onBackClick()
+                        },
+                        modifier = Modifier.weight(1f),
+                        contentPadding = PaddingValues(vertical = 4.dp)
+                    ) { Text("Filtrar", fontSize = 13.sp) }
+                }
+            }
         }
     ) { paddingValues ->
         Column(
             modifier = modifier
                 .fillMaxSize()
-                .padding(paddingValues)
-                .padding(10.dp)
-                .verticalScroll(rememberScrollState())
+                .padding(
+                    start = paddingValues.calculateStartPadding(LocalLayoutDirection.current),
+                    top   = paddingValues.calculateTopPadding(),
+                    end   = paddingValues.calculateEndPadding(LocalLayoutDirection.current)
+                )
+                .padding(8.dp)
         ) {
             // Tipo de oferta
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(10.dp)
+                shape = RoundedCornerShape(8.dp)
             ) {
                 Column(
-                    modifier = Modifier.padding(10.dp)
+                    modifier = Modifier.padding(8.dp)
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
@@ -76,7 +113,7 @@ fun P2PFiltersScreen(
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(10.dp))
+                    Spacer(modifier = Modifier.height(6.dp))
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -94,15 +131,19 @@ fun P2PFiltersScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(6.dp))
 
             // Monedas
             Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(10.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),                 // ⬅️ ocupa todo el espacio libre
+                shape = RoundedCornerShape(8.dp)
             ) {
                 Column(
-                    modifier = Modifier.padding(10.dp)
+                    modifier = Modifier
+                        .fillMaxSize()           // ⬅️ la Card realmente se estira
+                        .padding(8.dp)
                 ) {
                     Text(
                         text = "Monedas",
@@ -110,130 +151,106 @@ fun P2PFiltersScreen(
                         fontWeight = FontWeight.SemiBold
                     )
 
-                    Spacer(modifier = Modifier.height(10.dp))
+                    Spacer(modifier = Modifier.height(4.dp))
 
-                    Text(
-                        text = "Selecciona las monedas que quieres ver:",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    // Toggle para "Todas las monedas" - Mutually exclusive
+                    CoinToggleRow(
+                        text = "Todas las monedas",
+                        isChecked = localSelectedCoins.isEmpty(),
+                        onCheckedChange = { isChecked ->
+                            if (isChecked) {
+                                localSelectedCoins = setOf()
+                            }
+                        }
                     )
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    if (availableCoins.isNotEmpty()) {
+                        HorizontalDivider(modifier = Modifier.padding(vertical = 3.dp))
 
-                    // Toggle para "Todas las monedas"
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "Todas las monedas",
-                            style = MaterialTheme.typography.bodySmall,
-                            fontWeight = FontWeight.Normal
-                        )
-                        Switch(
-                            checked = localSelectedCoins.isEmpty(),
-                            onCheckedChange = {
-                                if (it) localSelectedCoins = setOf()
-                            },
-                            modifier = Modifier.scale(0.85f)
-                        )
-                    }
+                        // Grid de toggles para monedas específicas - Mutually exclusive
 
-                    if (localSelectedCoins.isNotEmpty() || availableCoins.isNotEmpty()) {
-                        HorizontalDivider(modifier = Modifier.padding(vertical = 6.dp))
-
-                        // Toggles para monedas específicas
-                        availableCoins.forEach { coin ->
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = coin,
-                                    style = MaterialTheme.typography.bodySmall
-                                )
-                                Switch(
-                                    checked = localSelectedCoins.contains(coin),
-                                    onCheckedChange = { isChecked ->
-                                        localSelectedCoins = if (isChecked) {
-                                            localSelectedCoins + coin
-                                        } else {
-                                            localSelectedCoins - coin
-                                        }
-                                    },
-                                    modifier = Modifier.scale(0.85f)
-                                )
-                            }
-                            if (coin != availableCoins.last()) {
-                                Spacer(modifier = Modifier.height(4.dp))
-                            }
+                        Box(Modifier.weight(1f, fill = true)) {
+                            CoinSelectionGrid(
+                                availableCoins = availableCoins,
+                                selectedCoins = localSelectedCoins,
+                                onCoinSelected = { selectedCoin ->
+                                    localSelectedCoins = if (selectedCoin.isEmpty()) {
+                                        // Si desactiva una moneda, vuelve a "Todas las monedas"
+                                        setOf()
+                                    } else {
+                                        // Solo permitir una moneda seleccionada a la vez
+                                        setOf(selectedCoin)
+                                    }
+                                }
+                            )
                         }
                     }
                 }
             }
+            Spacer(Modifier.height(64.dp))
+        }
+    }
+}
 
-            Spacer(modifier = Modifier.height(15.dp))
+// SOLID - Single Responsibility: Component for individual coin toggle
+@Composable
+private fun CoinToggleRow(
+    text: String,
+    isChecked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+    compact: Boolean = false
+) {
+    val rowHeight = if (compact) 24.dp else 32.dp
+    val switchScale = if (compact) 0.58f else 0.7f
+    val textStyle = if (compact) MaterialTheme.typography.labelSmall
+    else MaterialTheme.typography.bodySmall
 
-            // Botones de acción
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                OutlinedButton(
-                    onClick = {
-                        localSelectedOfferType = "all"
-                        localSelectedCoins = setOf()
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .heightIn(min = rowHeight),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(text = text, style = textStyle, maxLines = 1)
+        Switch(
+            checked = isChecked,
+            onCheckedChange = onCheckedChange,
+            modifier = Modifier
+                .scale(switchScale)
+                .minimumInteractiveComponentSize() // ← usa el Local (24.dp o 0.dp)
+        )
+    }
+}
+
+// SOLID - Single Responsibility: Component for coin selection grid with mutual exclusion
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun CoinSelectionGrid(
+    availableCoins: List<String>,
+    selectedCoins: Set<String>,
+    onCoinSelected: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    // 1) Permite componentes compactos
+    CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides 24.dp) {
+        // ó 0.dp si quieres desactivar completamente el mínimo
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(2),
+            verticalArrangement = Arrangement.spacedBy(0.dp),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            contentPadding = PaddingValues(vertical = 2.dp)
+        ) {
+            items(availableCoins) { coin ->
+                CoinToggleRow(
+                    text = coin,
+                    isChecked = selectedCoins.contains(coin),
+                    onCheckedChange = { checked ->
+                        onCoinSelected(if (checked) coin else "")
                     },
-                    modifier = Modifier.weight(1f),
-                    contentPadding = PaddingValues(vertical = 7.dp)
-                ) {
-                    Text("Limpiar", fontSize = 13.sp)
-                }
-
-                Button(
-                    onClick = {
-                        onApplyFilters(localSelectedOfferType, localSelectedCoins.toList())
-                        onBackClick()
-                    },
-                    modifier = Modifier.weight(1f),
-                    contentPadding = PaddingValues(vertical = 7.dp)
-                ) {
-                    Text("Filtrar", fontSize = 13.sp)
-                }
-            }
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            // Información adicional
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer
-                ),
-                shape = RoundedCornerShape(10.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(10.dp)
-                ) {
-                    Text(
-                        text = "ℹ️ Información",
-                        style = MaterialTheme.typography.bodySmall,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer
-                    )
-
-                    Spacer(modifier = Modifier.height(5.dp))
-
-                    Text(
-                        text = "• Si no seleccionas ninguna moneda específica, se mostrarán todas las ofertas disponibles.\n" +
-                                "• Los filtros se aplican al pulsar 'Filtrar'.\n" +
-                                "• Puedes combinar diferentes tipos de filtros.",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer
-                    )
-                }
+                    compact = true
+                )
             }
         }
     }
