@@ -8,18 +8,20 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import android.content.Context
 import com.example.qvapayappandroid.data.database.dao.OfferAlertDao
 import com.example.qvapayappandroid.data.database.dao.OfferTemplateDao
+import com.example.qvapayappandroid.data.database.dao.P2POfferDao
 import com.example.qvapayappandroid.data.database.dao.SessionDao
 import com.example.qvapayappandroid.data.database.dao.SettingsDao
 import com.example.qvapayappandroid.data.database.dao.UserDao
 import com.example.qvapayappandroid.data.database.entities.OfferAlertEntity
 import com.example.qvapayappandroid.data.database.entities.OfferTemplateEntity
+import com.example.qvapayappandroid.data.database.entities.P2POfferEntity
 import com.example.qvapayappandroid.data.database.entities.SessionEntity
 import com.example.qvapayappandroid.data.database.entities.SettingsEntity
 import com.example.qvapayappandroid.data.database.entities.UserEntity
 
 @Database(
-    entities = [UserEntity::class, SessionEntity::class, SettingsEntity::class, OfferTemplateEntity::class, OfferAlertEntity::class],
-    version = 6,
+    entities = [UserEntity::class, SessionEntity::class, SettingsEntity::class, OfferTemplateEntity::class, OfferAlertEntity::class, P2POfferEntity::class],
+    version = 7,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -29,6 +31,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun settingsDao(): SettingsDao
     abstract fun offerTemplateDao(): OfferTemplateDao
     abstract fun offerAlertDao(): OfferAlertDao
+    abstract fun p2pOfferDao(): P2POfferDao
     
     companion object {
         @Volatile
@@ -196,13 +199,45 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
         
+        private val MIGRATION_6_7 = object : Migration(6, 7) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("""
+                    CREATE TABLE IF NOT EXISTS `p2p_offers` (
+                        `uuid` TEXT NOT NULL,
+                        `type` TEXT,
+                        `coin` TEXT,
+                        `peer_id` INTEGER,
+                        `amount` TEXT,
+                        `receive` TEXT,
+                        `details` TEXT,
+                        `message` TEXT,
+                        `only_kyc` INTEGER,
+                        `private` INTEGER,
+                        `only_vip` INTEGER,
+                        `status` TEXT,
+                        `tx_id` TEXT,
+                        `created_at` TEXT,
+                        `updated_at` TEXT,
+                        `valid` INTEGER,
+                        `coin_data_json` TEXT,
+                        `owner_json` TEXT,
+                        `peer_json` TEXT,
+                        `last_sync_at` INTEGER NOT NULL,
+                        `is_my_offer` INTEGER NOT NULL,
+                        `local_status` TEXT,
+                        PRIMARY KEY(`uuid`)
+                    )
+                """)
+            }
+        }
+        
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
                     context.applicationContext,
                     AppDatabase::class.java,
                     "qvapay_database"
-                ).addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6).build()
+                ).addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7).build()
                 INSTANCE = instance
                 instance
             }

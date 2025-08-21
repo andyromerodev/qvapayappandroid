@@ -11,4 +11,5 @@ val databaseModule = module {
     single { get<AppDatabase>().settingsDao() }
     single { get<AppDatabase>().offerTemplateDao() }
     single { get<AppDatabase>().offerAlertDao() }
+    single { get<AppDatabase>().p2pOfferDao() }
 }

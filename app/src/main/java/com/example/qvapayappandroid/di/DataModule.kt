@@ -58,7 +58,7 @@ val dataModule = module {
     single<SessionRepository> { SessionRepositoryDataStoreImpl(get(), get()) }
     single<AuthRepository> { AuthRepositoryImpl(get<LoginDataSource>(), get<SessionPreferencesRepository>()) }
     single<SettingsRepository> { SettingsRepositoryDataStoreImpl(get()) }
-    single<P2PRepository> { P2PRepositoryImpl(get()) }
+    single<P2PRepository> { P2PRepositoryImpl(get(), get()) }
     single<WebViewRepository> { WebViewRepositoryImpl(get()) }
     single<OfferTemplateRepository> { OfferTemplateRepositoryImpl(get()) }
     single<OfferAlertRepository> { OfferAlertRepositoryImpl(get()) }
