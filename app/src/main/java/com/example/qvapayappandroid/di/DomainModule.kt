@@ -29,6 +29,7 @@ import com.example.qvapayappandroid.domain.usecase.UpdateNotificationsUseCase
 import com.example.qvapayappandroid.domain.usecase.UpdateOfferAlertUseCase
 import com.example.qvapayappandroid.domain.usecase.UpdateOfferTemplateUseCase
 import com.example.qvapayappandroid.domain.usecase.UpdateThemeUseCase
+import com.example.qvapayappandroid.domain.repository.AuthRepository
 import org.koin.dsl.module
 
 val domainModule = module {
@@ -36,7 +37,7 @@ val domainModule = module {
     factory { LoginUseCase(get()) }
     factory { CheckSessionUseCase(get()) }
     factory { GetCurrentUserUseCase(get()) }
-    factory { LogoutUseCase(get()) }
+    factory { LogoutUseCase(get<AuthRepository>()) }
     factory { GetP2POffersUseCase(get(), get()) }
     factory { GetP2POfferByIdUseCase(get(), get()) }
     factory { ApplyToP2POfferUseCase(get(), get()) }
