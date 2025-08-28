@@ -41,6 +41,7 @@ class HomeViewModel(
         
         HomeUiState(
             isLoadingOffers = loadingState.isLoadingOffers,
+            isRefreshing = loadingState.isRefreshing,
             myOffers = cachedOffers,
             filteredOffers = filteredOffers,
             selectedStatusFilters = statusFilters,
@@ -121,7 +122,7 @@ class HomeViewModel(
             Log.d("HomeViewModel", "Refreshing offers from API")
             
             _loadingState.value = _loadingState.value.copy(
-                isLoadingOffers = true,
+                isRefreshing = true,
                 offersError = null
             )
             
@@ -131,7 +132,7 @@ class HomeViewModel(
                 onSuccess = {
                     Log.d("HomeViewModel", "Refresh successful")
                     _loadingState.value = _loadingState.value.copy(
-                        isLoadingOffers = false,
+                        isRefreshing = false,
                         hasNextPage = true // Reset pagination state
                     )
                 },
@@ -212,6 +213,7 @@ class HomeViewModel(
                 
                 _loadingState.value = _loadingState.value.copy(
                     isLoadingOffers = false,
+                    isRefreshing = false,
                     isLoadingMore = false,
                     offersError = "Demasiadas solicitudes, reintentando en ${delayTime/1000} segundos..."
                 )
@@ -229,6 +231,7 @@ class HomeViewModel(
         
         _loadingState.value = _loadingState.value.copy(
             isLoadingOffers = false,
+            isRefreshing = false,
             isLoadingMore = false,
             offersError = "Error: $errorMessage"
         )
@@ -345,6 +348,7 @@ class HomeViewModel(
  */
 private data class LoadingState(
     val isLoadingOffers: Boolean = false,
+    val isRefreshing: Boolean = false,
     val isLoadingMore: Boolean = false,
     val hasNextPage: Boolean = true,
     val offersError: String? = null,
@@ -358,6 +362,7 @@ private data class LoadingState(
  */
 data class HomeUiState(
     val isLoadingOffers: Boolean = false,
+    val isRefreshing: Boolean = false,
     val myOffers: List<P2POffer> = emptyList(),
     val filteredOffers: List<P2POffer> = emptyList(),
     val selectedStatusFilters: Set<String> = emptySet(),

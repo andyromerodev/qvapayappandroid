@@ -84,13 +84,10 @@ class P2PRepositoryImpl(
     
     override suspend fun refreshMyP2POffers(accessToken: String): Result<Unit> {
         return try {
-            Log.d("P2PRepository", "Refreshing all my P2P offers (clear cache + reload)")
+            Log.d("P2PRepository", "Refreshing all my P2P offers (overwrite cache)")
             
-            // Clear existing cache first
-            p2pOfferDao.clearMyOffers()
-            Log.d("P2PRepository", "Cleared my offers cache")
-            
-            // Fetch fresh data from API
+            // Fetch fresh data from API and overwrite cache (don't clear first)
+            // This keeps the existing data visible during refresh
             syncMyP2POffers(accessToken, page = 1)
         } catch (e: Exception) {
             Log.e("P2PRepository", "P2P refresh error: ${e.message}", e)

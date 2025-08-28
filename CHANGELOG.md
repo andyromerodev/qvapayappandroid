@@ -989,6 +989,50 @@ presentation/ui/home/
 - **Performance Metrics**: Measure scroll performance and loading times
 - **A/B Testing**: Test different pagination strategies
 
+## 🚀 v3.5.0 - PullToRefresh Data Persistence Enhancement (2025-08-28)
+
+### ✨ PullToRefresh UX Improvement
+
+#### 🔄 Data Visibility During Refresh
+- **Enhanced HomeScreen PullToRefresh**: Data now remains visible during refresh operations
+- **Separate Refresh State**: Added dedicated `isRefreshing` state independent from `isLoadingOffers`
+- **No Cache Clearing**: Repository refresh now overwrites data instead of clearing cache first
+- **Smooth User Experience**: Users see existing offers while new data loads in background
+
+#### 🏗️ Repository Layer Enhancement
+- **P2PRepositoryImpl Optimization**: `refreshMyP2POffers()` method no longer clears cache before refresh
+- **Data Persistence**: Existing cached data remains visible throughout refresh process
+- **Single Source of Truth**: Maintains reactive Flow pattern while improving UX
+
+#### 🎯 State Management Improvements
+- **HomeViewModel Enhancement**: 
+  - Added `isRefreshing: Boolean` to `LoadingState` and `HomeUiState`
+  - Updated `refreshOffers()` method to use dedicated refresh state
+  - Clear separation between initial loading and refresh operations
+- **HomeScreen UI Logic**: 
+  - PullToRefreshBox now uses `uiState.isRefreshing` instead of `uiState.isLoadingOffers`
+  - Refined `when` conditions to prevent empty states during refresh
+
+### 🐛 Critical Fixes
+- **Blank Screen During Refresh**: Eliminated blank screen caused by cache clearing during refresh
+- **Shimmer Effect Override**: Fixed shimmer showing during refresh when data exists
+- **Empty State During Refresh**: Prevented EmptyOffersState from appearing during refresh operations
+
+### 📁 Files Enhanced
+```
+├── presentation/ui/home/
+│   ├── HomeScreen.kt (PullToRefreshBox state change, when logic refinement)
+│   └── HomeViewModel.kt (separate refresh state, updated refresh method)
+├── data/repository/
+│   └── P2PRepositoryImpl.kt (removed cache clearing during refresh)
+```
+
+### 🎯 User Experience Impact
+- **✅ Continuous Data Visibility**: Offers remain visible during refresh operations
+- **✅ Smooth Refresh Experience**: No jarring empty states or blank screens
+- **✅ Professional UX**: Matches modern app refresh patterns
+- **✅ Maintained Performance**: Reactive data updates with cached visibility
+
 ## 🚀 v3.1.0 - Enhanced Loading Experience with Shimmer Effects and Global API Throttling (2025-08-13)
 
 ### ✨ Advanced Loading States with Shimmer Effects
