@@ -1,5 +1,112 @@
 # Changelog - QvaPay Android App
 
+## 🚀 v3.6.0 - UserProfile MVI Refactor and Login Data Persistence Fix (2025-08-28)
+
+### ✨ UserProfile Module Complete MVI Architecture Implementation
+
+#### 🏗️ MVI Pattern Implementation Following SOLID Principles
+- **UserProfileIntent.kt**: Centralized user action definitions
+  - `LoadUserProfile` - Initial profile data loading
+  - `RefreshUserProfile` - Manual profile refresh with visual feedback
+  - `Logout` - User logout with proper state management
+  - `ClearError` - Error state cleanup
+  - `RetryLoadProfile` - Error recovery functionality
+
+- **UserProfileEffect.kt**: Side effects management for navigation and feedback
+  - `NavigateToLogin` - Navigation effect after successful logout
+  - `ShowSuccessMessage` - Success feedback for user actions
+  - `ShowErrorMessage` - Error feedback with user-friendly messages
+  - `ShowLogoutConfirmation` - Future logout confirmation dialog support
+
+- **UserProfileState.kt**: Comprehensive state management with computed properties
+  - Loading, refreshing, and logout states with proper separation
+  - **Computed Properties**: `shouldShowLoading`, `shouldShowContent`, `shouldShowError`
+  - **Formatted Display Properties**: Auto-formatted balance, satoshis, and status texts
+  - **Conditional Logic**: `canRefresh`, `canLogout` for UI state management
+  - **User Data Formatters**: KYC status, VIP status, P2P status with Spanish text
+
+#### 🔧 UserProfile ViewModel Enhancement
+- **Complete MVI Integration**: `handleIntent()` method for centralized action processing
+- **Separate Loading States**: Distinct handling for initial load vs refresh operations
+- **Enhanced Error Recovery**: Retry functionality with proper state transitions
+- **Reactive User Updates**: Flow-based user data observation with state synchronization
+- **Effect Emission**: Success/error messages through SharedFlow for UI feedback
+- **Initialization Control**: Prevents duplicate data loading with `isInitialized` flag
+
+#### 📱 UserProfile Screen UI Improvements
+- **Intent-Based Actions**: All user interactions use intents instead of direct ViewModel calls
+- **State-Computed Display**: Leverages computed properties from UserProfileState
+- **Enhanced Error Handling**: Retry button alongside dismiss for better UX
+- **Loading State Refinement**: Uses `shouldShowLoading` for cleaner conditional rendering
+- **Message Integration**: `onShowMessage` parameter for success/error feedback display
+
+### 🐛 Critical Login Data Persistence Fix
+
+#### 🔍 Root Cause Analysis and Resolution
+- **Problem Identified**: AuthRepositoryImpl was bypassing SessionRepositoryDataStoreImpl
+- **Impact**: Login only saved tokens to DataStore, but user data never reached Room database
+- **Result**: GetCurrentUserUseCase returned null because Room was empty despite valid session
+
+#### 🛠️ Technical Fixes Applied
+- **AuthRepositoryImpl.kt Refactored**:
+  - Changed dependency from `SessionPreferencesRepository` to `SessionRepository`
+  - Now uses `sessionRepository.saveLoginSession()` which saves to both DataStore AND Room
+  - Proper logout implementation using `sessionRepository.logout()`
+  - Removed obsolete `saveSessionToDataStore()` method
+
+- **DataModule.kt Dependency Injection Fix**:
+  - Updated AuthRepositoryImpl injection to use `SessionRepository` instead of `SessionPreferencesRepository`
+  - Ensures proper dependency chain: Login → AuthRepository → SessionRepository → DataStore + Room
+
+#### 📊 Login Flow Correction
+1. **Previous (Broken) Flow**:
+   - Login Success → AuthRepository → Direct to DataStore → Room Empty → GetCurrentUser() returns null
+
+2. **Fixed Flow**:
+   - Login Success → AuthRepository → SessionRepository → DataStore + Room → GetCurrentUser() returns user ✅
+
+### 🎯 User Experience Improvements
+
+#### 💼 Profile Screen Enhancements
+- **Professional Loading States**: Separate spinners for refresh vs initial load
+- **Retry Functionality**: Users can retry failed profile loads without app restart
+- **Computed Display Logic**: Cleaner UI rendering with state-based conditions
+- **Better Error Recovery**: Multiple paths for error resolution (retry/dismiss)
+
+#### 🔐 Login System Reliability  
+- **Data Persistence Fixed**: User profile data now properly persists after login
+- **Session Consistency**: DataStore and Room stay synchronized through SessionRepository
+- **No More Null Users**: Profile screen displays actual user data instead of "User loaded: null"
+
+### 📁 Files Modified
+```
+├── data/repository/
+│   └── AuthRepositoryImpl.kt (SessionRepository integration)
+├── di/
+│   └── DataModule.kt (dependency injection fix)
+├── presentation/ui/profile/
+│   ├── UserProfileIntent.kt (NEW - MVI intents)
+│   ├── UserProfileEffect.kt (NEW - side effects)
+│   ├── UserProfileState.kt (NEW - computed state)
+│   ├── UserProfileViewModel.kt (MVI pattern implementation)
+│   └── UserProfileScreen.kt (intent-based interactions)
+```
+
+### 🔧 Technical Benefits
+- **SOLID Compliance**: Single responsibility, dependency inversion properly implemented
+- **MVI Consistency**: UserProfile now follows same pattern as Templates and CreateP2POffer modules
+- **Testability**: Separated concerns make unit testing straightforward
+- **Maintainability**: Intent/State/Effect pattern makes code changes predictable
+- **Type Safety**: Sealed interfaces prevent invalid state transitions
+- **Performance**: Computed properties eliminate redundant calculations in UI
+
+### 🚀 Architecture Impact
+- **Clean Data Flow**: Login → Repository → Storage layers working correctly
+- **Reactive Updates**: User data changes propagate through Flow-based observation
+- **State Management**: MVI pattern provides predictable state transitions
+- **Error Handling**: Comprehensive error recovery with user-friendly feedback
+- **Future Ready**: Architecture prepared for additional profile features
+
 ## ✅ v2.0.0 - Sistema P2P Completo (2024-01-XX)
 
 ### 🎯 Funcionalidades P2P Implementadas
