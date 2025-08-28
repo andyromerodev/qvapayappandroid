@@ -84,6 +84,9 @@ dependencies {
     
     // Core for NotificationCompat
     implementation(libs.androidx.core)
+    
+    // DataStore Preferences
+    implementation(libs.androidx.datastore.preferences)
 
 
     testImplementation(libs.junit)

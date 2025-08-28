@@ -989,6 +989,50 @@ presentation/ui/home/
 - **Performance Metrics**: Measure scroll performance and loading times
 - **A/B Testing**: Test different pagination strategies
 
+## 🚀 v3.5.0 - PullToRefresh Data Persistence Enhancement (2025-08-28)
+
+### ✨ PullToRefresh UX Improvement
+
+#### 🔄 Data Visibility During Refresh
+- **Enhanced HomeScreen PullToRefresh**: Data now remains visible during refresh operations
+- **Separate Refresh State**: Added dedicated `isRefreshing` state independent from `isLoadingOffers`
+- **No Cache Clearing**: Repository refresh now overwrites data instead of clearing cache first
+- **Smooth User Experience**: Users see existing offers while new data loads in background
+
+#### 🏗️ Repository Layer Enhancement
+- **P2PRepositoryImpl Optimization**: `refreshMyP2POffers()` method no longer clears cache before refresh
+- **Data Persistence**: Existing cached data remains visible throughout refresh process
+- **Single Source of Truth**: Maintains reactive Flow pattern while improving UX
+
+#### 🎯 State Management Improvements
+- **HomeViewModel Enhancement**: 
+  - Added `isRefreshing: Boolean` to `LoadingState` and `HomeUiState`
+  - Updated `refreshOffers()` method to use dedicated refresh state
+  - Clear separation between initial loading and refresh operations
+- **HomeScreen UI Logic**: 
+  - PullToRefreshBox now uses `uiState.isRefreshing` instead of `uiState.isLoadingOffers`
+  - Refined `when` conditions to prevent empty states during refresh
+
+### 🐛 Critical Fixes
+- **Blank Screen During Refresh**: Eliminated blank screen caused by cache clearing during refresh
+- **Shimmer Effect Override**: Fixed shimmer showing during refresh when data exists
+- **Empty State During Refresh**: Prevented EmptyOffersState from appearing during refresh operations
+
+### 📁 Files Enhanced
+```
+├── presentation/ui/home/
+│   ├── HomeScreen.kt (PullToRefreshBox state change, when logic refinement)
+│   └── HomeViewModel.kt (separate refresh state, updated refresh method)
+├── data/repository/
+│   └── P2PRepositoryImpl.kt (removed cache clearing during refresh)
+```
+
+### 🎯 User Experience Impact
+- **✅ Continuous Data Visibility**: Offers remain visible during refresh operations
+- **✅ Smooth Refresh Experience**: No jarring empty states or blank screens
+- **✅ Professional UX**: Matches modern app refresh patterns
+- **✅ Maintained Performance**: Reactive data updates with cached visibility
+
 ## 🚀 v3.1.0 - Enhanced Loading Experience with Shimmer Effects and Global API Throttling (2025-08-13)
 
 ### ✨ Advanced Loading States with Shimmer Effects
@@ -1101,6 +1145,96 @@ presentation/ui/home/
 - **✅ Consistent Experience**: Uniform loading behavior across P2P and Home screens
 - **✅ Reliable Performance**: Stable API interactions with proper throttling
 - **✅ Enhanced Visual Polish**: Enterprise-grade loading states improve app perception
+
+## 🚀 v3.4.0 - P2P Filters Screen SOLID Refactoring with Mutual Exclusion and Enhanced Layout (2025-08-20)
+
+### ✨ Complete P2P Filters Screen Refactoring
+
+#### 🏗️ SOLID Principles Implementation
+- **Single Responsibility Principle (SRP)**:
+  - `CoinToggleRow` component extracted for individual coin toggle handling
+  - `CoinSelectionGrid` component for 2-column grid layout management
+  - Each component has one specific responsibility and reason to change
+
+- **Open/Closed Principle (OCP)**:
+  - Components are extensible through `Modifier` parameters
+  - Closed for modification while open for extension
+
+- **Dependency Inversion Principle (DIP)**:
+  - Components depend on Composable abstractions
+  - Reduced coupling between UI components
+
+#### 🎯 Mutual Exclusion Selection System
+- **True Mutually Exclusive Logic**: Only one currency switch can be active at a time
+- **"Todas las monedas" Toggle**: Selecting this option deselects all specific currencies
+- **Single Currency Selection**: Selecting any specific currency automatically:
+  - Deselects "Todas las monedas"
+  - Deselects any previously selected currency
+  - Maintains only the newly selected currency active
+- **Smart State Management**: `onCoinSelected: (String) -> Unit` callback for clean state updates
+
+#### 📱 Enhanced Layout and User Experience
+- **2-Column Grid Layout**: `LazyVerticalGrid` with `GridCells.Fixed(2)` for better screen utilization
+- **Compact Design**: Reduced component sizes and spacing to fit entire screen without scrolling
+- **Bottom Bar Integration**: Action buttons moved to `bottomBar` with `Surface` elevation
+- **Navigation Bar Support**: Added `navigationBarsPadding()` for proper spacing
+- **Flexible Layout**: Card with `weight(1f)` takes available space, buttons stay at bottom
+
+#### 🔧 Technical Improvements
+- **Component Extraction**: Following SOLID principles with reusable components
+- **Layout Optimization**: 
+  - Changed from scrollable layout to flexible weight-based layout
+  - Removed `verticalScroll` in favor of proper space distribution
+  - Spacer with `weight(1f)` pushes buttons to bottom
+- **Performance Enhancement**: `LazyVerticalGrid` with optimized item spacing
+- **Material 3 Compliance**: Updated icons (`Icons.AutoMirrored.Filled.ArrowBack`)
+
+#### 🎨 UI/UX Enhancements
+- **Compact Toggle Switches**: `Switch` with `scale(0.58f)` and reduced minimum interactive size
+- **Grid Spacing Optimization**: Minimal spacing between grid items (`0.dp` vertical, `6.dp` horizontal)
+- **Professional Bottom Bar**: Elevated surface with proper button layout
+- **Improved Typography**: `MaterialTheme.typography.labelSmall` for compact text
+- **Consistent Theming**: Proper Material 3 color roles throughout
+
+### 📁 Files Modified
+```
+├── presentation/ui/p2p/
+│   └── P2PFiltersScreen.kt (complete refactoring with SOLID principles)
+```
+
+### 🐛 Critical Fixes
+- **Layout Height Issues**: Fixed `LazyVerticalGrid` height calculation problems
+- **Button Visibility**: Resolved issue where action buttons were hidden
+- **Scrolling Elimination**: Removed need for scrolling through better space utilization
+- **Mutual Exclusion**: Implemented true single-selection behavior for currency filters
+
+### 🎯 User Experience Improvements
+- **No Scrolling Required**: Entire filter interface fits on screen
+- **Clear Selection Feedback**: Visual indication of selected filters with mutual exclusion
+- **Intuitive Navigation**: Bottom buttons always visible and accessible
+- **Compact Information**: Removed descriptive text to reduce clutter
+- **Responsive Layout**: Better adaptation to different screen sizes
+
+### 🏛️ Architecture Benefits
+- **Maintainable Code**: Components can be modified independently
+- **Reusable Components**: `CoinToggleRow` and `CoinSelectionGrid` can be used elsewhere
+- **Testable Components**: Individual components enable better unit testing
+- **Clean Separation**: UI logic properly separated by responsibility
+- **Consistent Design**: Components follow Material 3 design system
+
+### 🔧 Technical Implementation Details
+- **Component Parameters**: Flexible component design with callback functions
+- **State Management**: Clean state updates through parent component
+- **Layout Constraints**: Proper use of `weight()`, `fillMaxSize()`, and `wrapContentHeight()`
+- **Performance**: Efficient grid rendering with proper item spacing
+- **Accessibility**: Maintained content descriptions and interaction feedback
+
+### 🎨 Design System Consistency
+- **Material 3 Integration**: Full compliance with Material 3 design principles  
+- **Color Theming**: Proper use of surface, primary, and container color roles
+- **Typography Hierarchy**: Consistent text styles with appropriate sizing
+- **Spacing Standards**: Standardized spacing following Material 3 guidelines
+- **Component Elevation**: Proper use of Surface elevation for bottom bar
 
 ## 🚀 v3.3.0 - Advanced P2P Offer Notification System with WorkManager (2025-08-16)
 

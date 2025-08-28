@@ -6,19 +6,18 @@ import com.example.qvapayappandroid.data.datasource.OfferTemplateLocalDataSource
 import com.example.qvapayappandroid.data.datasource.OfferTemplateLocalDataSourceImpl
 import com.example.qvapayappandroid.data.datasource.P2PDataSource
 import com.example.qvapayappandroid.data.datasource.P2PDataSourceImpl
-import com.example.qvapayappandroid.data.datasource.SessionLocalDataSource
-import com.example.qvapayappandroid.data.datasource.SessionLocalDataSourceImpl
-import com.example.qvapayappandroid.data.datasource.SettingsLocalDataSource
-import com.example.qvapayappandroid.data.datasource.SettingsLocalDataSourceImpl
 import com.example.qvapayappandroid.data.datasource.WebViewLoginDataSource
 import com.example.qvapayappandroid.data.datasource.WebViewLoginDataSourceImpl
+import com.example.qvapayappandroid.data.datastore.SessionPreferencesRepository
 import com.example.qvapayappandroid.data.permissions.NotificationPermissionManager
 import com.example.qvapayappandroid.data.repository.AuthRepositoryImpl
 import com.example.qvapayappandroid.data.repository.OfferAlertRepositoryImpl
 import com.example.qvapayappandroid.data.repository.OfferTemplateRepositoryImpl
 import com.example.qvapayappandroid.data.repository.P2PRepositoryImpl
-import com.example.qvapayappandroid.data.repository.SessionRepositoryImpl
-import com.example.qvapayappandroid.data.repository.SettingsRepositoryImpl
+import com.example.qvapayappandroid.data.repository.SessionRepositoryDataStoreImpl
+import com.example.qvapayappandroid.data.repository.SettingsRepositoryDataStoreImpl
+import com.example.qvapayappandroid.data.migration.SessionDataMigration
+import com.example.qvapayappandroid.data.migration.SettingsDataMigration
 import com.example.qvapayappandroid.data.repository.WebViewRepositoryImpl
 import com.example.qvapayappandroid.data.throttling.ThrottlingManagerImpl
 import com.example.qvapayappandroid.data.work.OfferAlertWorkManager
@@ -37,11 +36,9 @@ val dataModule = module {
     // Throttling Manager
     single<ThrottlingManager> { ThrottlingManagerImpl() }
     
-    // DataSources
+    // DataSources (Optimized - removed obsolete Session and Settings DataSources)
     single<LoginDataSource> { LoginDataSourceImpl(get()) }
-    single<SessionLocalDataSource> { SessionLocalDataSourceImpl(get(), get()) }
     single<P2PDataSource> { P2PDataSourceImpl(get(), get()) }
-    single<SettingsLocalDataSource> { SettingsLocalDataSourceImpl(get()) }
     single<OfferTemplateLocalDataSource> { OfferTemplateLocalDataSourceImpl(get()) }
 
     // WebView DataSource
@@ -52,12 +49,16 @@ val dataModule = module {
 
     // Work Manager
     single { OfferAlertWorkManager(androidContext()) }
+    
+    // Migration
+    single { SessionDataMigration(get(), get(), get()) }
+    single { SettingsDataMigration(get(), get()) }
 
-    // Repositories
-    single<SessionRepository> { SessionRepositoryImpl(get()) }
-    single<AuthRepository> { AuthRepositoryImpl(get(), get()) }
-    single<P2PRepository> { P2PRepositoryImpl(get()) }
-    single<SettingsRepository> { SettingsRepositoryImpl(get()) }
+    // Repositories (Optimized for DataStore)
+    single<SessionRepository> { SessionRepositoryDataStoreImpl(get(), get()) }
+    single<AuthRepository> { AuthRepositoryImpl(get<LoginDataSource>(), get<SessionPreferencesRepository>()) }
+    single<SettingsRepository> { SettingsRepositoryDataStoreImpl(get()) }
+    single<P2PRepository> { P2PRepositoryImpl(get(), get()) }
     single<WebViewRepository> { WebViewRepositoryImpl(get()) }
     single<OfferTemplateRepository> { OfferTemplateRepositoryImpl(get()) }
     single<OfferAlertRepository> { OfferAlertRepositoryImpl(get()) }

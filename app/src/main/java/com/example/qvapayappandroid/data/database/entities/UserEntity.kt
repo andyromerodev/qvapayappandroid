@@ -32,11 +32,11 @@ data class UserEntity(
     val twoFactorSecret: String?,
     val twoFactorResetCode: String?,
     val phoneRequestId: String?,
-    val canWithdraw: Int,
-    val canDeposit: Int,
-    val canTransfer: Int,
-    val canBuy: Int,
-    val canSell: Int,
+    val canWithdraw: Int?,
+    val canDeposit: Int?,
+    val canTransfer: Int?,
+    val canBuy: Int?,
+    val canSell: Int?,
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis()
 )

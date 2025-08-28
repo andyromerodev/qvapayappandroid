@@ -1,9 +1,9 @@
 TAREAS PENDIENTES - QvaPay Android App
 =============================================
 
-Fecha: 2025-08-11
+Fecha: 2025-08-20
 Proyecto: QvaPay Android App
-Branch actual: feature/p2p-cancel-offer
+Branch actual: master
 
 ESTADO ACTUAL:
 - ✅ WebView architecture refactoring completado
@@ -11,11 +11,48 @@ ESTADO ACTUAL:
 - ✅ Separación de ViewModels independientes
 - ✅ Estados separados (P2PWebViewState / WebViewFullScreenState)
 - ✅ Clean Architecture aplicada
+- ✅ P2PFiltersScreen refactoring with SOLID principles completado
+- ✅ Mutual exclusion selection system implementado
+- ✅ 2-column grid layout y bottom bar mejorados
+- ✅ DataStore migration completada (Phases 1-4)
+- ✅ Single Source of Truth con DataStore implementado
+- ✅ Session y Settings migrados de Room a DataStore
+- ✅ Repositories optimizados para DataStore
+- ✅ Use Cases actualizados con reactive flows
 
-TAREAS PARA MAÑANA:
-==================
+PRÓXIMAS TAREAS PRIORITARIAS:
+============================
 
-0.1 Comenzar a usar los Intents, Effect y States separados en cada archivo .kt.
+🎯 1. Implementar MVI Pattern (Intent-Effect-State) en componentes restantes
+   - Crear archivos separados para Intent, Effect y State en cada feature
+   - Migrar ViewModels existentes al patrón MVI
+   - Aplicar en HomeScreen, SettingsScreen, y otros componentes principales
+   - Seguir el ejemplo de OfferTemplatesScreen como referencia
+
+🧪 2. TESTING Y VALIDACIÓN DataStore Migration
+   - [ ] Testing manual de login/logout con DataStore
+   - [ ] Validación de persistencia de Settings (theme, notifications, etc.)
+   - [ ] Tests unitarios para SessionPreferencesRepository
+   - [ ] Tests unitarios para SettingsPreferencesRepository  
+   - [ ] Tests de migración Room→DataStore (SessionDataMigration, SettingsDataMigration)
+   - [ ] Tests de Use Cases actualizados (LoginUseCase, CheckSessionUseCase, etc.)
+   - [ ] Validación de consistencia de datos entre Room y DataStore
+   - [ ] Testing de performance DataStore vs Room
+   - [ ] Testing de edge cases (app crash durante migración, DataStore corrupto)
+   - [ ] Benchmarks y medición de mejoras de rendimiento
+
+🗂️ 3. FASE 6: Cleanup Room entities obsoletas (OPCIONAL)
+   - [ ] Eliminar entities Room que ya no se usan
+   - [ ] Cleanup de DAOs obsoletos
+   - [ ] Optimización final de DataStore
+   - [ ] Documentación de arquitectura DataStore
+
+📊 4. Arquitectura de Datos Centralizada (FUTURO)
+   - Extender Repository pattern a otros módulos (P2P, Offers)
+   - Local database como cache principal para datos complejos
+   - API calls solo para sincronización
+   - Estado offline completo de la aplicación
+   - Conflict resolution para datos sincronizados
 
 1. [ ] TESTING Y VALIDACIÓN
    - Probar navegación P2P → WebView → Volver
@@ -83,4 +120,4 @@ CONTACTO/REFERENCIAS:
 
 ============================================
 Actualizar este archivo conforme se completen las tareas.
-Fecha última actualización: 2025-08-11
+Fecha última actualización: 2025-08-21 (DataStore Migration completada)

@@ -5,4 +5,5 @@ import com.example.qvapayappandroid.data.model.LoginResponse
 
 interface AuthRepository {
     suspend fun login(request: LoginRequest): Result<LoginResponse>
+    suspend fun logout(): Result<Unit>
 }

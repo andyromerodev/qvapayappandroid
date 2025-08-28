@@ -130,7 +130,7 @@ private fun MyP2POffersSection(
     }
     
     PullToRefreshBox(
-        isRefreshing = uiState.isLoadingOffers,
+        isRefreshing = uiState.isRefreshing,
         onRefresh = onRefresh,
         modifier = modifier
     ) {
@@ -153,7 +153,7 @@ private fun MyP2POffersSection(
                     )
                 }
                 
-                uiState.isLoadingOffers -> {
+                uiState.isLoadingOffers && uiState.myOffers.isEmpty() -> {
                     MyOfferShimmerEffect()
                 }
                 

@@ -9,156 +9,249 @@ import com.example.qvapayappandroid.domain.usecase.CancelP2POfferUseCase
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.launch
 
+/**
+ * HomeViewModel with Single Source of Truth pattern using reactive flows.
+ * Data flows from local cache (Room) automatically, API calls only sync in background.
+ */
 class HomeViewModel(
     private val getMyP2POffersUseCase: GetMyP2POffersUseCase,
     private val cancelP2POfferUseCase: CancelP2POfferUseCase
 ) : ViewModel() {
     
-    private val _uiState = MutableStateFlow(HomeUiState())
-    val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
+    // UI State for loading states and errors
+    private val _loadingState = MutableStateFlow(LoadingState())
+    private val _selectedStatusFilters = MutableStateFlow<Set<String>>(emptySet())
     
-    private var lastLoadTime = 0L
+    // Reactive UI State that combines cache data with UI state
+    val uiState: StateFlow<HomeUiState> = combine(
+        getMyP2POffersUseCase.getMyOffersFlow(), // Reactive data from cache
+        _selectedStatusFilters,
+        _loadingState
+    ) { cachedOffers, statusFilters, loadingState ->
+        val filteredOffers = if (statusFilters.isEmpty()) {
+            cachedOffers
+        } else {
+            filterOffers(cachedOffers, statusFilters)
+        }
+        
+        HomeUiState(
+            isLoadingOffers = loadingState.isLoadingOffers,
+            isRefreshing = loadingState.isRefreshing,
+            myOffers = cachedOffers,
+            filteredOffers = filteredOffers,
+            selectedStatusFilters = statusFilters,
+            offersError = loadingState.offersError,
+            isLoadingMore = loadingState.isLoadingMore,
+            hasNextPage = loadingState.hasNextPage,
+            isCancellingOffer = loadingState.isCancellingOffer,
+            cancelOfferError = loadingState.cancelOfferError
+        )
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = HomeUiState()
+    )
+    
+    private var lastSyncTime = 0L
     private var lastRefreshTime = 0L
-    private val minLoadInterval = 1000L // Reducido a 1 segundo para paginación más fluida
-    private val minRefreshInterval = 3000L // Reducido a 3 segundos para refresh
+    private val minSyncInterval = 5000L // 5 seconds between syncs
+    private val minRefreshInterval = 3000L // 3 seconds between refreshes
+    private var currentPage = 1
     
     init {
-        loadMyOffers()
+        // Initial sync with API to populate cache
+        initialSync()
     }
     
-    private fun loadMyOffers(page: Int = 1, isRefresh: Boolean = false, retryCount: Int = 0) {
+    // ========================================
+    // REACTIVE CACHE-FIRST METHODS
+    // ========================================
+    
+    /**
+     * Initial sync with API to populate cache.
+     * Called once when ViewModel is created.
+     */
+    private fun initialSync() {
         viewModelScope.launch {
-            Log.d("HomeViewModel", "loadMyOffers called - page: $page, isRefresh: $isRefresh, retryCount: $retryCount")
-            Log.d("HomeViewModel", "Current state before load - isLoadingOffers: ${_uiState.value.isLoadingOffers}, isLoadingMore: ${_uiState.value.isLoadingMore}")
+            Log.d("HomeViewModel", "Initial sync with API to populate cache")
             
-            // Prevenir solicitudes muy frecuentes según el tipo
-            val currentTime = System.currentTimeMillis()
+            _loadingState.value = _loadingState.value.copy(
+                isLoadingOffers = true,
+                offersError = null
+            )
             
-            if (isRefresh) {
-                // Para refresh, verificar intervalo más largo
-                if (currentTime - lastRefreshTime < minRefreshInterval) {
-                    Log.d("HomeViewModel", "Refresh throttled, too soon since last refresh")
-                    return@launch
-                }
-                lastRefreshTime = currentTime
-            } else if (page > 1) {
-                // Para paginación, verificar intervalo más corto solo si ya se hizo una carga reciente
-                if (lastLoadTime > 0 && currentTime - lastLoadTime < minLoadInterval) {
-                    Log.d("HomeViewModel", "Pagination throttled, too soon since last load")
-                    return@launch
-                }
-            }
-            
-            lastLoadTime = currentTime
-            
-            if (isRefresh) {
-                _uiState.value = _uiState.value.copy(
-                    isLoadingOffers = true, 
-                    offersError = null,
-                    currentPage = 1,
-                    hasNextPage = true
-                )
-            } else if (page > 1) {
-                _uiState.value = _uiState.value.copy(isLoadingMore = true, offersError = null)
-            } else {
-                _uiState.value = _uiState.value.copy(isLoadingOffers = true, offersError = null)
-            }
-            
-            getMyP2POffersUseCase(page).fold(
-                onSuccess = { response ->
-                    val newOffers = if (isRefresh || page == 1) {
-                        response.data
-                    } else {
-                        _uiState.value.myOffers + response.data
-                    }
-                    
-                    Log.d("HomeViewModel", "SUCCESS - Setting isLoadingOffers = false, isLoadingMore = false")
-                    _uiState.value = _uiState.value.copy(
+            getMyP2POffersUseCase.syncOffers().fold(
+                onSuccess = {
+                    Log.d("HomeViewModel", "Initial sync successful")
+                    _loadingState.value = _loadingState.value.copy(
                         isLoadingOffers = false,
-                        isLoadingMore = false,
-                        myOffers = newOffers,
-                        filteredOffers = filterOffers(newOffers, _uiState.value.selectedStatusFilters),
-                        offersError = null,
-                        currentPage = response.currentPage,
-                        hasNextPage = response.currentPage < response.lastPage
+                        hasNextPage = true // Assume there might be more pages initially
                     )
-                    Log.d("HomeViewModel", "My offers loaded: ${response.data.size} offers, page: $page, total pages: ${response.lastPage}")
-                    Log.d("HomeViewModel", "Final state - isLoadingOffers: ${_uiState.value.isLoadingOffers}, isLoadingMore: ${_uiState.value.isLoadingMore}")
                 },
                 onFailure = { error ->
-                    handleLoadError(error, page, isRefresh, retryCount)
+                    Log.e("HomeViewModel", "Initial sync failed: ${error.message}")
+                    _loadingState.value = _loadingState.value.copy(
+                        isLoadingOffers = false,
+                        offersError = "Error cargando ofertas: ${error.message}"
+                    )
                 }
             )
         }
     }
     
-    private fun handleLoadError(error: Throwable, page: Int, isRefresh: Boolean, retryCount: Int) {
+    /**
+     * Refresh offers from API and update cache.
+     * This clears existing cache and reloads from server.
+     */
+    fun refreshOffers() {
         viewModelScope.launch {
-            val errorMessage = error.message ?: "Error desconocido"
+            val currentTime = System.currentTimeMillis()
             
-            // Manejar error 429 (Too Many Requests) con retry automático
-            if (errorMessage.contains("Too Many Attempts") || errorMessage.contains("429")) {
-                if (retryCount < 3) {
-                    val delayTime = when (retryCount) {
-                        0 -> 5000L  // 5 segundos
-                        1 -> 10000L // 10 segundos  
-                        else -> 15000L // 15 segundos
-                    }
-                    
-                    Log.d("HomeViewModel", "Rate limited, retrying in ${delayTime/1000} seconds (attempt ${retryCount + 1})")
-                    
-                    _uiState.value = _uiState.value.copy(
-                        isLoadingOffers = false,
-                        isLoadingMore = false,
-                        offersError = "Demasiadas solicitudes, reintentando en ${delayTime/1000} segundos..."
+            // Throttle refresh requests
+            if (currentTime - lastRefreshTime < minRefreshInterval) {
+                Log.d("HomeViewModel", "Refresh throttled, too soon since last refresh")
+                return@launch
+            }
+            lastRefreshTime = currentTime
+            
+            Log.d("HomeViewModel", "Refreshing offers from API")
+            
+            _loadingState.value = _loadingState.value.copy(
+                isRefreshing = true,
+                offersError = null
+            )
+            
+            currentPage = 1 // Reset pagination
+            
+            getMyP2POffersUseCase.refreshOffers().fold(
+                onSuccess = {
+                    Log.d("HomeViewModel", "Refresh successful")
+                    _loadingState.value = _loadingState.value.copy(
+                        isRefreshing = false,
+                        hasNextPage = true // Reset pagination state
                     )
-                    
-                    delay(delayTime)
-                    loadMyOffers(page, isRefresh, retryCount + 1)
-                    return@launch
+                },
+                onFailure = { error ->
+                    Log.e("HomeViewModel", "Refresh failed: ${error.message}")
+                    handleSyncError(error, isRefresh = true)
                 }
+            )
+        }
+    }
+    
+    /**
+     * Load more offers (pagination) from API and append to cache.
+     */
+    fun loadMoreOffers() {
+        viewModelScope.launch {
+            val currentState = _loadingState.value
+            
+            if (currentState.isLoadingMore || !currentState.hasNextPage) {
+                Log.d("HomeViewModel", "loadMoreOffers blocked - isLoadingMore: ${currentState.isLoadingMore}, hasNextPage: ${currentState.hasNextPage}")
+                return@launch
             }
             
-            Log.d("HomeViewModel", "ERROR - Setting isLoadingOffers = false, isLoadingMore = false")
-            _uiState.value = _uiState.value.copy(
-                isLoadingOffers = false,
-                isLoadingMore = false,
-                offersError = "Error cargando ofertas: $errorMessage"
+            val currentTime = System.currentTimeMillis()
+            
+            // Throttle pagination requests
+            if (currentTime - lastSyncTime < minSyncInterval) {
+                Log.d("HomeViewModel", "Pagination throttled, too soon since last sync")
+                return@launch
+            }
+            lastSyncTime = currentTime
+            
+            val nextPage = currentPage + 1
+            Log.d("HomeViewModel", "Loading more offers - page $nextPage")
+            
+            _loadingState.value = _loadingState.value.copy(
+                isLoadingMore = true,
+                offersError = null
             )
-            Log.e("HomeViewModel", "Error loading my offers: $errorMessage")
-            Log.d("HomeViewModel", "Error state - isLoadingOffers: ${_uiState.value.isLoadingOffers}, isLoadingMore: ${_uiState.value.isLoadingMore}")
+            
+            getMyP2POffersUseCase.syncOffers(nextPage).fold(
+                onSuccess = {
+                    Log.d("HomeViewModel", "Load more successful - page $nextPage")
+                    currentPage = nextPage
+                    _loadingState.value = _loadingState.value.copy(
+                        isLoadingMore = false
+                        // hasNextPage will be determined by the actual API response
+                        // For now, assume there might be more pages
+                    )
+                },
+                onFailure = { error ->
+                    Log.e("HomeViewModel", "Load more failed: ${error.message}")
+                    _loadingState.value = _loadingState.value.copy(
+                        isLoadingMore = false,
+                        offersError = "Error cargando más ofertas: ${error.message}"
+                    )
+                }
+            )
         }
     }
     
-    fun refreshOffers() {
-        loadMyOffers(page = 1, isRefresh = true)
-    }
-    
-    fun loadMoreOffers() {
-        val currentState = _uiState.value
-        Log.d("HomeViewModel", "loadMoreOffers called - isLoadingMore: ${currentState.isLoadingMore}, hasNextPage: ${currentState.hasNextPage}, currentPage: ${currentState.currentPage}")
+    /**
+     * Handle sync errors with automatic retry for rate limiting.
+     */
+    private suspend fun handleSyncError(error: Throwable, isRefresh: Boolean = false, retryCount: Int = 0) {
+        val errorMessage = error.message ?: "Error desconocido"
         
-        if (!currentState.isLoadingMore && currentState.hasNextPage) {
-            val nextPage = currentState.currentPage + 1
-            Log.d("HomeViewModel", "Loading page $nextPage")
-            loadMyOffers(nextPage)
-        } else {
-            Log.d("HomeViewModel", "loadMoreOffers blocked - isLoadingMore: ${currentState.isLoadingMore}, hasNextPage: ${currentState.hasNextPage}")
+        // Handle rate limiting with automatic retry
+        if (errorMessage.contains("Too Many Attempts") || errorMessage.contains("429")) {
+            if (retryCount < 3) {
+                val delayTime = when (retryCount) {
+                    0 -> 5000L  // 5 seconds
+                    1 -> 10000L // 10 seconds  
+                    else -> 15000L // 15 seconds
+                }
+                
+                Log.d("HomeViewModel", "Rate limited, retrying in ${delayTime/1000} seconds (attempt ${retryCount + 1})")
+                
+                _loadingState.value = _loadingState.value.copy(
+                    isLoadingOffers = false,
+                    isRefreshing = false,
+                    isLoadingMore = false,
+                    offersError = "Demasiadas solicitudes, reintentando en ${delayTime/1000} segundos..."
+                )
+                
+                delay(delayTime)
+                
+                if (isRefresh) {
+                    refreshOffers()
+                } else {
+                    initialSync()
+                }
+                return
+            }
         }
+        
+        _loadingState.value = _loadingState.value.copy(
+            isLoadingOffers = false,
+            isRefreshing = false,
+            isLoadingMore = false,
+            offersError = "Error: $errorMessage"
+        )
     }
     
+    /**
+     * Clear error messages.
+     */
     fun clearOffersError() {
-        _uiState.value = _uiState.value.copy(offersError = null)
+        _loadingState.value = _loadingState.value.copy(offersError = null)
     }
     
+    /**
+     * Toggle status filter for offers.
+     */
     fun toggleStatusFilter(status: String) {
-        val currentFilters = _uiState.value.selectedStatusFilters.toMutableSet()
+        val currentFilters = _selectedStatusFilters.value.toMutableSet()
         
         if (status.isEmpty()) {
-            // Si se selecciona "TODAS", limpiar todos los filtros
+            // If "ALL" is selected, clear all filters
             currentFilters.clear()
         } else {
             if (currentFilters.contains(status)) {
@@ -168,14 +261,12 @@ class HomeViewModel(
             }
         }
         
-        val filteredOffers = filterOffers(_uiState.value.myOffers, currentFilters)
-        
-        _uiState.value = _uiState.value.copy(
-            selectedStatusFilters = currentFilters,
-            filteredOffers = filteredOffers
-        )
+        _selectedStatusFilters.value = currentFilters
     }
     
+    /**
+     * Filter offers by status.
+     */
     private fun filterOffers(offers: List<P2POffer>, statusFilters: Set<String>): List<P2POffer> {
         if (statusFilters.isEmpty()) {
             return offers
@@ -187,6 +278,9 @@ class HomeViewModel(
         }
     }
     
+    /**
+     * Map offer status to filter key.
+     */
     private fun mapOfferStatusToFilterKey(status: String?): String {
         return when (status?.lowercase()) {
             "open", "abierta", "activa" -> "activa"
@@ -198,29 +292,41 @@ class HomeViewModel(
         }
     }
     
+    /**
+     * Get offer by ID from current cache.
+     * Note: This will automatically update when cache changes due to reactive flows.
+     */
     fun getOfferById(offerId: String): P2POffer? {
-        return _uiState.value.myOffers.find { it.uuid == offerId }
+        return uiState.value.myOffers.find { it.uuid == offerId }
     }
     
+    /**
+     * Cancel an offer.
+     * This automatically updates the local cache and the UI will react to changes.
+     */
     fun cancelOffer(offerId: String, onSuccess: (() -> Unit)? = null) {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isCancellingOffer = offerId)
+            Log.d("HomeViewModel", "Cancelling offer: $offerId")
+            
+            _loadingState.value = _loadingState.value.copy(
+                isCancellingOffer = offerId,
+                cancelOfferError = null
+            )
             
             cancelP2POfferUseCase(offerId).fold(
                 onSuccess = { response ->
                     Log.d("HomeViewModel", "Offer cancelled successfully: ${response.msg}")
-                    _uiState.value = _uiState.value.copy(
+                    _loadingState.value = _loadingState.value.copy(
                         isCancellingOffer = null,
                         cancelOfferError = null
                     )
-                    // Refresh offers to get updated status
-                    refreshOffers()
+                    // No need to refresh - cache is automatically updated by repository
                     // Execute navigation callback if provided
                     onSuccess?.invoke()
                 },
                 onFailure = { error ->
                     Log.e("HomeViewModel", "Failed to cancel offer: ${error.message}")
-                    _uiState.value = _uiState.value.copy(
+                    _loadingState.value = _loadingState.value.copy(
                         isCancellingOffer = null,
                         cancelOfferError = error.message ?: "Error cancelando oferta"
                     )
@@ -229,18 +335,38 @@ class HomeViewModel(
         }
     }
     
+    /**
+     * Clear cancel offer error.
+     */
     fun clearCancelOfferError() {
-        _uiState.value = _uiState.value.copy(cancelOfferError = null)
+        _loadingState.value = _loadingState.value.copy(cancelOfferError = null)
     }
 }
 
+/**
+ * Internal loading state for the ViewModel.
+ */
+private data class LoadingState(
+    val isLoadingOffers: Boolean = false,
+    val isRefreshing: Boolean = false,
+    val isLoadingMore: Boolean = false,
+    val hasNextPage: Boolean = true,
+    val offersError: String? = null,
+    val isCancellingOffer: String? = null,
+    val cancelOfferError: String? = null
+)
+
+/**
+ * UI State for the Home Screen with Single Source of Truth pattern.
+ * Data comes from reactive flows, loading states are separate.
+ */
 data class HomeUiState(
     val isLoadingOffers: Boolean = false,
+    val isRefreshing: Boolean = false,
     val myOffers: List<P2POffer> = emptyList(),
     val filteredOffers: List<P2POffer> = emptyList(),
     val selectedStatusFilters: Set<String> = emptySet(),
     val offersError: String? = null,
-    val currentPage: Int = 1,
     val hasNextPage: Boolean = true,
     val isLoadingMore: Boolean = false,
     val isCancellingOffer: String? = null,
