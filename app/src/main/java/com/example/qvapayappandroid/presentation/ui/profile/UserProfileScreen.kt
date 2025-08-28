@@ -46,6 +46,7 @@ import org.koin.androidx.compose.koinViewModel
 @Composable
 fun UserProfileScreen(
     onLogout: () -> Unit = {},
+    onShowMessage: (String) -> Unit = {},
     viewModel: UserProfileViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -54,6 +55,11 @@ fun UserProfileScreen(
         viewModel.effect.collect { effect ->
             when (effect) {
                 is UserProfileEffect.NavigateToLogin -> onLogout()
+                is UserProfileEffect.ShowSuccessMessage -> onShowMessage(effect.message)
+                is UserProfileEffect.ShowErrorMessage -> onShowMessage(effect.message)
+                is UserProfileEffect.ShowLogoutConfirmation -> {
+                    // Could implement logout confirmation dialog here
+                }
             }
         }
     }
@@ -64,10 +70,10 @@ fun UserProfileScreen(
                 title = { Text("Mi Perfil") },
                 actions = {
                     IconButton(
-                        onClick = { viewModel.refreshProfile() },
-                        enabled = !uiState.isLoading
+                        onClick = { viewModel.handleIntent(UserProfileIntent.RefreshUserProfile) },
+                        enabled = uiState.canRefresh
                     ) {
-                        if (uiState.isLoading) {
+                        if (uiState.isRefreshing) {
                             CircularProgressIndicator(
                                 modifier = Modifier.size(20.dp),
                                 strokeWidth = 2.dp
@@ -81,8 +87,8 @@ fun UserProfileScreen(
                     }
                     
                     IconButton(
-                        onClick = { viewModel.logout() },
-                        enabled = !uiState.isLoggingOut
+                        onClick = { viewModel.handleIntent(UserProfileIntent.Logout) },
+                        enabled = uiState.canLogout
                     ) {
                         if (uiState.isLoggingOut) {
                             CircularProgressIndicator(
@@ -104,7 +110,7 @@ fun UserProfileScreen(
                 .verticalScroll(rememberScrollState())
         ) {
             when {
-                uiState.isLoading -> {
+                uiState.shouldShowLoading -> {
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
@@ -121,14 +127,14 @@ fun UserProfileScreen(
                     }
                 }
                 
-                uiState.user != null -> {
+                uiState.shouldShowContent -> {
                     UserProfileContent(
-                        user = uiState.user!!,
+                        state = uiState,
                         modifier = Modifier.padding(16.dp)
                     )
                 }
                 
-                uiState.errorMessage != null -> {
+                uiState.shouldShowError -> {
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -149,11 +155,20 @@ fun UserProfileScreen(
                                 text = uiState.errorMessage!!,
                                 color = MaterialTheme.colorScheme.onErrorContainer
                             )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            TextButton(
-                                onClick = { viewModel.clearError() }
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-                                Text("Cerrar")
+                                TextButton(
+                                    onClick = { viewModel.handleIntent(UserProfileIntent.RetryLoadProfile) }
+                                ) {
+                                    Text("Reintentar")
+                                }
+                                TextButton(
+                                    onClick = { viewModel.handleIntent(UserProfileIntent.ClearError) }
+                                ) {
+                                    Text("Cerrar")
+                                }
                             }
                         }
                     }
@@ -165,9 +180,10 @@ fun UserProfileScreen(
 
 @Composable
 private fun UserProfileContent(
-    user: User,
+    state: UserProfileState,
     modifier: Modifier = Modifier
 ) {
+    val user = state.user!!
     Column(
         modifier = modifier.fillMaxSize()
     ) {
@@ -221,22 +237,22 @@ private fun UserProfileContent(
                 Spacer(modifier = Modifier.height(16.dp))
                 
                 Text(
-                    text = "${user.name} ${user.lastname}",
+                    text = state.userDisplayName,
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onPrimaryContainer
                 )
                 
                 Text(
-                    text = "@${user.username}",
+                    text = state.userUsername,
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onPrimaryContainer
                 )
                 
-                if (user.bio?.isNotBlank() == true) {
+                if (state.hasBio) {
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = user.bio,
+                        text = user.bio!!,
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
@@ -275,7 +291,7 @@ private fun UserProfileContent(
                             color = MaterialTheme.colorScheme.onSecondaryContainer
                         )
                         Text(
-                            text = "$${user.balance}",
+                            text = state.formattedBalance,
                             style = MaterialTheme.typography.headlineLarge,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSecondaryContainer
@@ -291,7 +307,7 @@ private fun UserProfileContent(
                             color = MaterialTheme.colorScheme.onSecondaryContainer
                         )
                         Text(
-                            text = "$${user.pendingBalance}",
+                            text = state.formattedPendingBalance,
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.onSecondaryContainer
@@ -301,7 +317,7 @@ private fun UserProfileContent(
                 
                 Spacer(modifier = Modifier.height(12.dp))
                 Text(
-                    text = "Satoshis: ${user.satoshis}",
+                    text = "Satoshis: ${state.formattedSatoshis}",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSecondaryContainer
                 )
@@ -325,13 +341,13 @@ private fun UserProfileContent(
                 Spacer(modifier = Modifier.height(16.dp))
                 
                 ProfileInfoRow("UUID", user.uuid)
-                ProfileInfoRow("Email", user.phone ?: "No disponible")
-                ProfileInfoRow("País", user.country?.ifBlank { "No especificado" } ?: "No especificado")
+                ProfileInfoRow("Email", state.emailDisplayText)
+                ProfileInfoRow("País", state.countryDisplayText)
                 ProfileInfoRow("Rol", user.role)
-                ProfileInfoRow("Rating", user.averageRating)
-                ProfileInfoRow("KYC", if (user.kyc == 1) "Verificado" else "No verificado")
-                ProfileInfoRow("VIP", if (user.vip == 1) "Sí" else "No")
-                ProfileInfoRow("P2P", if (user.p2pEnabled == 1) "Habilitado" else "Deshabilitado")
+                ProfileInfoRow("Rating", state.ratingDisplayText)
+                ProfileInfoRow("KYC", state.kycStatusText)
+                ProfileInfoRow("VIP", state.vipStatusText)
+                ProfileInfoRow("P2P", state.p2pStatusText)
             }
         }
     }

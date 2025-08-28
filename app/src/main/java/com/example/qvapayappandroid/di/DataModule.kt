@@ -56,7 +56,7 @@ val dataModule = module {
 
     // Repositories (Optimized for DataStore)
     single<SessionRepository> { SessionRepositoryDataStoreImpl(get(), get()) }
-    single<AuthRepository> { AuthRepositoryImpl(get<LoginDataSource>(), get<SessionPreferencesRepository>()) }
+    single<AuthRepository> { AuthRepositoryImpl(get<LoginDataSource>(), get<SessionRepository>()) }
     single<SettingsRepository> { SettingsRepositoryDataStoreImpl(get()) }
     single<P2PRepository> { P2PRepositoryImpl(get(), get()) }
     single<WebViewRepository> { WebViewRepositoryImpl(get()) }
