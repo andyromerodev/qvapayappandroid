@@ -296,7 +296,8 @@ private fun P2PContent(
                         items(sortedOffers) { offer ->
                             P2POfferCard(
                                 offer = offer,
-                                onClick = onOfferClick
+                                onClick = onOfferClick,
+                                phoneNumber = offer.uuid?.let { uiState.phoneNumbersMap[it] }
                             )
                         }
 

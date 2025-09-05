@@ -20,15 +20,28 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    buildFeatures {
+        buildConfig = true
+    }
+
     buildTypes {
+        debug {
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = "-DEBUG"
+            buildConfigField("boolean", "ENABLE_LOGS", "true")
+        }
         release {
-            isMinifyEnabled = false
+            buildConfigField("boolean", "ENABLE_LOGS", "false")
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
         }
     }
+
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
@@ -87,6 +100,9 @@ dependencies {
     
     // DataStore Preferences
     implementation(libs.androidx.datastore.preferences)
+    
+    // DotLottie
+    implementation(libs.lottie.compose)
 
 
     testImplementation(libs.junit)

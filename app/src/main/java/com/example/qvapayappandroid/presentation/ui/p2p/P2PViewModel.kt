@@ -30,6 +30,37 @@ class P2PViewModel(
     
     // Removed automatic loading from init - now loads only when P2PScreen is opened
     
+    private fun logP2POffersDetails(offers: List<P2POffer>, context: String = "") {
+        Log.d("P2POffers", "===== P2P OFFERS LOG ${if (context.isNotEmpty()) "($context)" else ""} =====")
+        Log.d("P2POffers", "Total offers: ${offers.size}")
+        Log.d("P2POffers", "========================================")
+        
+        offers.forEachIndexed { index, offer ->
+            Log.d("P2POffers", "--- OFFER ${index + 1} ---")
+            Log.d("P2POffers", "UUID: ${offer.uuid}")
+            Log.d("P2POffers", "Type: ${offer.type}")
+            Log.d("P2POffers", "Coin: ${offer.coin}")
+            Log.d("P2POffers", "Peer ID: ${offer.peerId}")
+            Log.d("P2POffers", "Amount: ${offer.amount}")
+            Log.d("P2POffers", "Receive: ${offer.receive}")
+            Log.d("P2POffers", "Details: ${offer.details}")
+            Log.d("P2POffers", "Message: ${offer.message}")
+            Log.d("P2POffers", "Only KYC: ${offer.onlyKyc}")
+            Log.d("P2POffers", "Private: ${offer.private}")
+            Log.d("P2POffers", "Only VIP: ${offer.onlyVip}")
+            Log.d("P2POffers", "Status: ${offer.status}")
+            Log.d("P2POffers", "TX ID: ${offer.txId}")
+            Log.d("P2POffers", "Created At: ${offer.createdAt}")
+            Log.d("P2POffers", "Updated At: ${offer.updatedAt}")
+            Log.d("P2POffers", "Valid: ${offer.valid}")
+            Log.d("P2POffers", "Coin Data: ${offer.coinData}")
+            Log.d("P2POffers", "Owner: ${offer.owner}")
+            Log.d("P2POffers", "Peer: ${offer.peer}")
+            Log.d("P2POffers", "")
+        }
+        Log.d("P2POffers", "===== END OF P2P OFFERS LOG =====")
+    }
+    
     private fun loadP2PDataDebounced() {
         // Cancel previous request if still running
         loadDataJob?.cancel()
@@ -58,6 +89,10 @@ class P2PViewModel(
                             _uiState.value.offers + response.data
                         }
                         
+                        // Procesar números de teléfono
+                        val newPhoneNumbers = processOffersWithPhoneNumbers(response.data)
+                        val updatedPhoneNumbers = _uiState.value.phoneNumbersMap + newPhoneNumbers
+                        
                         _uiState.value = _uiState.value.copy(
                             isLoading = false,
                             isLoadingMore = false,
@@ -66,9 +101,13 @@ class P2PViewModel(
                             offers = newOffers,
                             currentPage = response.currentPage,
                             totalPages = response.lastPage,
-                            totalOffers = response.total
+                            totalOffers = response.total,
+                            phoneNumbersMap = updatedPhoneNumbers
                         )
                         Log.d("P2PViewModel", "P2P offers loaded: ${response.data.size} offers, page ${response.currentPage}/${response.lastPage}")
+                        
+                        // Log detailed offer information
+                        logP2POffersDetails(response.data, "loadP2PDataDebounced - New offers")
                     },
                     onFailure = { error ->
                         val currentStateForError = _uiState.value
@@ -140,15 +179,22 @@ class P2PViewModel(
                 
                 getP2POffersUseCase(filters).fold(
                     onSuccess = { response ->
+                        // Procesar números de teléfono
+                        val phoneNumbers = processOffersWithPhoneNumbers(response.data)
+                        
                         _uiState.value = _uiState.value.copy(
                             isRefreshing = false,
                             offers = response.data,
                             currentPage = response.currentPage,
                             totalPages = response.lastPage,
                             totalOffers = response.total,
-                            errorMessage = null
+                            errorMessage = null,
+                            phoneNumbersMap = phoneNumbers
                         )
                         Log.d("P2PViewModel", "Refresh successful - ${response.data.size} offers loaded")
+                        
+                        // Log detailed offer information
+                        logP2POffersDetails(response.data, "refresh")
                     },
                     onFailure = { error ->
                         _uiState.value = _uiState.value.copy(
@@ -376,6 +422,9 @@ class P2PViewModel(
                         (_uiState.value.offers + uniqueOffers).distinctBy { it.uuid }
                     }
                     
+                    // Procesar números de teléfono para todas las ofertas finales
+                    val phoneNumbers = processOffersWithPhoneNumbers(finalOffers)
+                    
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
                         isLoadingMore = false,
@@ -384,9 +433,14 @@ class P2PViewModel(
                         offers = finalOffers,
                         currentPage = currentState.currentPage,
                         totalPages = maxPages,
-                        totalOffers = finalOffers.size
+                        totalOffers = finalOffers.size,
+                        phoneNumbersMap = phoneNumbers
                     )
                     Log.d("P2PViewModel", "P2P offers loaded: ${uniqueOffers.size} unique offers from ${coinsToQuery.size} coin(s)")
+                    
+                    // Log detailed offer information
+                    logP2POffersDetails(uniqueOffers, "loadP2PDataImmediate - Unique offers")
+                    logP2POffersDetails(finalOffers, "loadP2PDataImmediate - Final offers")
                 }
                 
             } catch (e: Exception) {
@@ -456,6 +510,79 @@ class P2PViewModel(
         _uiState.value = _uiState.value.copy(sortAsc = !_uiState.value.sortAsc)
     }
 
+    /**
+     * Procesa una lista de ofertas y extrae los números de teléfono
+     * Actualiza el mapa de números de teléfono en el estado
+     */
+    private fun processOffersWithPhoneNumbers(offers: List<P2POffer>): Map<String, String> {
+        val phoneMap = mutableMapOf<String, String>()
+        offers.forEach { offer ->
+            offer.uuid?.let { uuid ->
+                extractPhoneFromMessage(offer.message)?.let { phone ->
+                    phoneMap[uuid] = phone
+                }
+            }
+        }
+        return phoneMap
+    }
+
+    /**
+     * Obtiene el número de teléfono de una oferta desde el mapa en el estado
+     */
+    fun getPhoneNumberForOffer(offerUuid: String?): String? {
+        return if (offerUuid != null) _uiState.value.phoneNumbersMap[offerUuid] else null
+    }
+
+    /**
+     * Extrae número de teléfono del mensaje usando múltiples expresiones regulares
+     * Busca números de diferentes países y formatos
+     */
+    fun extractPhoneFromMessage(message: String?): String? {
+        if (message.isNullOrBlank()) return null
+        
+        // Lista de expresiones regulares para diferentes países
+        val phonePatterns = listOf(
+            // Cuba: +53XXXXXXXX, 53XXXXXXXX, 5XXXXXXXX (móviles cubanos)
+            Regex("""\+?53[\s\-]?[5-9]\d{7}"""),
+            // Estados Unidos/Canadá: +1XXXXXXXXXX, 1XXXXXXXXXX
+            Regex("""\+?1[\s\-]?\d{10}"""),
+            // México: +52XXXXXXXXXX
+            Regex("""\+?52[\s\-]?1?\d{10}"""),
+            // España: +34XXXXXXXXX
+            Regex("""\+?34[\s\-]?\d{9}"""),
+            // Argentina: +54XXXXXXXXXX
+            Regex("""\+?54[\s\-]?\d{10}"""),
+            // Colombia: +57XXXXXXXXXX
+            Regex("""\+?57[\s\-]?\d{10}"""),
+            // Venezuela: +58XXXXXXXXXX
+            Regex("""\+?58[\s\-]?\d{10}"""),
+            // Brasil: +55XXXXXXXXXXX
+            Regex("""\+?55[\s\-]?\d{11}"""),
+            // Chile: +56XXXXXXXXX
+            Regex("""\+?56[\s\-]?\d{9}"""),
+            // Perú: +51XXXXXXXXX
+            Regex("""\+?51[\s\-]?\d{9}"""),
+            // Ecuador: +593XXXXXXXXX
+            Regex("""\+?593[\s\-]?\d{9}"""),
+            // Patrón genérico para números internacionales (8-15 dígitos)
+            Regex("""\+\d{1,4}[\s\-]?\d{8,12}"""),
+            // Números locales de 8-11 dígitos (sin código de país)
+            Regex("""\b\d{8,11}\b""")
+        )
+        
+        // Buscar coincidencias con cada patrón
+        for (pattern in phonePatterns) {
+            val matches = pattern.findAll(message)
+            val match = matches.firstOrNull()
+            if (match != null) {
+                // Limpiar espacios, guiones y caracteres especiales
+                return match.value.replace(Regex("[\\s\\-()]"), "")
+            }
+        }
+        
+        return null
+    }
+
 }
 
 data class P2PUiState(
@@ -479,7 +606,9 @@ data class P2PUiState(
         "QVAPAY", "BANDECPREPAGO", "CUPCASH", "WISE", "EURCASH", "USDTBSC", "BOLSATM"
     ),
     val sortBy: String = "ratio",    // "ratio" o "nombre"
-    val sortAsc: Boolean = false
+    val sortAsc: Boolean = false,
+    // Mapa para almacenar números de teléfono extraídos por UUID de oferta
+    val phoneNumbersMap: Map<String, String> = emptyMap()
 )
 
 sealed class P2PEffect {

@@ -1,5 +1,6 @@
 package com.example.qvapayappandroid.data.network
 
+import com.example.qvapayappandroid.BuildConfig
 import io.ktor.client.*
 import io.ktor.client.engine.android.*
 import io.ktor.client.plugins.*
@@ -21,10 +22,10 @@ object HttpClientFactory {
                     encodeDefaults = true
                 })
             }
-            
+
             // Logging for debugging
             install(Logging) {
-                level = LogLevel.ALL
+                level = if (BuildConfig.ENABLE_LOGS) LogLevel.ALL else LogLevel.NONE
             }
             
             // Timeout configuration

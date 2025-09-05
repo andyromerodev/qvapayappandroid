@@ -10,7 +10,8 @@
       "Bash(./gradlew:*)",
       "Bash(git push:*)",
       "Bash(adb logcat:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(git checkout:*)"
     ],
     "deny": []
   }
