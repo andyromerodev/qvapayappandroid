@@ -7,7 +7,7 @@ object ApiConfig {
         const val AUTH_LOGIN = "/auth/login"
         const val AUTH_LOGOUT = "/auth/logout"
         const val AUTH_REGISTER = "/auth/register"
-        const val USER_PROFILE = "/user/profile"
+        const val USER_PROFILE = "/user"
         const val TRANSACTIONS = "/transactions"
         const val BALANCE = "/balance"
         const val P2P_INDEX = "/p2p/index"

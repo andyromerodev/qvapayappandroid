@@ -21,6 +21,7 @@ import com.example.qvapayappandroid.domain.usecase.LoadOfferTemplateUseCase
 import com.example.qvapayappandroid.domain.usecase.LoginUseCase
 import com.example.qvapayappandroid.domain.usecase.LogoutUseCase
 import com.example.qvapayappandroid.domain.usecase.ManageAlertWorkManagerUseCase
+import com.example.qvapayappandroid.domain.usecase.RefreshUserProfileUseCase
 import com.example.qvapayappandroid.domain.usecase.SaveOfferAlertUseCase
 import com.example.qvapayappandroid.domain.usecase.SaveOfferTemplateUseCase
 import com.example.qvapayappandroid.domain.usecase.ToggleOfferAlertUseCase
@@ -37,6 +38,7 @@ val domainModule = module {
     factory { LoginUseCase(get()) }
     factory { CheckSessionUseCase(get()) }
     factory { GetCurrentUserUseCase(get()) }
+    factory { RefreshUserProfileUseCase(get()) }
     factory { LogoutUseCase(get<AuthRepository>()) }
     factory { GetP2POffersUseCase(get(), get()) }
     factory { GetP2POfferByIdUseCase(get(), get()) }

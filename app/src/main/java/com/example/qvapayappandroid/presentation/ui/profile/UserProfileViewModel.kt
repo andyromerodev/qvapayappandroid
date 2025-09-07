@@ -20,6 +20,7 @@ import kotlinx.coroutines.launch
  */
 class UserProfileViewModel(
     private val getCurrentUserUseCase: GetCurrentUserUseCase,
+    private val refreshUserProfileUseCase: com.example.qvapayappandroid.domain.usecase.RefreshUserProfileUseCase,
     private val logoutUseCase: LogoutUseCase
 ) : ViewModel() {
     
@@ -87,24 +88,26 @@ class UserProfileViewModel(
                 errorMessage = null
             )
             
-            try {
-                val user = getCurrentUserUseCase.getCurrentUser()
-                _uiState.value = _uiState.value.copy(
-                    isRefreshing = false,
-                    user = user,
-                    errorMessage = null
-                )
-                Log.d(TAG, "User refreshed: ${user?.name}")
-                _effect.emit(UserProfileEffect.ShowSuccessMessage("Perfil actualizado"))
-            } catch (e: Exception) {
-                val errorMessage = "Error refreshing user data: ${e.message}"
-                _uiState.value = _uiState.value.copy(
-                    isRefreshing = false,
-                    errorMessage = errorMessage
-                )
-                Log.e(TAG, "Error refreshing user", e)
-                _effect.emit(UserProfileEffect.ShowErrorMessage(errorMessage))
-            }
+            refreshUserProfileUseCase().fold(
+                onSuccess = { refreshedUser ->
+                    _uiState.value = _uiState.value.copy(
+                        isRefreshing = false,
+                        user = refreshedUser,
+                        errorMessage = null
+                    )
+                    Log.d(TAG, "User profile refreshed from server: ${refreshedUser.name}")
+                    _effect.emit(UserProfileEffect.ShowSuccessMessage("Perfil actualizado desde el servidor"))
+                },
+                onFailure = { error ->
+                    val errorMessage = "Error refreshing user profile: ${error.message}"
+                    _uiState.value = _uiState.value.copy(
+                        isRefreshing = false,
+                        errorMessage = errorMessage
+                    )
+                    Log.e(TAG, "Error refreshing user profile", error)
+                    _effect.emit(UserProfileEffect.ShowErrorMessage(errorMessage))
+                }
+            )
         }
     }
     

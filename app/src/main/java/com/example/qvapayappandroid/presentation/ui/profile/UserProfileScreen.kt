@@ -14,7 +14,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ExitToApp
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Card
@@ -25,6 +25,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -39,7 +40,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil.compose.SubcomposeAsyncImage
-import com.example.qvapayappandroid.data.model.User
 import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -50,13 +50,18 @@ fun UserProfileScreen(
     viewModel: UserProfileViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val (snackbarController, snackbarHostState) = rememberSnackbarController()
 
     LaunchedEffect(Unit) {
         viewModel.effect.collect { effect ->
             when (effect) {
                 is UserProfileEffect.NavigateToLogin -> onLogout()
-                is UserProfileEffect.ShowSuccessMessage -> onShowMessage(effect.message)
-                is UserProfileEffect.ShowErrorMessage -> onShowMessage(effect.message)
+                is UserProfileEffect.ShowSuccessMessage -> {
+                    snackbarController.showSuccess(effect.message)
+                }
+                is UserProfileEffect.ShowErrorMessage -> {
+                    snackbarController.showError(effect.message)
+                }
                 is UserProfileEffect.ShowLogoutConfirmation -> {
                     // Could implement logout confirmation dialog here
                 }
@@ -65,6 +70,7 @@ fun UserProfileScreen(
     }
     
     Scaffold(
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = { Text("Mi Perfil") },
@@ -96,7 +102,7 @@ fun UserProfileScreen(
                                 strokeWidth = 2.dp
                             )
                         } else {
-                            Icon(Icons.Default.ExitToApp, contentDescription = "Logout")
+                            Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = "Logout")
                         }
                     }
                 }

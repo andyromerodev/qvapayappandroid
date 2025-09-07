@@ -1,5 +1,258 @@
 # Changelog - QvaPay Android App
 
+## 🚀 v3.8.0 - UserProfile Snackbar Message System with Clean Architecture (2025-09-07)
+
+### ✨ Enhanced UserProfile Message Display System
+
+#### 🎯 Snackbar Integration for Success and Error Messages
+- **SnackbarController Component**: Clean Architecture implementation for message management
+  - Testable and independent component design following SOLID principles
+  - Configurable message properties with `SnackbarMessage` data class
+  - Separate methods for success (`showSuccess()`) and error (`showError()`) messages
+  - Proper separation of concerns for future extensibility
+
+- **Material 3 Snackbar Integration**: Native Android snackbar implementation
+  - Integrated `SnackbarHost` into UserProfileScreen `Scaffold`
+  - Proper `SnackbarHostState` management with `remember` pattern
+  - Consistent Material 3 theming and design compliance
+  - Non-blocking message display that doesn't interrupt user workflow
+
+#### 🏗️ Server-Side Profile Refresh Enhancement
+
+##### **New Data Layer Components**
+- **UserDataSource Interface**: Abstract data access for user profile operations
+- **UserDataSourceImpl**: Complete HTTP client implementation for profile refresh
+  - Bearer token authentication for secure API access
+  - JSON deserialization with error handling and logging
+  - Rate limiting compliance with existing throttling system
+  - Comprehensive error handling with detailed logging
+
+##### **Domain Layer Enhancement**
+- **RefreshUserProfileUseCase**: Business logic for server-side profile refresh
+  - Clean Architecture compliance with proper dependency injection
+  - Result pattern for success/failure handling with detailed error information
+  - Comprehensive logging for debugging and monitoring profile refresh operations
+  - Integration with existing SessionRepository for token management
+
+##### **Updated Repository Layer**
+- **SessionRepository Interface**: Added `refreshUserProfile(): Result<User>` method
+- **SessionRepositoryDataStoreImpl Enhancement**:
+  - Server-side profile refresh with fresh data fetching
+  - Dual storage update (DataStore + Room) for data consistency
+  - Session validation and token management during refresh
+  - Automatic username synchronization when profile data changes
+
+#### 🔧 UserProfile ViewModel Architecture Enhancement
+- **MVI Pattern Compliance**: Enhanced ViewModel with proper effect emission
+  - Success and error effects now trigger snackbar messages
+  - `RefreshUserProfileUseCase` integration for server-side data refresh
+  - Improved state management with separate refresh handling
+  - Enhanced error handling with user-friendly Spanish messages
+
+#### 📱 UserProfileScreen UI Improvements
+- **Message Handling Refactor**: Replaced external callback with native snackbar system
+  - Removed dependency on `onShowMessage` parameter for cleaner architecture
+  - Direct snackbar integration using `rememberSnackbarController()`
+  - Real-time message display for refresh operations and errors
+  - Enhanced user feedback with immediate visual confirmation
+
+- **Icon Deprecation Fix**: Updated to Material 3 AutoMirrored icons
+  - Replaced deprecated `Icons.Filled.ExitToApp` with `Icons.AutoMirrored.Filled.ExitToApp`
+  - Improved RTL (Right-to-Left) language support
+  - Future-proof icon implementation following Material 3 guidelines
+
+#### 🛠️ Technical Implementation Details
+
+##### **Clean Architecture Benefits**
+- **Separation of Concerns**: SnackbarController can be tested independently
+- **SOLID Compliance**: Single responsibility for message display logic
+- **Testability**: Individual components enable comprehensive unit testing
+- **Maintainability**: Changes to message display don't affect other components
+- **Reusability**: SnackbarController can be used across different screens
+
+##### **API Integration Enhancement**
+- **Updated API Endpoint**: Changed from `/user/profile` to `/user` for profile refresh
+- **Bearer Token Security**: Secure authentication for profile data access
+- **Error Handling**: Comprehensive HTTP status code handling with user feedback
+- **Response Parsing**: Robust JSON parsing with fallback error handling
+
+##### **State Management Improvements**
+- **Reactive Profile Updates**: Server data automatically updates local storage
+- **Session Consistency**: DataStore and Room database stay synchronized
+- **Error Recovery**: Clear error messages with actionable user guidance
+- **Loading States**: Visual feedback during profile refresh operations
+
+### 📁 New Files Created
+```
+├── presentation/ui/profile/
+│   └── SnackbarController.kt (message management component)
+├── data/datasource/
+│   ├── UserDataSource.kt (interface)
+│   └── UserDataSourceImpl.kt (HTTP implementation)
+└── domain/usecase/
+    └── RefreshUserProfileUseCase.kt (business logic)
+```
+
+### 📁 Files Enhanced
+```
+├── presentation/ui/profile/
+│   ├── UserProfileScreen.kt (snackbar integration, icon fix)
+│   └── UserProfileViewModel.kt (refresh use case integration)
+├── data/
+│   ├── network/ApiConfig.kt (endpoint update)
+│   └── repository/SessionRepositoryDataStoreImpl.kt (profile refresh)
+├── domain/repository/
+│   └── SessionRepository.kt (interface enhancement)
+└── di/
+    ├── DataModule.kt (dependency injection updates)
+    ├── DomainModule.kt (use case registration)
+    └── PresentationModule.kt (ViewModel dependency update)
+```
+
+### 🐛 Critical Fixes
+- **Message Display Architecture**: Proper snackbar integration replacing external callbacks
+- **Icon Deprecation**: Updated to AutoMirrored icons for RTL support and future compatibility
+- **Profile Refresh Logic**: Server-side refresh now properly updates both DataStore and Room
+- **Error Handling**: Enhanced error messages with proper user feedback mechanisms
+
+### 🎯 User Experience Improvements
+- **Native Message Display**: Snackbars appear at bottom of screen following Material 3 guidelines
+- **Immediate Feedback**: Success and error messages display instantly after operations
+- **Non-blocking UX**: Messages don't interrupt user workflow or navigation
+- **Professional Polish**: Consistent message styling across the entire profile system
+- **Enhanced Refresh**: Server-side profile refresh with visual feedback and error recovery
+
+### 🚀 Technical Benefits
+- **Clean Architecture**: Proper separation enables easy testing and maintenance
+- **SOLID Compliance**: Single responsibility principle applied to message handling
+- **Performance**: Efficient message display with proper state management
+- **Scalability**: SnackbarController can be extended for additional message types
+- **Maintainability**: Modular design allows independent component updates
+- **Future-Ready**: Architecture prepared for additional profile features and enhancements
+
+### 🔒 Security Enhancements
+- **Bearer Token Authentication**: Secure profile refresh with proper token validation
+- **Session Validation**: Automatic session checking before profile operations
+- **Error Message Sanitization**: Safe error display without exposing sensitive information
+- **API Security**: Proper HTTP header management and secure communication
+
+## 🚀 v3.7.0 - P2P Messaging Integration with WhatsApp and Telegram Contact System (2025-01-05)
+
+### ✨ Enhanced P2P Communication System
+
+#### 📱 Dual Messaging Platform Integration
+- **WhatsApp Integration**: Direct WhatsApp contact functionality for P2P offers
+  - Custom WhatsApp icon with `whatsapp_svgrepo_com.xml` drawable
+  - Green-themed button with light green background (`#E8F5E8`) and WhatsApp green border (`#25D366`)
+  - Deep linking using `https://wa.me/` URL scheme
+  - Fallback to phone dialer if WhatsApp is not installed
+
+- **Telegram Integration**: Parallel Telegram contact system
+  - Custom Telegram icon with `telegram_icon.xml` drawable  
+  - Blue-themed button with light blue background (`#E3F2FD`) and Telegram blue border (`#0088CC`)
+  - Deep linking using `https://t.me/` URL scheme
+  - Fallback to phone dialer if Telegram is not installed
+
+#### 🔍 Advanced Phone Number Extraction System
+- **Multi-Country Phone Detection**: Comprehensive regex patterns supporting:
+  - **Cuba**: +53XXXXXXXX, 53XXXXXXXX, 5XXXXXXXX (mobile numbers)
+  - **US/Canada**: +1XXXXXXXXXX, 1XXXXXXXXXX
+  - **Mexico**: +52XXXXXXXXXX with optional mobile prefix
+  - **Spain**: +34XXXXXXXXX
+  - **Argentina**: +54XXXXXXXXXX
+  - **Colombia**: +57XXXXXXXXXX
+  - **Venezuela**: +58XXXXXXXXXX
+  - **Brazil**: +55XXXXXXXXXXX
+  - **Chile**: +56XXXXXXXXX
+  - **Peru**: +51XXXXXXXXX
+  - **Ecuador**: +593XXXXXXXXX
+  - **Generic International**: +\d{1,4}[\s\-]?\d{8,12}
+  - **Local Numbers**: 8-11 digit patterns
+
+#### 🏗️ Clean Architecture Phone Number Management
+- **ViewModel Integration**: Phone number processing in `P2PViewModel.extractPhoneFromMessage()`
+- **State Management**: `phoneNumbersMap: Map<String, String>` in `P2PUiState` for UUID-based phone storage  
+- **Efficient Processing**: Phone numbers extracted once during data loading, stored in state map
+- **Memory Optimization**: Numbers cached by offer UUID, preventing redundant regex processing
+- **MVVM Compliance**: Separation of concerns with business logic in ViewModel
+
+#### 🎨 Enhanced P2P Offer Card Design
+- **Redesigned Card Layout**: Complete visual overhaul with professional sentence-based information display
+- **Text-Based Information**: Replaced mini-cards with readable Spanish text format:
+  - "Compra $1000.00 en saldo Qvapay"
+  - "Envía $1150.00 en CLASICA"  
+  - "Ratio 1.15" with messaging buttons
+- **Visual Dividers**: Thin dividers between information sections for better organization
+- **Surface Container**: Transaction information wrapped in bordered Surface with rounded corners
+- **Responsive Buttons**: WhatsApp and Telegram buttons appear only when phone numbers are detected
+
+#### 🔧 UI Component Enhancements
+- **Chip Visual Improvements**: 
+  - **Golden Check Chip**: Light golden background with golden border and icon
+  - **KYC Chip**: Material Theme tertiary colors with consistent border styling
+  - **Rating Chip**: Secondary container background with secondary border
+- **Button Design**: Compact 24dp buttons with 6dp rounded corners and proper spacing
+- **Icon Integration**: Custom SVG icons with appropriate tinting and sizing
+- **Material 3 Compliance**: Consistent theming across all components
+
+### 🛠️ Technical Implementation
+
+#### 📊 Phone Number Processing Flow
+1. **Data Loading**: Offers fetched from API in P2PViewModel
+2. **Phone Extraction**: `processOffersWithPhoneNumbers()` processes all offers
+3. **State Storage**: Phone numbers stored in `phoneNumbersMap` by offer UUID
+4. **UI Display**: P2POfferCard receives `phoneNumber` parameter from state
+5. **Button Rendering**: Messaging buttons appear when phone number exists
+6. **Deep Linking**: Platform-specific URL schemes for direct messaging
+
+#### 🔄 State Management Architecture
+- **Single Source of Truth**: Phone numbers managed in P2PUiState
+- **Reactive Updates**: State changes trigger UI updates automatically  
+- **Efficient Lookup**: O(1) phone number retrieval using UUID keys
+- **Memory Management**: Phone numbers persist with offer data lifecycle
+- **Clean Separation**: UI components receive processed data, no business logic
+
+#### 📱 User Experience Enhancements
+- **Instant Contact**: One-tap access to WhatsApp or Telegram for offer communication
+- **Visual Feedback**: Clear button styling indicates available messaging platforms
+- **Fallback Behavior**: Graceful degradation to phone dialer if messaging apps unavailable
+- **Contextual Display**: Buttons appear only for offers with detected phone numbers
+- **Professional Layout**: Clean, readable information presentation with proper spacing
+
+### 📁 Files Modified
+```
+├── presentation/ui/p2p/
+│   ├── P2PScreen.kt (phoneNumber parameter passing)
+│   ├── P2PViewModel.kt (phone extraction and state management)
+│   └── components/
+│       ├── P2POfferCard.kt (complete redesign with messaging integration)
+│       └── MiniChipAndCard.kt (chip styling improvements)
+├── app/src/main/res/drawable/
+│   ├── whatsapp_svgrepo_com.xml (WhatsApp icon)
+│   ├── telegram_icon.xml (Telegram icon)
+│   └── award_star_24px.xml (Golden star icon)
+```
+
+### 🐛 Critical Fixes
+- **Architecture Compliance**: Proper MVVM separation with business logic in ViewModel
+- **Performance Optimization**: Phone number extraction occurs once during data loading
+- **State Management**: Clean state-based phone number storage and retrieval
+- **Code Deduplication**: Removed duplicate `extractPhoneFromMessage` function from component
+
+### 🎯 User Impact
+- **Enhanced Communication**: Direct messaging integration reduces friction in P2P transactions
+- **Multi-Platform Support**: Choice between WhatsApp and Telegram based on user preference  
+- **International Compatibility**: Phone number detection works across multiple countries
+- **Professional UI**: Modern, clean design with improved information hierarchy
+- **Improved Discoverability**: Clear visual indication of contact availability
+
+### 🚀 Technical Benefits
+- **Clean Architecture**: Proper separation of concerns following MVVM principles
+- **Performance**: Efficient phone number processing with state-based caching
+- **Maintainability**: Modular design with reusable components
+- **Scalability**: Easy addition of new messaging platforms or phone number formats
+- **Testability**: Isolated business logic enables comprehensive unit testing
+
 ## 🚀 v3.6.0 - UserProfile MVI Refactor and Login Data Persistence Fix (2025-08-28)
 
 ### ✨ UserProfile Module Complete MVI Architecture Implementation

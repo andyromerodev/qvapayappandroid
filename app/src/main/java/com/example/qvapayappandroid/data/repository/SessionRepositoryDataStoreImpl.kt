@@ -3,6 +3,7 @@ package com.example.qvapayappandroid.data.repository
 import android.util.Log
 import com.example.qvapayappandroid.data.database.dao.UserDao
 import com.example.qvapayappandroid.data.database.entities.UserEntity
+import com.example.qvapayappandroid.data.datasource.UserDataSource
 import com.example.qvapayappandroid.data.datastore.SessionPreferencesRepository
 import com.example.qvapayappandroid.data.model.LoginResponse
 import com.example.qvapayappandroid.data.model.User
@@ -19,7 +20,8 @@ import kotlinx.coroutines.flow.map
  */
 class SessionRepositoryDataStoreImpl(
     private val sessionPreferencesRepository: SessionPreferencesRepository,
-    private val userDao: UserDao
+    private val userDao: UserDao,
+    private val userDataSource: UserDataSource
 ) : SessionRepository {
 
     companion object {
@@ -140,6 +142,53 @@ class SessionRepositoryDataStoreImpl(
             
             Result.success(Unit)
         } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun refreshUserProfile(): Result<User> {
+        return try {
+            Log.d(TAG, "🔄 Refreshing user profile from server...")
+            
+            // Get access token
+            val accessToken = getAccessToken()
+            if (accessToken == null) {
+                Log.e(TAG, "❌ No access token available for refresh")
+                return Result.failure(Exception("No access token available"))
+            }
+            
+            // Fetch user profile from server
+            userDataSource.getCurrentUserProfile(accessToken).fold(
+                onSuccess = { freshUser ->
+                    Log.d(TAG, "✅ Fresh user profile received: ${freshUser.username}")
+                    
+                    // Update both DataStore and Room with fresh data
+                    val userEntity = freshUser.toUserEntity()
+                    userDao.updateUser(userEntity.copy(updatedAt = System.currentTimeMillis()))
+                    
+                    // Update username in DataStore if changed
+                    sessionPreferencesRepository.sessionPreferencesFlow.first().let { sessionPrefs ->
+                        if (sessionPrefs.username != freshUser.username) {
+                            sessionPreferencesRepository.saveSession(
+                                userId = sessionPrefs.userId,
+                                userUuid = freshUser.uuid,
+                                username = freshUser.username,
+                                accessToken = sessionPrefs.accessToken,
+                                refreshToken = sessionPrefs.refreshToken
+                            )
+                        }
+                    }
+                    
+                    Log.d(TAG, "✅ User profile refreshed successfully")
+                    Result.success(freshUser)
+                },
+                onFailure = { error ->
+                    Log.e(TAG, "❌ Error refreshing user profile: ${error.message}", error)
+                    Result.failure(error)
+                }
+            )
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ Error during profile refresh: ${e.message}", e)
             Result.failure(e)
         }
     }

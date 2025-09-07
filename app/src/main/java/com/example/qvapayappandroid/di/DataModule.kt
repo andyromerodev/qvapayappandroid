@@ -6,6 +6,8 @@ import com.example.qvapayappandroid.data.datasource.OfferTemplateLocalDataSource
 import com.example.qvapayappandroid.data.datasource.OfferTemplateLocalDataSourceImpl
 import com.example.qvapayappandroid.data.datasource.P2PDataSource
 import com.example.qvapayappandroid.data.datasource.P2PDataSourceImpl
+import com.example.qvapayappandroid.data.datasource.UserDataSource
+import com.example.qvapayappandroid.data.datasource.UserDataSourceImpl
 import com.example.qvapayappandroid.data.datasource.WebViewLoginDataSource
 import com.example.qvapayappandroid.data.datasource.WebViewLoginDataSourceImpl
 import com.example.qvapayappandroid.data.datastore.SessionPreferencesRepository
@@ -38,6 +40,7 @@ val dataModule = module {
     
     // DataSources (Optimized - removed obsolete Session and Settings DataSources)
     single<LoginDataSource> { LoginDataSourceImpl(get()) }
+    single<UserDataSource> { UserDataSourceImpl(get()) }
     single<P2PDataSource> { P2PDataSourceImpl(get(), get()) }
     single<OfferTemplateLocalDataSource> { OfferTemplateLocalDataSourceImpl(get()) }
 
@@ -55,7 +58,7 @@ val dataModule = module {
     single { SettingsDataMigration(get(), get()) }
 
     // Repositories (Optimized for DataStore)
-    single<SessionRepository> { SessionRepositoryDataStoreImpl(get(), get()) }
+    single<SessionRepository> { SessionRepositoryDataStoreImpl(get(), get(), get()) }
     single<AuthRepository> { AuthRepositoryImpl(get<LoginDataSource>(), get<SessionRepository>()) }
     single<SettingsRepository> { SettingsRepositoryDataStoreImpl(get()) }
     single<P2PRepository> { P2PRepositoryImpl(get(), get()) }

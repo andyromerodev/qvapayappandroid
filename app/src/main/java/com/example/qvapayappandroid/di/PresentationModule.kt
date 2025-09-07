@@ -23,7 +23,7 @@ val presentationModule = module {
     viewModel { LoginViewModel(get()) }
     viewModel { MainViewModel(get()) }
     viewModel { HomeViewModel(get(), get()) }
-    viewModel { UserProfileViewModel(get(), get()) }
+    viewModel { UserProfileViewModel(get(), get(), get()) }
     viewModel { P2PViewModel(get()) }
     viewModel { P2POfferDetailViewModel(get()) }
     viewModel { CreateP2POfferViewModel(get()) }

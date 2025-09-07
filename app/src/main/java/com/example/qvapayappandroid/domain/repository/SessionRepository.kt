@@ -12,4 +12,5 @@ interface SessionRepository {
     suspend fun getAccessToken(): String?
     suspend fun logout(): Result<Unit>
     suspend fun updateUserData(user: User): Result<Unit>
+    suspend fun refreshUserProfile(): Result<User>
 }
