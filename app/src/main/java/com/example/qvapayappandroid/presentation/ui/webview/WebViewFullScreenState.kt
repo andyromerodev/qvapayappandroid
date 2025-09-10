@@ -11,5 +11,6 @@ data class WebViewFullScreenState(
 ) {
     companion object {
         const val QVAPAY_LOGIN_URL = "https://qvapay.com/login"
+        const val QVAPAY_DASHBOARD_URL = "https://qvapay.com/dashboard"
     }
 }

@@ -1,5 +1,61 @@
 # Changelog - QvaPay Android App
 
+## 🚀 v3.9.0 - WebView Quick Navigation System with Expandable FABs (2025-09-10)
+
+### ✨ Enhanced WebView Navigation Experience
+
+#### 🚀 Expandable Floating Action Button System
+- **Quick Navigation FABs**: Implemented expandable FAB system for instant QvaPay access
+  - **Primary FAB**: Main action button with animated rotation (45° on expand)
+  - **Login FAB**: Direct navigation to `https://qvapay.com/login`
+  - **Dashboard FAB**: Direct navigation to `https://qvapay.com/dashboard`
+  - **Smart Expansion**: Tap main FAB to reveal/hide secondary buttons
+
+#### 🎨 Material 3 Design Implementation
+- **Professional FAB Layout**: Column-based layout with proper spacing (12dp between FABs)
+- **Distinct Color Theming**: Each FAB uses different Material 3 color containers
+  - Primary FAB: `primaryContainer` with animated rotation
+  - Dashboard FAB: `secondaryContainer` with dashboard icon
+  - Login FAB: `tertiaryContainer` with login icon
+- **Smooth Animations**: 300ms rotation animation with `animateFloatAsState`
+- **Responsive Positioning**: Bottom-end alignment with 16dp padding
+
+#### 🛠️ WebView Navigation Enhancement
+- **Direct URL Loading**: FABs trigger immediate navigation to specified URLs
+  - Updated `WebViewFullScreenViewModel.showWebView()` for instant navigation
+  - Enhanced state management for real-time URL switching
+  - Bypasses shimmer loading for QvaPay URLs for faster navigation
+- **Smart Loading States**: Optimized loading behavior prevents stuck "LOADING QVAPAY" state
+- **URL Constants**: Added `QVAPAY_DASHBOARD_URL` constant in `WebViewFullScreenState`
+
+#### 🔧 Technical Implementation
+- **State Management**: Enhanced ViewModel with immediate WebView URL loading
+- **Animation System**: `animateFloatAsState` with `tween` animation for smooth FAB rotation
+- **Icon Integration**: Material Icons with proper AutoMirrored support for RTL
+- **Component Architecture**: Self-contained FAB system with callback-based navigation
+
+### 📁 Files Modified
+```
+├── presentation/ui/webview/
+│   ├── WebViewFullScreen.kt (expandable FAB system, Material 3 design)
+│   ├── WebViewFullScreenState.kt (dashboard URL constant)
+│   └── WebViewFullScreenViewModel.kt (enhanced navigation logic)
+```
+
+### 🎯 User Experience Improvements
+- **Instant Access**: One-tap navigation to login and dashboard from any WebView
+- **Visual Feedback**: Clear animation states and color-coded FABs
+- **Professional Polish**: Smooth animations and Material 3 compliance
+- **Faster Navigation**: Optimized loading prevents shimmer delays
+- **Intuitive Design**: Expandable interface saves screen space
+
+### 🚀 Technical Benefits
+- **Enhanced Navigation Flow**: Quick access to key QvaPay sections
+- **Optimized Performance**: Direct URL loading without unnecessary delays
+- **Material 3 Compliance**: Consistent design system integration
+- **Animation Polish**: Professional animation system with proper state management
+- **Maintainable Code**: Clean component separation and callback architecture
+
 ## 🚀 v3.8.0 - UserProfile Snackbar Message System with Clean Architecture (2025-09-07)
 
 ### ✨ Enhanced UserProfile Message Display System

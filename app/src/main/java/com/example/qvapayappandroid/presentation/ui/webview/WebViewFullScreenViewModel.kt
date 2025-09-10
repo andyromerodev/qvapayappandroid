@@ -58,6 +58,22 @@ class WebViewFullScreenViewModel : ViewModel() {
             isLoading = true,
             error = null
         )
+        
+        // Navegar a la nueva URL si tenemos un WebView existente
+        webViewRef?.get()?.let { webView ->
+            hasCommittedFrame = false
+            isShowingShimmer = false
+            setLoading(true)
+            
+            // Evitar el shimmer y cargar directamente la URL
+            viewModelScope.launch {
+                delay(100) // Pequeño delay para asegurar que el estado se actualice
+                webView.post { 
+                    webView.loadUrl(url)
+                }
+            }
+        }
+        
         emitEffect(WebViewEffect.PageStarted(url))
     }
 
@@ -110,9 +126,14 @@ class WebViewFullScreenViewModel : ViewModel() {
                     val u = url.orEmpty()
                     val isData = u.startsWith("data:", true)
                     val isBlank = u == "about:blank"
-                    if (!hasCommittedFrame && !isData && !isBlank && !isShowingShimmer) {
+                    
+                    // Solo mostrar shimmer para la carga inicial, no para navegación desde FABs
+                    val isQvaPayUrl = u.contains("qvapay.com")
+                    if (!hasCommittedFrame && !isData && !isBlank && !isShowingShimmer && !isQvaPayUrl) {
                         setLoading(true)
                         showShimmerHTML(view)
+                    } else if (isQvaPayUrl) {
+                        setLoading(true)
                     }
                 }
 

@@ -1,17 +1,28 @@
 package com.example.qvapayappandroid.presentation.ui.webview
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Dashboard
+import androidx.compose.material.icons.automirrored.filled.Login
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -21,9 +32,14 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -138,7 +154,67 @@ fun WebViewFullScreen(
                 )
             }
 
-            // Puedes pintar overlays con state.isLoading / state.error si quieres
+            // Floating Action Button expandible
+            var isFabExpanded by remember { mutableStateOf(false) }
+            
+            val fabRotation by animateFloatAsState(
+                targetValue = if (isFabExpanded) 45f else 0f,
+                animationSpec = tween(durationMillis = 300),
+                label = "fab_rotation"
+            )
+
+            Column(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalAlignment = Alignment.End
+            ) {
+                // FAB secundarios (Login y Dashboard)
+                if (isFabExpanded) {
+                    SmallFloatingActionButton(
+                        onClick = {
+                            viewModel.handleIntent(WebViewIntent.ShowWebView(WebViewFullScreenState.QVAPAY_DASHBOARD_URL))
+                            isFabExpanded = false
+                        },
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                        modifier = Modifier.offset(y = 8.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.Dashboard,
+                            contentDescription = "Dashboard"
+                        )
+                    }
+
+                    SmallFloatingActionButton(
+                        onClick = {
+                            viewModel.handleIntent(WebViewIntent.ShowWebView(WebViewFullScreenState.QVAPAY_LOGIN_URL))
+                            isFabExpanded = false
+                        },
+                        containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onTertiaryContainer
+                    ) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.Login,
+                            contentDescription = "Login"
+                        )
+                    }
+                }
+
+                // FAB principal
+                FloatingActionButton(
+                    onClick = { isFabExpanded = !isFabExpanded },
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                ) {
+                    Icon(
+                        Icons.Default.Add,
+                        contentDescription = "Opciones",
+                        modifier = Modifier.rotate(fabRotation)
+                    )
+                }
+            }
         }
     }
 }
