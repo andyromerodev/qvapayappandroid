@@ -176,7 +176,7 @@ class OfferCheckWorker(
         val notificationText = "${alert.name}: ${offer.type?.uppercase() ?: "OFERTA"} ${offer.amount ?: "N/A"} ${offer.coin ?: ""} a ${offer.receive ?: "N/A"}"
 
         val notification = NotificationCompat.Builder(applicationContext, NOTIFICATION_CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_launcher_foreground) // Asegúrate de tener este ícono
+            .setSmallIcon(R.drawable.doublecheck) // Asegúrate de tener este ícono
             .setContentTitle(notificationTitle)
             .setContentText(notificationText)
             .setStyle(
