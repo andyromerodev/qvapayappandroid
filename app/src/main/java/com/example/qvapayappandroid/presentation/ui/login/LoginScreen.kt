@@ -1,6 +1,14 @@
 package com.example.qvapayappandroid.presentation.ui.login
 
-import android.util.Log
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.MutableTransitionState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -22,6 +30,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -30,9 +39,8 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.platform.LocalContext
 import org.koin.androidx.compose.koinViewModel
-import org.koin.androidx.compose.get
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -41,16 +49,28 @@ fun LoginScreen(
     onLoginSuccess: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val context = LocalContext.current
-
+    val screenVisibilityState = remember {
+        MutableTransitionState(false).apply { targetState = true }
+    }
+    var pendingNavigation by remember { mutableStateOf(false) }
+    val updatedOnLoginSuccess by rememberUpdatedState(onLoginSuccess)
 
     LaunchedEffect(Unit) {
         viewModel.effect.collect { effect ->
             when (effect) {
                 is LoginEffect.NavigateToHome -> {
-                    onLoginSuccess()
+                    pendingNavigation = true
+                    screenVisibilityState.targetState = false
                 }
             }
+        }
+    }
+
+    LaunchedEffect(screenVisibilityState.currentState, screenVisibilityState.targetState, pendingNavigation) {
+        val isHidden = !screenVisibilityState.currentState && !screenVisibilityState.targetState
+        if (pendingNavigation && isHidden) {
+            pendingNavigation = false
+            updatedOnLoginSuccess()
         }
     }
 
@@ -60,22 +80,29 @@ fun LoginScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                brush = Brush.verticalGradient(
-                    colors = listOf(
-                        MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-                        MaterialTheme.colorScheme.surface
-                    )
-                )
-            )
+            .background(Color(0xFF716EC5))
     ) {
-        LoginForm(
-            uiState = uiState,
-            viewModel = viewModel,
-            focusManager = focusManager,
-            passwordVisible = passwordVisible,
-            onPasswordVisibilityToggle = { passwordVisible = !passwordVisible }
-        )
+        AnimatedVisibility(
+            visibleState = screenVisibilityState,
+            enter = fadeIn(animationSpec = tween(durationMillis = 320, easing = FastOutSlowInEasing)) +
+                slideInVertically(
+                    animationSpec = tween(durationMillis = 320, easing = FastOutSlowInEasing),
+                    initialOffsetY = { it / 5 }
+                ),
+            exit = fadeOut(animationSpec = tween(durationMillis = 220, easing = FastOutSlowInEasing)) +
+                slideOutVertically(
+                    animationSpec = tween(durationMillis = 220, easing = FastOutSlowInEasing),
+                    targetOffsetY = { it / 6 }
+                )
+        ) {
+            LoginForm(
+                uiState = uiState,
+                viewModel = viewModel,
+                focusManager = focusManager,
+                passwordVisible = passwordVisible,
+                onPasswordVisibilityToggle = { passwordVisible = !passwordVisible }
+            )
+        }
     }
 }
 
@@ -98,35 +125,38 @@ private fun LoginForm(
         // Logo/Brand Section
         LoginHeader()
         
-        // Email Field
-        EmailField(
-            value = uiState.email,
-            onValueChange = viewModel::updateEmail,
-            isEnabled = !uiState.isLoading,
-            focusManager = focusManager
-        )
+        AnimatedField(delayMillis = 80) {
+            EmailField(
+                value = uiState.email,
+                onValueChange = viewModel::updateEmail,
+                isEnabled = !uiState.isLoading,
+                focusManager = focusManager
+            )
+        }
 
-        // Password Field
-        PasswordField(
-            value = uiState.password,
-            onValueChange = viewModel::updatePassword,
-            isEnabled = !uiState.isLoading,
-            isVisible = passwordVisible,
-            onVisibilityToggle = onPasswordVisibilityToggle,
-            focusManager = focusManager
-        )
+        AnimatedField(delayMillis = 160) {
+            PasswordField(
+                value = uiState.password,
+                onValueChange = viewModel::updatePassword,
+                isEnabled = !uiState.isLoading,
+                isVisible = passwordVisible,
+                onVisibilityToggle = onPasswordVisibilityToggle,
+                focusManager = focusManager
+            )
+        }
 
-        // 2FA Code Field
-        CodeField(
-            value = uiState.code,
-            onValueChange = viewModel::updateCode,
-            isEnabled = !uiState.isLoading,
-            focusManager = focusManager,
-            onDone = { 
-                focusManager.clearFocus()
-                viewModel.login()
-            }
-        )
+        AnimatedField(delayMillis = 240) {
+            CodeField(
+                value = uiState.code,
+                onValueChange = viewModel::updateCode,
+                isEnabled = !uiState.isLoading,
+                focusManager = focusManager,
+                onDone = { 
+                    focusManager.clearFocus()
+                    viewModel.login()
+                }
+            )
+        }
 
         // Login Buttons
         LoginButtons(
@@ -175,6 +205,7 @@ private fun LoginHeader() {
         text = "Bienvenido a QvaPay",
         style = MaterialTheme.typography.headlineMedium,
         fontWeight = FontWeight.Bold,
+        color = Color.White,
         textAlign = TextAlign.Center,
         modifier = Modifier.padding(bottom = 8.dp)
     )
@@ -182,10 +213,32 @@ private fun LoginHeader() {
     Text(
         text = "Inicia sesión para continuar",
         style = MaterialTheme.typography.bodyLarge,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        color = Color.White.copy(alpha = 0.8f),
         textAlign = TextAlign.Center,
         modifier = Modifier.padding(bottom = 40.dp)
     )
+}
+
+@Composable
+private fun AnimatedField(
+    delayMillis: Int,
+    content: @Composable AnimatedVisibilityScope.() -> Unit
+) {
+    var isVisible by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        delay(delayMillis.toLong())
+        isVisible = true
+    }
+    AnimatedVisibility(
+        visible = isVisible,
+        enter = fadeIn(animationSpec = tween(durationMillis = 240, easing = FastOutSlowInEasing)) +
+            slideInVertically(
+                animationSpec = tween(durationMillis = 320, easing = FastOutSlowInEasing),
+                initialOffsetY = { it / 6 }
+            )
+    ) {
+        content()
+    }
 }
 
 @Composable
@@ -203,7 +256,7 @@ private fun EmailField(
             Icon(
                 imageVector = Icons.Default.Email,
                 contentDescription = "Email",
-                tint = MaterialTheme.colorScheme.primary
+                tint = Color.White
             )
         },
         keyboardOptions = KeyboardOptions(
@@ -219,8 +272,14 @@ private fun EmailField(
         enabled = isEnabled,
         shape = RoundedCornerShape(12.dp),
         colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = MaterialTheme.colorScheme.primary,
-            unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+            focusedBorderColor = Color.White,
+            unfocusedBorderColor = Color.White.copy(alpha = 0.6f),
+            focusedLabelColor = Color.White,
+            unfocusedLabelColor = Color.White.copy(alpha = 0.8f),
+            focusedTextColor = Color.White,
+            unfocusedTextColor = Color.White,
+            focusedContainerColor = Color.White.copy(alpha = 0.1f),
+            unfocusedContainerColor = Color.White.copy(alpha = 0.05f)
         )
     )
 }
@@ -242,7 +301,7 @@ private fun PasswordField(
             Icon(
                 imageVector = Icons.Default.Lock,
                 contentDescription = "Password",
-                tint = MaterialTheme.colorScheme.primary
+                tint = Color.White
             )
         },
         trailingIcon = {
@@ -250,7 +309,7 @@ private fun PasswordField(
                 Icon(
                     imageVector = if (isVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
                     contentDescription = if (isVisible) "Ocultar contraseña" else "Mostrar contraseña",
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    tint = Color.White.copy(alpha = 0.7f)
                 )
             }
         },
@@ -268,8 +327,14 @@ private fun PasswordField(
         enabled = isEnabled,
         shape = RoundedCornerShape(12.dp),
         colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = MaterialTheme.colorScheme.primary,
-            unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+            focusedBorderColor = Color.White,
+            unfocusedBorderColor = Color.White.copy(alpha = 0.6f),
+            focusedLabelColor = Color.White,
+            unfocusedLabelColor = Color.White.copy(alpha = 0.8f),
+            focusedTextColor = Color.White,
+            unfocusedTextColor = Color.White,
+            focusedContainerColor = Color.White.copy(alpha = 0.1f),
+            unfocusedContainerColor = Color.White.copy(alpha = 0.05f)
         )
     )
 }
@@ -290,7 +355,7 @@ private fun CodeField(
             Icon(
                 imageVector = Icons.Default.Security,
                 contentDescription = "2FA Code",
-                tint = MaterialTheme.colorScheme.primary
+                tint = Color.White
             )
         },
         keyboardOptions = KeyboardOptions(
@@ -304,8 +369,14 @@ private fun CodeField(
         enabled = isEnabled,
         shape = RoundedCornerShape(12.dp),
         colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = MaterialTheme.colorScheme.primary,
-            unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+            focusedBorderColor = Color.White,
+            unfocusedBorderColor = Color.White.copy(alpha = 0.6f),
+            focusedLabelColor = Color.White,
+            unfocusedLabelColor = Color.White.copy(alpha = 0.8f),
+            focusedTextColor = Color.White,
+            unfocusedTextColor = Color.White,
+            focusedContainerColor = Color.White.copy(alpha = 0.1f),
+            unfocusedContainerColor = Color.White.copy(alpha = 0.05f)
         )
     )
 }
@@ -324,8 +395,10 @@ private fun LoginButtons(
         enabled = !uiState.isLoading && uiState.email.isNotBlank() && uiState.password.isNotBlank(),
         shape = RoundedCornerShape(12.dp),
         colors = ButtonDefaults.buttonColors(
-            containerColor = MaterialTheme.colorScheme.primary,
-            disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+            containerColor = Color.White,
+            disabledContainerColor = Color.White.copy(alpha = 0.5f),
+            contentColor = Color(0xFF716EC5),
+            disabledContentColor = Color(0xFF716EC5).copy(alpha = 0.7f)
         )
     ) {
         if (uiState.isLoading) {
@@ -335,7 +408,7 @@ private fun LoginButtons(
             ) {
                 CircularProgressIndicator(
                     modifier = Modifier.size(20.dp),
-                    color = MaterialTheme.colorScheme.onPrimary,
+                    color = Color(0xFF716EC5),
                     strokeWidth = 2.dp
                 )
                 Spacer(modifier = Modifier.width(12.dp))
@@ -365,7 +438,7 @@ private fun ErrorMessage(
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.errorContainer
+                containerColor = Color.White.copy(alpha = 0.9f)
             ),
             shape = RoundedCornerShape(12.dp)
         ) {
@@ -378,14 +451,14 @@ private fun ErrorMessage(
                 Icon(
                     imageVector = Icons.Default.Error,
                     contentDescription = "Error",
-                    tint = MaterialTheme.colorScheme.onErrorContainer,
+                    tint = Color.Red,
                     modifier = Modifier.size(20.dp)
                 )
                 Spacer(modifier = Modifier.width(12.dp))
                 Text(
                     text = error,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onErrorContainer
+                    color = Color.Red.copy(alpha = 0.8f)
                 )
             }
         }
@@ -399,7 +472,7 @@ private fun SuccessMessage(loginResponse: com.example.qvapayappandroid.data.mode
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer
+                containerColor = Color.White.copy(alpha = 0.9f)
             ),
             shape = RoundedCornerShape(12.dp)
         ) {
@@ -410,7 +483,7 @@ private fun SuccessMessage(loginResponse: com.example.qvapayappandroid.data.mode
                 Icon(
                     imageVector = Icons.Default.CheckCircle,
                     contentDescription = "Success",
-                    tint = MaterialTheme.colorScheme.primary,
+                    tint = Color.Green,
                     modifier = Modifier.size(32.dp)
                 )
                 Spacer(modifier = Modifier.height(12.dp))
@@ -418,14 +491,14 @@ private fun SuccessMessage(loginResponse: com.example.qvapayappandroid.data.mode
                     text = "¡Inicio de sesión exitoso!",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    color = Color(0xFF716EC5),
                     textAlign = TextAlign.Center
                 )
                 Text(
                     text = "Bienvenido, ${response.me.name} ${response.me.lastname}",
                     modifier = Modifier.padding(top = 8.dp),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    color = Color(0xFF716EC5).copy(alpha = 0.8f),
                     textAlign = TextAlign.Center
                 )
                 Text(
@@ -433,7 +506,7 @@ private fun SuccessMessage(loginResponse: com.example.qvapayappandroid.data.mode
                     modifier = Modifier.padding(top = 4.dp),
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.primary,
+                    color = Color.Green,
                     textAlign = TextAlign.Center
                 )
             }

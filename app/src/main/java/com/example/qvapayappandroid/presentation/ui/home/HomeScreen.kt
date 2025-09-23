@@ -8,6 +8,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -23,6 +29,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import android.util.Log
@@ -174,10 +182,10 @@ private fun MyP2POffersSection(
                         state = listState,
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        items(offersToShow) { offer ->
-                            MyOfferCard(
+                        items(offersToShow, key = { it.uuid ?: "" }) { offer ->
+                            AnimatedOfferItem(
                                 offer = offer,
-                                onClick = onOfferClick
+                                onOfferClick = onOfferClick
                             )
                         }
                         
@@ -190,6 +198,39 @@ private fun MyP2POffersSection(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun AnimatedOfferItem(
+    offer: P2POffer,
+    onOfferClick: (P2POffer) -> Unit
+) {
+    var isVisible by remember { mutableStateOf(false) }
+    
+    LaunchedEffect(offer.uuid) {
+        isVisible = true
+    }
+    
+    AnimatedVisibility(
+        visible = isVisible,
+        enter = fadeIn(
+            animationSpec = tween(
+                durationMillis = 300,
+                delayMillis = 50
+            )
+        ) + slideInVertically(
+            animationSpec = spring(
+                dampingRatio = Spring.DampingRatioMediumBouncy,
+                stiffness = Spring.StiffnessLow
+            ),
+            initialOffsetY = { it / 3 }
+        )
+    ) {
+        MyOfferCard(
+            offer = offer,
+            onClick = onOfferClick
+        )
     }
 }
 
