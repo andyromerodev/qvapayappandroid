@@ -1,5 +1,61 @@
 # Changelog - QvaPay Android App
 
+## 🚀 v3.11.0 - Enhanced UI Animations and P2P System Improvements (2025-09-23)
+
+### ✨ Splash Screen and Login UI Animation Enhancements
+- **Animated Splash Screen Transitions**: Implemented smooth fade out and scale effects for splash screen exit
+- **Purple-Themed Login Screen**: Complete visual redesign with brand color integration
+  - White-on-purple color scheme for consistent branding
+  - Animated field entrance with staggered delays (80ms, 160ms, 240ms)
+  - Smooth slide-in animations with FastOutSlowInEasing for professional feel
+- **Enhanced Visual Feedback**: Animated error and success message cards
+- **Lottie Animation Update**: Switched from moneyanimation to doublecheck animation
+
+### 🔄 P2P Offers System Improvements
+- **Smart Auto-Pagination**: Implemented intelligent scroll-based pagination
+  - User scroll detection to prevent unwanted auto-loading
+  - Exact end-of-list detection for precise loading triggers
+  - 3-second delay before enabling auto-pagination after initial load
+- **Advanced Filtering State Management**: Enhanced filtering system reliability
+  - Proper filtering state tracking to prevent loading conflicts
+  - Improved race condition handling between filtering and pagination
+  - Better cancellation handling for concurrent API requests
+- **Enhanced Error Handling**: Robust error management for network operations
+  - Separate error states for initial load vs pagination errors
+  - 429 rate limit detection with automatic retry delays
+  - Graceful cancellation handling without state corruption
+- **Animated List Items**: Smooth slide-in animations for P2P offers and home screen items
+  - Spring-based animations with medium bounce damping
+  - Fade-in effects with optimized timing for better UX
+
+### 🎨 UI Resource Updates
+- **Notification Icon Update**: Changed OfferCheckWorker to use doublecheck drawable
+- **Launcher Icon Refresh**: Updated app icons across all density variants for better brand consistency
+- **Enhanced Animation Resources**: Added doublecheck.json Lottie animation
+- **Night Mode Support**: Improved color palette with comprehensive dark theme support
+
+### 🔧 Technical Improvements
+- **Performance Optimization**: Better state management for scroll performance
+- **Memory Management**: Optimized list rendering with proper key-based item tracking
+- **API Call Optimization**: Debounced loading to prevent rapid successive API calls
+- **Concurrency Handling**: Improved coroutine cancellation and error propagation
+
+### 📁 Files Modified in v3.11.0
+```
+├── app/src/main/java/com/example/qvapayappandroid/presentation/ui/splash/SplashScreen.kt
+├── app/src/main/java/com/example/qvapayappandroid/presentation/ui/login/LoginScreen.kt
+├── app/src/main/java/com/example/qvapayappandroid/presentation/ui/home/HomeScreen.kt
+├── app/src/main/java/com/example/qvapayappandroid/presentation/ui/p2p/P2PScreen.kt
+├── app/src/main/java/com/example/qvapayappandroid/presentation/ui/p2p/P2PViewModel.kt
+├── app/src/main/java/com/example/qvapayappandroid/presentation/ui/p2p/components/ErrorRetryState.kt
+├── app/src/main/java/com/example/qvapayappandroid/data/work/OfferCheckWorker.kt
+├── app/src/main/res/raw/doublecheck.json
+├── app/src/main/res/drawable/ic_launcher_foreground.xml
+├── app/src/main/res/values/colors.xml
+├── app/src/main/res/values-night/colors.xml
+└── app/src/main/res/mipmap-*/ic_launcher*.webp (multiple density variants)
+```
+
 ## 🚀 v3.10.0 - MIUI Splash Screen Compatibility and Transparent Status Bar Enhancement (2025-09-23)
 
 ### ✨ MIUI Device Compatibility Fix
