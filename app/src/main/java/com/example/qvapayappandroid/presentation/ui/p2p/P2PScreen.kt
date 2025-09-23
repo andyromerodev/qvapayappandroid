@@ -17,6 +17,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
@@ -37,6 +43,9 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -80,8 +89,15 @@ fun P2PScreen(
             )
         }
     ) { paddingValues ->
+
+        val showBlockingLoader =
+            uiState.isLoading ||
+                    uiState.isRefreshing ||
+                    (uiState.isFiltering && uiState.currentPage == 1)
+
         when {
-            (uiState.isLoading || uiState.isRefreshing) && uiState.offers.isEmpty() -> {
+            // Mostrar shimmer durante carga inicial, refresh o filtrado
+            showBlockingLoader -> {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -98,13 +114,7 @@ fun P2PScreen(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(paddingValues),
-                    onSendMoney = { viewModel.onSendMoney() },
-                    onReceiveMoney = { viewModel.onReceiveMoney() },
-                    onViewHistory = { viewModel.onViewHistory() },
-                    onOfferTypeChanged = { viewModel.onOfferTypeChanged(it) },
-                    onCoinChanged = { viewModel.onCoinChanged(it) },
                     onNextPage = { viewModel.onNextPage() },
-                    onPreviousPage = { viewModel.onPreviousPage() },
                     onRefresh = { viewModel.refresh() },
                     onOfferClick = onOfferClick,
                     onSortByChanged = { viewModel.onSortByChanged(it) },
@@ -122,13 +132,7 @@ fun P2PScreen(
 private fun P2PContent(
     uiState: P2PUiState,
     modifier: Modifier = Modifier,
-    onSendMoney: () -> Unit,
-    onReceiveMoney: () -> Unit,
-    onViewHistory: () -> Unit,
-    onOfferTypeChanged: (String) -> Unit,
-    onCoinChanged: (String) -> Unit,
     onNextPage: () -> Unit,
-    onPreviousPage: () -> Unit,
     onRefresh: () -> Unit,
     onOfferClick: (P2POffer) -> Unit,
     onSortByChanged: (String) -> Unit,
@@ -138,30 +142,44 @@ private fun P2PContent(
 ) {
     val listState = rememberLazyListState()
 
-    val shouldLoadMore by remember {
+    var userHasScrolled by remember { mutableStateOf(false) }
+
+    LaunchedEffect(listState) {
+        snapshotFlow { listState.isScrollInProgress }.collect { inProgress ->
+            if (inProgress) userHasScrolled = true
+        }
+    }
+
+    val shouldLoadMore by remember(listState, uiState, userHasScrolled) {
         derivedStateOf {
             val layoutInfo = listState.layoutInfo
-            val totalItemsNumber = layoutInfo.totalItemsCount
-            val lastVisibleItemIndex = (layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1)
+            val totalItems = layoutInfo.totalItemsCount
+            val lastVisibleIndex = layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1
 
-            val condition1 = totalItemsNumber > 0
-            val condition2 = lastVisibleItemIndex >= totalItemsNumber - 3
-            val condition3 = uiState.currentPage < uiState.totalPages
-            val condition4 = !uiState.isLoadingMore
-            val condition5 = !uiState.isLoading
-            val condition6 = uiState.errorMessage == null
+            val hasContent = uiState.offers.isNotEmpty()
+            val atEnd = totalItems > 0 && lastVisibleIndex == totalItems - 1 // <- fin real de la lista
+            val notLastPage = uiState.totalPages > 0 && uiState.currentPage < uiState.totalPages
+            val idle = !uiState.isLoading && !uiState.isLoadingMore && !uiState.isFiltering
+            val noError = uiState.errorMessage == null
 
-            val result =
-                condition1 && condition2 && condition3 && condition4 && condition5 && condition6
+            // Requiere:
+            // - que el usuario haya scrolleado alguna vez (evita auto-carga si todo cabe en pantalla)
+            // - estar exactamente en el último elemento
+            val result = userHasScrolled &&
+                    hasContent &&
+                    atEnd &&
+                    notLastPage &&
+                    idle &&
+                    noError
 
-            if (totalItemsNumber > 0) {
+            if (totalItems > 0) {
                 Log.d(
                     "P2PScreen",
-                    "shouldLoadMore check - total: $totalItemsNumber, lastVisible: $lastVisibleItemIndex, currentPage: ${uiState.currentPage}, totalPages: ${uiState.totalPages}, isLoadingMore: ${uiState.isLoadingMore}, isLoading: ${uiState.isLoading}, error: ${uiState.errorMessage}"
+                    "SCROLL DEBUG - total: $totalItems, lastVisible: $lastVisibleIndex, atEnd: $atEnd, userHasScrolled: $userHasScrolled"
                 )
                 Log.d(
                     "P2PScreen",
-                    "Conditions - 1: $condition1, 2: $condition2, 3: $condition3, 4: $condition4, 5: $condition5, 6: $condition6, RESULT: $result"
+                    "shouldLoadMore - notLastPage: $notLastPage, idle: $idle, noError: $noError, RESULT: $result"
                 )
             }
 
@@ -170,12 +188,11 @@ private fun P2PContent(
     }
 
     LaunchedEffect(shouldLoadMore) {
-        Log.d("P2PScreen", "LaunchedEffect triggered - shouldLoadMore = $shouldLoadMore")
         if (shouldLoadMore) {
-            Log.d("P2PScreen", "Triggering onNextPage - shouldLoadMore = true")
             onNextPage()
         }
     }
+
     PullToRefreshBox(
         isRefreshing = uiState.isRefreshing,
         onRefresh = onRefresh,
@@ -253,13 +270,12 @@ private fun P2PContent(
                     else -> uiState.offers
                 }
             }
-
+            
             // Ofertas, error o mensaje de vacío
+            // Nota: Los estados de carga (isFiltering, isRefreshing, isLoading) ya se manejan en P2PScreen
+            // por lo que aquí solo necesitamos manejar: errores, lista vacía, o lista con contenido
             when {
-                uiState.isRefreshing -> {
-                    P2PShimmerEffect()
-                }
-                
+                // Mostrar errores
                 uiState.errorMessage != null || uiState.isRetryingFirstLoad -> {
                     Box(
                         modifier = Modifier.weight(1f),
@@ -273,7 +289,9 @@ private fun P2PContent(
                     }
                 }
 
-                sortedOffers.isEmpty() -> {
+                // Mostrar mensaje de vacío SOLO cuando el resultado del filtro/carga es definitivamente vacío
+                // No cuando la lista está vacía temporalmente durante el filtrado
+                sortedOffers.isEmpty() && uiState.totalOffers == 0 && !uiState.isFiltering -> {
                     Box(
                         modifier = Modifier.weight(1f),
                         contentAlignment = Alignment.Center
@@ -293,10 +311,10 @@ private fun P2PContent(
                         verticalArrangement = Arrangement.spacedBy(12.dp),
                         contentPadding = PaddingValues(vertical = 12.dp)
                     ) {
-                        items(sortedOffers) { offer ->
-                            P2POfferCard(
+                        items(sortedOffers, key = { it.uuid ?: "" }) { offer ->
+                            AnimatedListItem(
                                 offer = offer,
-                                onClick = onOfferClick,
+                                onOfferClick = onOfferClick,
                                 phoneNumber = offer.uuid?.let { uiState.phoneNumbersMap[it] }
                             )
                         }
@@ -320,6 +338,41 @@ private fun P2PContent(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun AnimatedListItem(
+    offer: P2POffer,
+    onOfferClick: (P2POffer) -> Unit,
+    phoneNumber: String?
+) {
+    var isVisible by remember { mutableStateOf(false) }
+    
+    LaunchedEffect(offer.uuid) {
+        isVisible = true
+    }
+    
+    AnimatedVisibility(
+        visible = isVisible,
+        enter = fadeIn(
+            animationSpec = tween(
+                durationMillis = 300,
+                delayMillis = 50
+            )
+        ) + slideInVertically(
+            animationSpec = spring(
+                dampingRatio = Spring.DampingRatioMediumBouncy,
+                stiffness = Spring.StiffnessLow
+            ),
+            initialOffsetY = { it / 3 }
+        )
+    ) {
+        P2POfferCard(
+            offer = offer,
+            onClick = onOfferClick,
+            phoneNumber = phoneNumber
+        )
     }
 }
 

@@ -23,10 +23,10 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun ErrorRetryState(
+    modifier: Modifier = Modifier,
     errorMessage: String,
     onRetry: () -> Unit,
     isRetrying: Boolean = false,
-    modifier: Modifier = Modifier
 ) {
     Card(
         modifier = modifier

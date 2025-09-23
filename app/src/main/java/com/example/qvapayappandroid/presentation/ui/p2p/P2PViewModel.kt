@@ -23,12 +23,8 @@ class P2PViewModel(
     private val _uiState = MutableStateFlow(P2PUiState())
     val uiState: StateFlow<P2PUiState> = _uiState.asStateFlow()
     
-    private val _effect = MutableSharedFlow<P2PEffect>()
-    val effect: SharedFlow<P2PEffect> = _effect.asSharedFlow()
-    
     private var loadDataJob: Job? = null
-    
-    // Removed automatic loading from init - now loads only when P2PScreen is opened
+    private var hasInitialLoadStarted = false
     
     private fun logP2POffersDetails(offers: List<P2POffer>, context: String = "") {
         Log.d("P2POffers", "===== P2P OFFERS LOG ${if (context.isNotEmpty()) "($context)" else ""} =====")
@@ -69,7 +65,14 @@ class P2PViewModel(
             // Increased delay to prevent rapid successive calls when filtering
             delay(1000)
             
-            _uiState.value = _uiState.value.copy(isLoading = true)
+            // Don't change isFiltering if it's currently true (filtering in progress)
+            val isCurrentlyFiltering = _uiState.value.isFiltering
+            Log.d("P2PViewModel", "loadP2PDataDebounced - isCurrentlyFiltering = $isCurrentlyFiltering")
+            
+            _uiState.value = _uiState.value.copy(
+                isLoading = true,
+                allowAutoPagination = _uiState.value.allowAutoPagination
+            )
             
             try {
                 val currentState = _uiState.value
@@ -93,18 +96,32 @@ class P2PViewModel(
                         val newPhoneNumbers = processOffersWithPhoneNumbers(response.data)
                         val updatedPhoneNumbers = _uiState.value.phoneNumbersMap + newPhoneNumbers
                         
+                        Log.d("P2PViewModel", "loadP2PDataDebounced - SUCCESS: clearing isFiltering, offers = ${newOffers.size}")
+                        val currentAllowAutoPagination = _uiState.value.allowAutoPagination
                         _uiState.value = _uiState.value.copy(
                             isLoading = false,
                             isLoadingMore = false,
+                            isFiltering = false, // Clear filtering state
                             errorMessage = null,
                             loadMoreError = null, // Clear on success
                             offers = newOffers,
                             currentPage = response.currentPage,
                             totalPages = response.lastPage,
                             totalOffers = response.total,
-                            phoneNumbersMap = updatedPhoneNumbers
+                            phoneNumbersMap = updatedPhoneNumbers,
+                            allowAutoPagination = currentAllowAutoPagination // Preserve current value
                         )
+                        
+                        // Enable auto-pagination after initial load completes successfully
+                        if (currentState.currentPage == 1) {
+                            viewModelScope.launch {
+                                delay(3000) // Wait 3 seconds before allowing auto-pagination
+                                _uiState.value = _uiState.value.copy(allowAutoPagination = true)
+                                Log.d("P2PViewModel", "Auto-pagination enabled after initial load")
+                            }
+                        }
                         Log.d("P2PViewModel", "P2P offers loaded: ${response.data.size} offers, page ${response.currentPage}/${response.lastPage}")
+                        Log.d("P2PViewModel", "loadP2PDataDebounced - Final state: isFiltering = ${_uiState.value.isFiltering}")
                         
                         // Log detailed offer information
                         logP2POffersDetails(response.data, "loadP2PDataDebounced - New offers")
@@ -116,36 +133,48 @@ class P2PViewModel(
                             _uiState.value = _uiState.value.copy(
                                 isLoading = false,
                                 isLoadingMore = false,
-                                loadMoreError = "Error loading more offers: ${error.message}"
+                                loadMoreError = "Error loading more offers: ${error.message}",
+                                allowAutoPagination = _uiState.value.allowAutoPagination
                             )
                         } else {
                             // Error en primera carga - limpiar ofertas
                             _uiState.value = _uiState.value.copy(
                                 isLoading = false,
                                 isLoadingMore = false,
+                                isFiltering = false, // Clear filtering state on error
                                 errorMessage = "Error loading P2P offers: ${error.message}",
-                                offers = emptyList()
+                                allowAutoPagination = _uiState.value.allowAutoPagination
+                                //offers = emptyList()
                             )
                         }
                         Log.e("P2PViewModel", "Error loading P2P offers", error)
                     }
                 )
             } catch (e: Exception) {
+                // Ignore CancellationException as it's expected when cancelling previous requests
+                if (e is kotlinx.coroutines.CancellationException) {
+                    Log.d("P2PViewModel", "Coroutine cancelled in loadP2PDataDebounced - ignoring")
+                    return@launch
+                }
+                
                 val currentStateForError = _uiState.value
                 if (currentStateForError.currentPage > 1 && currentStateForError.offers.isNotEmpty()) {
                     // Error en paginación - mantener ofertas existentes
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
                         isLoadingMore = false,
-                        loadMoreError = "Unexpected error: ${e.message}"
+                        loadMoreError = "Unexpected error: ${e.message}",
+                        allowAutoPagination = _uiState.value.allowAutoPagination
                     )
                 } else {
                     // Error en primera carga - limpiar ofertas
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
                         isLoadingMore = false,
+                        isFiltering = false, // Clear filtering state on error
                         errorMessage = "Unexpected error: ${e.message}",
-                        offers = emptyList()
+                        allowAutoPagination = _uiState.value.allowAutoPagination
+                        //offers = emptyList()
                     )
                 }
                 Log.e("P2PViewModel", "Unexpected error loading P2P data", e)
@@ -157,7 +186,13 @@ class P2PViewModel(
      * Carga las ofertas P2P. Se debe llamar manualmente cuando se abra P2PScreen
      */
     fun loadP2PData() {
-        loadP2PDataDebounced()
+        if (!hasInitialLoadStarted) {
+            hasInitialLoadStarted = true
+            Log.d("P2PViewModel", "loadP2PData - First time loading, proceeding...")
+            loadP2PDataDebounced()
+        } else {
+            Log.d("P2PViewModel", "loadP2PData - Already started initial load, skipping...")
+        }
     }
     
     /**
@@ -165,7 +200,10 @@ class P2PViewModel(
      */
     fun refresh() {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isRefreshing = true)
+            _uiState.value = _uiState.value.copy(
+                isRefreshing = true,
+                allowAutoPagination = _uiState.value.allowAutoPagination
+            )
             
             try {
                 val currentState = _uiState.value
@@ -189,7 +227,8 @@ class P2PViewModel(
                             totalPages = response.lastPage,
                             totalOffers = response.total,
                             errorMessage = null,
-                            phoneNumbersMap = phoneNumbers
+                            phoneNumbersMap = phoneNumbers,
+                            allowAutoPagination = _uiState.value.allowAutoPagination
                         )
                         Log.d("P2PViewModel", "Refresh successful - ${response.data.size} offers loaded")
                         
@@ -199,7 +238,8 @@ class P2PViewModel(
                     onFailure = { error ->
                         _uiState.value = _uiState.value.copy(
                             isRefreshing = false,
-                            errorMessage = error.message
+                            errorMessage = error.message,
+                            allowAutoPagination = _uiState.value.allowAutoPagination
                         )
                         Log.e("P2PViewModel", "Refresh failed: ${error.message}")
                     }
@@ -207,42 +247,14 @@ class P2PViewModel(
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     isRefreshing = false,
-                    errorMessage = "Error inesperado al refrescar: ${e.message}"
+                    errorMessage = "Error inesperado al refrescar: ${e.message}",
+                    allowAutoPagination = _uiState.value.allowAutoPagination
                 )
                 Log.e("P2PViewModel", "Refresh error: ${e.message}", e)
             }
         }
     }
-    
-    fun onSendMoney() {
-        viewModelScope.launch {
-            Log.d("P2PViewModel", "Send money action triggered")
-            _effect.emit(P2PEffect.NavigateToSendMoney)
-        }
-    }
-    
-    fun onReceiveMoney() {
-        viewModelScope.launch {
-            Log.d("P2PViewModel", "Receive money action triggered")
-            _effect.emit(P2PEffect.NavigateToReceiveMoney)
-        }
-    }
-    
-    fun onViewHistory() {
-        viewModelScope.launch {
-            Log.d("P2PViewModel", "View history action triggered")
-            _effect.emit(P2PEffect.NavigateToHistory)
-        }
-    }
-    
-    fun clearError() {
-        _uiState.value = _uiState.value.copy(errorMessage = null)
-    }
-    
-    fun clearLoadMoreError() {
-        _uiState.value = _uiState.value.copy(loadMoreError = null)
-    }
-    
+
     fun retryLoadMore() {
         val currentError = _uiState.value.loadMoreError
         val is429Error = currentError?.contains("429") == true || currentError?.contains("Too Many Attempts") == true
@@ -250,7 +262,8 @@ class P2PViewModel(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(
                 isRetrying = true,
-                loadMoreError = if (is429Error) "Esperando 15 segundos antes de reintentar..." else null
+                loadMoreError = if (is429Error) "Esperando 15 segundos antes de reintentar..." else null,
+                allowAutoPagination = _uiState.value.allowAutoPagination
             )
             
             if (is429Error) {
@@ -260,7 +273,8 @@ class P2PViewModel(
             
             _uiState.value = _uiState.value.copy(
                 isRetrying = false,
-                loadMoreError = null
+                loadMoreError = null,
+                allowAutoPagination = _uiState.value.allowAutoPagination
             )
             
             onNextPage()
@@ -274,7 +288,8 @@ class P2PViewModel(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(
                 isRetryingFirstLoad = true,
-                errorMessage = if (is429Error) currentError else null
+                errorMessage = if (is429Error) currentError else null,
+                allowAutoPagination = _uiState.value.allowAutoPagination
             )
             
             if (is429Error) {
@@ -286,39 +301,28 @@ class P2PViewModel(
                 isRetryingFirstLoad = false,
                 errorMessage = null,
                 currentPage = 1,
-                offers = emptyList()
+                allowAutoPagination = _uiState.value.allowAutoPagination
+                //offers = emptyList()
             )
             
             loadP2PData()
         }
     }
-    
-    fun onOfferTypeChanged(offerType: String) {
-        _uiState.value = _uiState.value.copy(
-            selectedOfferType = offerType,
-            currentPage = 1,
-            offers = emptyList() // Clear offers when changing filters
-        )
-        loadP2PData()
-    }
-    
-    fun onCoinChanged(coin: String) {
-        _uiState.value = _uiState.value.copy(
-            selectedCoin = coin,
-            currentPage = 1,
-            offers = emptyList() // Clear offers when changing filters
-        )
-        loadP2PData()
-    }
-    
+
     fun applyFilters(offerType: String, coins: List<String>) {
+        Log.d("P2PViewModel", "applyFilters called - setting isFiltering = true")
         _uiState.value = _uiState.value.copy(
             selectedOfferType = offerType,
             selectedCoins = coins,
             selectedCoin = if (coins.isEmpty()) "all" else coins.firstOrNull() ?: "all",
             currentPage = 1,
-            offers = emptyList() // Clear offers when applying filters
+            //offers = emptyList(), // Clear offers when applying filters
+            errorMessage = null, // Clear any previous error messages
+            loadMoreError = null, // Clear any pagination errors
+            isFiltering = true, // Set filtering state immediately
+            allowAutoPagination = _uiState.value.allowAutoPagination
         )
+        Log.d("P2PViewModel", "applyFilters - isFiltering set to: ${_uiState.value.isFiltering}")
         loadP2PDataImmediate()
     }
     
@@ -327,8 +331,7 @@ class P2PViewModel(
         loadDataJob?.cancel()
         
         loadDataJob = viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true)
-            
+            Log.d("P2PViewModel", "loadP2PDataImmediate started - isFiltering = ${_uiState.value.isFiltering}")
             try {
                 val currentState = _uiState.value
                 val coinsToQuery = currentState.selectedCoins.ifEmpty {
@@ -343,6 +346,7 @@ class P2PViewModel(
                 var maxPages = 1
                 var hasError = false
                 var errorMessage = ""
+                var allCoinsCancelled = true // Track if all requests were cancelled
                 
                 for (coin in coinsToQuery) {
                     try {
@@ -356,12 +360,21 @@ class P2PViewModel(
                         
                         getP2POffersUseCase(filters).fold(
                             onSuccess = { response ->
+                                allCoinsCancelled = false // At least one request succeeded
                                 allOffers.addAll(response.data)
                                 totalOffersCount += response.total
                                 maxPages = maxOf(maxPages, response.lastPage)
                                 Log.d("P2PViewModel", "Successfully loaded ${response.data.size} offers for coin: $coin")
                             },
                             onFailure = { error ->
+                                // Ignore CancellationException as it's expected when cancelling previous requests
+                                if (error is kotlinx.coroutines.CancellationException) {
+                                    Log.d("P2PViewModel", "Request cancelled for coin $coin - ignoring as expected")
+                                    return@fold // Skip this coin and continue with others
+                                }
+                                
+                                allCoinsCancelled = false // At least one request completed (even with error)
+                                
                                 hasError = true
                                 val isRateLimitError = error.message?.contains("429") == true || 
                                                      error.message?.contains("Too Many") == true
@@ -387,6 +400,14 @@ class P2PViewModel(
                         }
                         
                     } catch (e: Exception) {
+                        // Ignore CancellationException as it's expected when cancelling previous requests
+                        if (e is kotlinx.coroutines.CancellationException) {
+                            Log.d("P2PViewModel", "Request cancelled for coin $coin in catch block - ignoring as expected")
+                            continue // Skip this coin and continue with the next one
+                        }
+                        
+                        allCoinsCancelled = false // At least one request completed (even with error)
+                        
                         hasError = true
                         errorMessage = "Unexpected error for coin $coin: ${e.message}"
                         Log.e("P2PViewModel", "Unexpected error for coin: $coin", e)
@@ -394,22 +415,31 @@ class P2PViewModel(
                     }
                 }
                 
+                // If all requests were cancelled, don't update the state - keep isFiltering = true
+                if (allCoinsCancelled) {
+                    Log.d("P2PViewModel", "All coin requests were cancelled - keeping current state")
+                    return@launch
+                }
+                
                 if (hasError) {
                     val currentStateForError = _uiState.value
                     if (currentStateForError.currentPage > 1 && currentStateForError.offers.isNotEmpty()) {
                         // Error en paginación - mantener ofertas existentes
                         _uiState.value = _uiState.value.copy(
-                            isLoading = false,
+                            isFiltering = false,
                             isLoadingMore = false,
-                            loadMoreError = errorMessage
+                            loadMoreError = errorMessage,
+                            allowAutoPagination = _uiState.value.allowAutoPagination
                         )
                     } else {
                         // Error en primera carga - limpiar ofertas
+                        Log.d("P2PViewModel", "loadP2PDataImmediate - ERROR (hasError): setting isFiltering = false")
                         _uiState.value = _uiState.value.copy(
-                            isLoading = false,
+                            isFiltering = false,
                             isLoadingMore = false,
                             errorMessage = errorMessage,
-                            offers = emptyList()
+                            totalOffers = 0, // Reset totalOffers on error
+                            allowAutoPagination = _uiState.value.allowAutoPagination
                         )
                     }
                 } else {
@@ -425,8 +455,9 @@ class P2PViewModel(
                     // Procesar números de teléfono para todas las ofertas finales
                     val phoneNumbers = processOffersWithPhoneNumbers(finalOffers)
                     
+                    Log.d("P2PViewModel", "loadP2PDataImmediate - SUCCESS: setting isFiltering = false, offers count = ${finalOffers.size}")
                     _uiState.value = _uiState.value.copy(
-                        isLoading = false,
+                        isFiltering = false,
                         isLoadingMore = false,
                         errorMessage = null,
                         loadMoreError = null, // Clear on success
@@ -434,8 +465,10 @@ class P2PViewModel(
                         currentPage = currentState.currentPage,
                         totalPages = maxPages,
                         totalOffers = finalOffers.size,
-                        phoneNumbersMap = phoneNumbers
+                        phoneNumbersMap = phoneNumbers,
+                        allowAutoPagination = _uiState.value.allowAutoPagination
                     )
+                    Log.d("P2PViewModel", "loadP2PDataImmediate - Final state: isFiltering = ${_uiState.value.isFiltering}")
                     Log.d("P2PViewModel", "P2P offers loaded: ${uniqueOffers.size} unique offers from ${coinsToQuery.size} coin(s)")
                     
                     // Log detailed offer information
@@ -444,21 +477,30 @@ class P2PViewModel(
                 }
                 
             } catch (e: Exception) {
+                // Ignore CancellationException as it's expected when cancelling previous requests
+                if (e is kotlinx.coroutines.CancellationException) {
+                    Log.d("P2PViewModel", "Coroutine cancelled - ignoring as this is expected during filtering")
+                    return@launch
+                }
+                
                 val currentStateForError = _uiState.value
                 if (currentStateForError.currentPage > 1 && currentStateForError.offers.isNotEmpty()) {
                     // Error en paginación - mantener ofertas existentes
                     _uiState.value = _uiState.value.copy(
-                        isLoading = false,
+                        isFiltering = false,
                         isLoadingMore = false,
-                        loadMoreError = "Error loading P2P offers: ${e.message}"
+                        loadMoreError = "Error loading P2P offers: ${e.message}",
+                        allowAutoPagination = _uiState.value.allowAutoPagination
                     )
                 } else {
                     // Error en primera carga - limpiar ofertas
+                    Log.d("P2PViewModel", "loadP2PDataImmediate - ERROR (catch): setting isFiltering = false")
                     _uiState.value = _uiState.value.copy(
-                        isLoading = false,
+                        isFiltering = false,
                         isLoadingMore = false,
                         errorMessage = "Error loading P2P offers: ${e.message}",
-                        offers = emptyList()
+                        totalOffers = 0, // Reset totalOffers on error
+                        allowAutoPagination = _uiState.value.allowAutoPagination
                     )
                 }
                 Log.e("P2PViewModel", "Error loading P2P offers", e)
@@ -468,7 +510,13 @@ class P2PViewModel(
     
     fun onPageChanged(page: Int) {
         if (page in 1.._uiState.value.totalPages) {
-            _uiState.value = _uiState.value.copy(currentPage = page)
+            _uiState.value = _uiState.value.copy(
+                currentPage = page, 
+                //isFiltering = true,
+                errorMessage = null, // Clear any previous errors
+                loadMoreError = null,
+                allowAutoPagination = _uiState.value.allowAutoPagination
+            )
             loadP2PDataImmediate()
         }
     }
@@ -480,34 +528,38 @@ class P2PViewModel(
             return
         }
         
-        val currentPage = _uiState.value.currentPage
-        val totalPages = _uiState.value.totalPages
-        if (currentPage < totalPages) {
-            _uiState.value = _uiState.value.copy(isLoadingMore = true)
-            onPageChanged(currentPage + 1)
-        }
-    }
-    
-    fun onPreviousPage() {
-        // Prevent navigation if already loading
-        if (_uiState.value.isLoading || _uiState.value.isLoadingMore) {
-            Log.d("P2PViewModel", "Previous page blocked - already loading")
+        // Prevent automatic pagination during initial load or filtering
+        if (_uiState.value.isFiltering) {
+            Log.d("P2PViewModel", "Next page blocked - currently filtering")
             return
         }
         
         val currentPage = _uiState.value.currentPage
-        if (currentPage > 1) {
-            _uiState.value = _uiState.value.copy(isLoadingMore = true)
-            onPageChanged(currentPage - 1)
+        val totalPages = _uiState.value.totalPages
+        Log.d("P2PViewModel", "onNextPage called - currentPage: $currentPage, totalPages: $totalPages")
+        if (currentPage < totalPages) {
+            _uiState.value = _uiState.value.copy(
+                isLoadingMore = true,
+                allowAutoPagination = _uiState.value.allowAutoPagination
+            )
+            onPageChanged(currentPage + 1)
+        } else {
+            Log.d("P2PViewModel", "Next page blocked - already at last page")
         }
     }
 
     fun onSortByChanged(sortBy: String) {
-        _uiState.value = _uiState.value.copy(sortBy = sortBy)
+        _uiState.value = _uiState.value.copy(
+            sortBy = sortBy,
+            allowAutoPagination = _uiState.value.allowAutoPagination
+        )
     }
 
     fun onSortOrderToggled() {
-        _uiState.value = _uiState.value.copy(sortAsc = !_uiState.value.sortAsc)
+        _uiState.value = _uiState.value.copy(
+            sortAsc = !_uiState.value.sortAsc,
+            allowAutoPagination = _uiState.value.allowAutoPagination
+        )
     }
 
     /**
@@ -524,13 +576,6 @@ class P2PViewModel(
             }
         }
         return phoneMap
-    }
-
-    /**
-     * Obtiene el número de teléfono de una oferta desde el mapa en el estado
-     */
-    fun getPhoneNumberForOffer(offerUuid: String?): String? {
-        return if (offerUuid != null) _uiState.value.phoneNumbersMap[offerUuid] else null
     }
 
     /**
@@ -589,6 +634,7 @@ data class P2PUiState(
     val isLoading: Boolean = true,
     val isLoadingMore: Boolean = false,
     val isRefreshing: Boolean = false,
+    val isFiltering: Boolean = false,
     val errorMessage: String? = null,
     val loadMoreError: String? = null,
     val isRetrying: Boolean = false,
@@ -608,11 +654,6 @@ data class P2PUiState(
     val sortBy: String = "ratio",    // "ratio" o "nombre"
     val sortAsc: Boolean = false,
     // Mapa para almacenar números de teléfono extraídos por UUID de oferta
-    val phoneNumbersMap: Map<String, String> = emptyMap()
+    val phoneNumbersMap: Map<String, String> = emptyMap(),
+    val allowAutoPagination: Boolean = false
 )
-
-sealed class P2PEffect {
-    object NavigateToSendMoney : P2PEffect()
-    object NavigateToReceiveMoney : P2PEffect()
-    object NavigateToHistory : P2PEffect()
-}
