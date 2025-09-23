@@ -1,8 +1,11 @@
 package com.example.qvapayappandroid
 
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import android.webkit.WebView
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
@@ -22,30 +25,38 @@ import org.koin.core.context.startKoin
 class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Forzar modo claro para evitar problemas con MIUI forced dark mode
+        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
+        
         super.onCreate(savedInstanceState)
 
-        // Inicializar WebView de forma proactiva
-        initializeWebView()
+        // Pequeño delay para mostrar el splash screen
+        Handler(Looper.getMainLooper()).postDelayed({
+            setTheme(R.style.Theme_Qvapayoffers)
 
-        // Inicializar Koin si no está ya iniciado
-        if (org.koin.core.context.GlobalContext.getOrNull() == null) {
-            startKoin {
-                androidLogger()
-                androidContext(this@MainActivity)
-                modules(allModules)
-            }
-        }
+            // Inicializar WebView de forma proactiva
+            initializeWebView()
 
-        setContent {
-            AppTheme {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
-                    AppNavigation()
+            // Inicializar Koin si no está ya iniciado
+            if (org.koin.core.context.GlobalContext.getOrNull() == null) {
+                startKoin {
+                    androidLogger()
+                    androidContext(this@MainActivity)
+                    modules(allModules)
                 }
             }
-        }
+
+            setContent {
+                AppTheme {
+                    Surface(
+                        modifier = Modifier.fillMaxSize(),
+                        color = MaterialTheme.colorScheme.background
+                    ) {
+                        AppNavigation()
+                    }
+                }
+            }
+        }, 1500) // 1.5 segundos de splash
     }
     
     private fun initializeWebView() {

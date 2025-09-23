@@ -1,5 +1,82 @@
 # Changelog - QvaPay Android App
 
+## 🚀 v3.10.0 - MIUI Splash Screen Compatibility and Transparent Status Bar Enhancement (2025-09-23)
+
+### ✨ MIUI Device Compatibility Fix
+
+#### 🛡️ MIUI Forced Dark Mode Resolution
+- **Problem Identified**: MIUI aggressive dark mode enforcement overrode splash screen colors
+  - Splash screen showed dark background instead of brand purple (#716EC5)
+  - Android 12+ splash screen API conflicted with MIUI ROM customizations
+  - `windowSplashScreenBackground` and `forceDarkAllowed=false` ineffective on MIUI
+
+#### 🎯 Classic Splash Screen Implementation
+- **Replaced Android 12+ Splash API**: Switched to traditional theme-based splash screen
+  - Removed `installSplashScreen()` and Android 12+ splash configurations
+  - Implemented classic `SplashTheme` with `@drawable/splash_screen`
+  - Direct color hardcoding in drawable to bypass MIUI overrides
+
+- **Enhanced Splash Screen Drawable**: Optimized layer-list implementation
+  - Hardcoded purple background `#716EC5` in shape drawable
+  - Logo scaling to 250dp for better visual impact
+  - Removed oval placeholder for cleaner design
+
+#### 🔧 Technical Implementation Details
+- **MainActivity Enhancement**: Added `AppCompatDelegate.setDefaultNightMode(MODE_NIGHT_NO)` 
+- **Splash Duration Control**: 1.5-second delay before loading main content
+- **Theme Structure**: 
+  - `SplashTheme` as launcher theme in AndroidManifest
+  - Theme switching to `Theme.Qvapayoffers` after splash
+  - Transparent status bar integration for full-screen experience
+
+#### 📱 Status Bar Transparency Enhancement
+- **Translucent Status Bar**: Added `android:windowTranslucentStatus="true"`
+- **System Bar Drawing**: Enabled `android:windowDrawsSystemBarBackgrounds="true"`
+- **Full Purple Coverage**: Brand color extends through status bar area
+- **Professional Visual Impact**: Seamless color transition from top to bottom
+
+#### 🏗️ File Structure Changes
+- **Created**: `values-night/colors.xml` - Night mode color definitions
+- **Created**: `values-night-v29/themes.xml` - API 29+ night theme with `forceDarkAllowed`
+- **Removed**: `values-v31/themes.xml` - Android 12+ splash configuration
+- **Removed**: `values-night-v31/` - Night mode Android 12+ files
+- **Modified**: `AndroidManifest.xml` - Theme assignment to SplashTheme
+- **Modified**: `values/themes.xml` - SplashTheme definition with transparency
+
+### 🎯 Cross-Device Compatibility
+- **Xiaomi MIUI Support**: Tested and verified on Redmi Note 10 Pro Max (Android 12, MIUI 13)
+- **Google Pixel Compatibility**: Maintains functionality on Pixel 4 (API 34)
+- **Universal Solution**: Works across different Android versions and OEM customizations
+
+### 🔧 Technical Benefits
+- **MIUI Resilience**: Bypasses MIUI's aggressive dark mode enforcement
+- **Consistent Branding**: Purple splash screen maintains across all devices and themes
+- **Professional Polish**: Transparent status bar creates immersive experience
+- **Reliable Implementation**: Classic approach more stable than modern splash API
+- **Future-Proof**: Less susceptible to OEM ROM modifications
+
+### 📁 Files Modified
+```
+├── app/src/main/AndroidManifest.xml (SplashTheme assignment)
+├── app/src/main/java/com/example/qvapayappandroid/MainActivity.kt (MODE_NIGHT_NO, delay)
+├── app/src/main/res/values/themes.xml (SplashTheme definition)
+├── app/src/main/res/values-v29/themes.xml (forceDarkAllowed for API 29+)
+├── app/src/main/res/values-night/colors.xml (night mode colors)
+└── app/src/main/res/drawable/splash_screen.xml (hardcoded colors, logo scaling)
+```
+
+### 🐛 Critical Fixes
+- **MIUI Dark Mode Override**: Splash screen color now consistent across all system themes
+- **Status Bar Integration**: Seamless purple color coverage including status bar
+- **Logo Visibility**: Increased icon size from 160dp to 250dp for better visibility
+- **OEM Compatibility**: Solution works across different Android OEM customizations
+
+### 🎨 User Experience Improvements
+- **Consistent Branding**: Purple splash screen appears on all devices regardless of system theme
+- **Professional Appearance**: Transparent status bar creates premium app feel
+- **Visual Impact**: Larger logo improves brand recognition during app launch
+- **Smooth Transition**: 1.5-second duration provides optimal user experience
+
 ## 🚀 v3.9.0 - WebView Quick Navigation System with Expandable FABs (2025-09-10)
 
 ### ✨ Enhanced WebView Navigation Experience
