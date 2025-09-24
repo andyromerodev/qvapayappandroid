@@ -1,11 +1,11 @@
 package com.example.qvapayappandroid.domain.throttling
 
 /**
- * Resultado de verificación de throttling
- * 
- * @param canExecute Si la operación puede ejecutarse ahora
- * @param remainingTimeMs Tiempo restante en milisegundos hasta que pueda ejecutarse
- * @param reason Razón por la cual no puede ejecutarse (si aplica)
+ * Result returned by a throttling check.
+ *
+ * @param canExecute Whether the operation can run right now
+ * @param remainingTimeMs Remaining time in milliseconds until it can run
+ * @param reason Optional reason stating why it cannot run yet
  */
 data class ThrottlingResult(
     val canExecute: Boolean,
@@ -23,7 +23,7 @@ data class ThrottlingResult(
     }
     
     /**
-     * Tiempo restante en segundos (redondeado hacia arriba)
+     * Remaining time expressed in seconds (rounded up).
      */
     val remainingTimeSeconds: Int
         get() = if (remainingTimeMs <= 0) 0 else ((remainingTimeMs + 999) / 1000).toInt()

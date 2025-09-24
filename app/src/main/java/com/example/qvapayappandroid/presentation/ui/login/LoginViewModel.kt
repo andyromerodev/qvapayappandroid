@@ -52,7 +52,7 @@ class LoginViewModel(
                         isLoading = false,
                         loginResponse = response
                     )
-                    // Emitir efecto de navegación
+                    // Emit a navigation effect
                     _effect.emit(LoginEffect.NavigateToHome)
                 },
                 onFailure = { error ->

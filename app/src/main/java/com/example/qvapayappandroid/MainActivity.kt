@@ -25,19 +25,19 @@ import org.koin.core.context.startKoin
 class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        // Forzar modo claro para evitar problemas con MIUI forced dark mode
+        // Force light mode to avoid MIUI's forced dark mode quirks
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
         
         super.onCreate(savedInstanceState)
 
-        // Pequeño delay para mostrar el splash screen
+        // Add a short delay so the splash screen stays visible
         Handler(Looper.getMainLooper()).postDelayed({
             setTheme(R.style.Theme_Qvapayoffers)
 
-            // Inicializar WebView de forma proactiva
+            // Warm up the WebView ahead of time
             initializeWebView()
 
-            // Inicializar Koin si no está ya iniciado
+            // Spin up Koin if it has not been started yet
             if (org.koin.core.context.GlobalContext.getOrNull() == null) {
                 startKoin {
                     androidLogger()
@@ -56,14 +56,14 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             }
-        }, 1500) // 1.5 segundos de splash
+        }, 1500) // 1.5s splash delay
     }
     
     private fun initializeWebView() {
         try {
             Log.d("MainActivity", "🚀 Inicializando WebView proactivamente...")
             
-            // Verificar si WebView está disponible primero
+            // Check whether WebView is actually available
             try {
                 val webViewPackageInfo = WebView.getCurrentWebViewPackage()
                 Log.d("MainActivity", "📦 WebView package: ${webViewPackageInfo?.packageName}")
@@ -71,10 +71,10 @@ class MainActivity : ComponentActivity() {
                 Log.w("MainActivity", "⚠️ No se pudo obtener info del WebView package: ${e.message}")
             }
             
-            // Crear WebView temporal para inicializar el sistema
+            // Create a throwaway WebView to trigger initialization
             val tempWebView = WebView(this)
             
-            // Configurar settings de forma más robusta
+            // Apply a more thorough settings configuration
             tempWebView.settings.apply {
                 javaScriptEnabled = true
                 domStorageEnabled = true
@@ -83,7 +83,7 @@ class MainActivity : ComponentActivity() {
                 cacheMode = android.webkit.WebSettings.LOAD_DEFAULT
             }
             
-            // Configurar WebViewClient básico para manejo de errores
+            // Use a lightweight WebViewClient just to log failures
             tempWebView.webViewClient = object : android.webkit.WebViewClient() {
                 override fun onReceivedError(
                     view: WebView?, 
@@ -99,12 +99,12 @@ class MainActivity : ComponentActivity() {
                 }
             }
             
-            // Cargar página vacía para inicializar completamente
+            // Load a blank page to complete initialization
             tempWebView.loadUrl("about:blank")
             
             Log.d("MainActivity", "✅ WebView inicializado exitosamente")
             
-            // Destruir WebView temporal después de un momento más largo
+            // Tear down the temporary WebView after a longer pause
             tempWebView.postDelayed({
                 try {
                     tempWebView.clearHistory()
@@ -114,12 +114,12 @@ class MainActivity : ComponentActivity() {
                 } catch (e: Exception) {
                     Log.w("MainActivity", "Error destruyendo WebView temporal: ${e.message}")
                 }
-            }, 2000) // Más tiempo para inicialización completa
+            }, 2000) // Give it extra time to finish warming up
             
         } catch (e: Exception) {
             Log.e("MainActivity", "❌ Error crítico inicializando WebView: ${e.message}", e)
             
-            // Intentar diagnóstico adicional
+            // Attempt a bit more diagnostics
             try {
                 val webViewPackage = WebView.getCurrentWebViewPackage()
                 if (webViewPackage == null) {

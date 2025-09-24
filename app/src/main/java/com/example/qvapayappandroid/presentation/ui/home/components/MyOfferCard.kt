@@ -60,12 +60,12 @@ fun MyOfferCard(
                 .padding(8.dp)
                 .fillMaxWidth()
         ) {
-            // Primera fila: icono "Mi Oferta", estado
+            // First row: "My Offer" icon and status
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Foto de perfil del owner o icono por defecto
+                // Owner profile photo or a default icon
                 if (!offer.owner?.profilePhotoUrl.isNullOrBlank()) {
                     AsyncImage(
                         model = offer.owner.profilePhotoUrl,
@@ -110,7 +110,7 @@ fun MyOfferCard(
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(12.dp)
                     )
-                    // Foto de perfil del peer
+                    // Peer profile photo
                     if (!offer.peer?.profilePhotoUrl.isNullOrBlank()) {
                         AsyncImage(
                             model = offer.peer.profilePhotoUrl,
@@ -150,7 +150,7 @@ fun MyOfferCard(
                 MyOfferStatusChip(status = offer.status)
             }
 
-            // Mensaje si existe
+            // Show the message when present
             offer.message?.takeIf { it.isNotBlank() }?.let { msg ->
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
@@ -167,11 +167,11 @@ fun MyOfferCard(
 
             Spacer(modifier = Modifier.height(6.dp))
 
-            // Minicards en grid optimizado (primera fila: monto y recibe, segunda fila: tipo y ratio)
+            // Compact grid of minicards (first row amount/receive, second row type/ratio)
             Column(
                 verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                // Primera fila: Información principal (transacción)
+                // First row: primary transaction information
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -191,7 +191,7 @@ fun MyOfferCard(
                         )
                     }
                 }
-                // Segunda fila: Información secundaria (detalles)
+                // Second row: supporting details
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -218,7 +218,7 @@ fun MyOfferCard(
 
             Spacer(modifier = Modifier.height(7.dp))
 
-            // CHIPS en fila mini
+            // Mini chip row
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(6.dp)

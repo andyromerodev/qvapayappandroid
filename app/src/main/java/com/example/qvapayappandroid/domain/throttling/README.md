@@ -41,7 +41,7 @@ class MyDataSource(
             
             throttlingManager.recordExecution("my_operation")
             
-            // Hacer la petición HTTP
+            // Perform the HTTP request
             val response = httpClient.get("url")
             Result.success(response.body())
             
@@ -63,13 +63,13 @@ class MyViewModel(
             throttlingManager = throttlingManager,
             operationKey = ThrottlingOperations.MY_OPERATION,
             onThrottled = { result ->
-                // Mostrar mensaje de espera al usuario
+                // Surface a wait message to the user
                 _uiState.value = _uiState.value.copy(
                     errorMessage = "Espera ${result.remainingTimeSeconds} segundos"
                 )
             }
         ) {
-            // Ejecutar la operación
+            // Execute the operation
             doSomething()
         }
     }
@@ -79,10 +79,10 @@ class MyViewModel(
 ## Configuraciones Predefinidas
 
 ```kotlin
-// Configuración simple (intervalo)
+// Simple configuration (interval based)
 ThrottlingConfig(intervalMs = 5000L) // 5 segundos
 
-// Configuración con rate limiting
+// Configuration using rate limiting
 ThrottlingConfig(
     intervalMs = 1000L,
     maxExecutionsPerWindow = 10,

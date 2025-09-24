@@ -90,21 +90,21 @@ fun MainScreen(
                                 homeViewModel.cancelOffer(id, onSuccess)
                             },
                             onEditOffer = { offer ->
-                                // TODO: Implementar navegación a editar oferta
+                                // TODO: Hook up navigation to the edit screen
                             },
                             onShareOffer = { offer ->
-                                // TODO: Implementar compartir oferta
+                                // TODO: Wire up the share flow
                             },
                             navController = navController
                         )
                     } ?: run {
-                        // Si no se encuentra la oferta, navegar de vuelta
+                        // If the offer is missing, navigate back
                         LaunchedEffect(Unit) {
                             navController.navigateUp()
                         }
                     }
                 } else {
-                    // Si no hay offerId, navegar de vuelta
+                    // If no offerId is provided, navigate back
                     LaunchedEffect(Unit) {
                         navController.navigateUp()
                     }

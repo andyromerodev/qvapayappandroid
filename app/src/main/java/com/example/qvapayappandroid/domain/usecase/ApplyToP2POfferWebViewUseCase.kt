@@ -12,7 +12,7 @@ class ApplyToP2POfferWebViewUseCase(
         return try {
             Log.d("ApplyToP2POfferWebViewUseCase", "Aplicando a oferta P2P: $offerId")
             
-            // Timeout de 30 segundos para la operación completa
+            // Give the operation up to 30 seconds to finish
             withTimeout(30_000) {
                 webViewRepository.applyToP2POffer(offerId, webView)
             }

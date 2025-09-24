@@ -123,31 +123,31 @@ private fun P2POfferDetailContent(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Estado y propietario de la oferta
+            // Offer status and owner
             OfferOwnerCard(offer = offer)
 
-            // Información de la transacción
+            // Transaction information
             TransactionInfoCard(offer = offer)
 
-            // Detalles adicionales
+            // Additional details
             AdditionalDetailsCard(offer = offer)
 
-            // Mensaje si existe
+            // Message, if provided
             offer.message?.takeIf { it.isNotBlank() }?.let { message ->
                 MessageCard(message = message)
             }
 
-            // Aplicación exitosa si existe
+            // Success banner when the application completed
             uiState.applicationSuccessMessage?.let { successMessage ->
                 SuccessMessageCard(message = successMessage)
             }
 
-            // Error message si existe
+            // Error banner when something went wrong
             uiState.errorMessage?.let { errorMessage ->
                 ErrorMessageCard(message = errorMessage)
             }
 
-            // Botones de acción
+            // Action buttons
             ActionButtonsRow(
                 onContactUser = onContactUser,
                 onAcceptOffer = onAcceptOffer,
@@ -173,7 +173,7 @@ private fun OfferOwnerCard(
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
-            // Header con tipo de oferta
+            // Header with the offer type
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -187,12 +187,12 @@ private fun OfferOwnerCard(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Información del propietario
+            // Owner information
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Avatar del propietario
+                // Owner avatar
                 val username = offer.owner?.username?.trim().orEmpty()
                 val initial = username.firstOrNull()?.uppercase() ?: "?"
 
@@ -223,7 +223,7 @@ private fun OfferOwnerCard(
 
                 Spacer(modifier = Modifier.width(12.dp))
 
-                // Información del usuario
+                // User information
                 Column {
                     Text(
                         text = username.ifEmpty { "Usuario Desconocido" },
@@ -238,7 +238,7 @@ private fun OfferOwnerCard(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
-                        // Rating con estrella
+                        // Star-based rating
                         owner.averageRating?.toDoubleOrNull()?.let { rating ->
                             if (rating > 0.0) {
                                 Row(
@@ -290,7 +290,7 @@ private fun TransactionInfoCard(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Primera fila: Monto y Recibe
+            // First row: amount and receive
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -313,7 +313,7 @@ private fun TransactionInfoCard(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Segunda fila: Tipo y Ratio
+            // Second row: coin type and ratio
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -363,7 +363,7 @@ private fun AdditionalDetailsCard(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Verificaciones del usuario
+            // User verification badges
             offer.owner?.let { owner ->
                 if (owner.kyc == 1 || owner.goldenCheck == 1 || owner.vip == 1) {
                     Column(
@@ -420,7 +420,7 @@ private fun AdditionalDetailsCard(
                 }
             }
 
-            // Información de la moneda si existe
+            // Coin information when available
             offer.coinData?.let { coinData ->
                 Row(
                     verticalAlignment = Alignment.CenterVertically
@@ -437,7 +437,7 @@ private fun AdditionalDetailsCard(
                 }
             }
 
-            // ID de la oferta si existe
+            // Offer ID when available
             offer.uuid?.let { uuid ->
                 Spacer(modifier = Modifier.height(8.dp))
                 Row(

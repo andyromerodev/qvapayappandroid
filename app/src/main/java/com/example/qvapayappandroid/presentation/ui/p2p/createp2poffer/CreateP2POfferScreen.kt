@@ -29,35 +29,35 @@ fun CreateP2POfferScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    // Manejo de effects
+    // Handle one-off effects
     LaunchedEffect(Unit) {
         viewModel.effect.collect { effect ->
             when (effect) {
                 is CreateP2POfferEffect.NavigateBack -> onBackClick()
                 is CreateP2POfferEffect.ShowSuccess -> {
-                    // Este effect no se usa actualmente
+                    // Currently unused
                 }
                 is CreateP2POfferEffect.ShowError -> {
-                    // Error ya está siendo manejado por el estado en el ViewModel
+                    // Error is already surfaced through state in the ViewModel
                 }
                 is CreateP2POfferEffect.OfferCreatedSuccessfully -> {
-                    // Oferta creada exitosamente - podrías navegar o mostrar detalles
+                    // Offer created successfully—navigate or show details if needed
                     onSuccess()
                 }
                 is CreateP2POfferEffect.ValidationError -> {
-                    // Error de validación específico - podría resaltar el campo
+                    // Field-specific validation error—surface it in the UI
                 }
                 is CreateP2POfferEffect.ShowLoading -> {
-                    // Loading mostrado - manejado por estado
+                    // Loading indicator is driven by state
                 }
                 is CreateP2POfferEffect.HideLoading -> {
-                    // Loading oculto - manejado por estado
+                    // Hide loading — also driven by state
                 }
                 is CreateP2POfferEffect.ClearForm -> {
-                    // Limpiar formulario - podría resetear campos
+                    // Clear the form—could reset the inputs
                 }
                 is CreateP2POfferEffect.CurrentStateForTemplate -> {
-                    // Proporcionar estado actual para crear plantilla
+                    // Provide the current state so a template can be created
                     onSaveAsTemplate(effect.state)
                 }
             }
@@ -92,7 +92,7 @@ fun CreateP2POfferScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Tipo de oferta
+            // Offer type
             Card(
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -126,7 +126,7 @@ fun CreateP2POfferScreen(
                 }
             }
 
-            // Datos básicos
+            // Primary data
             Card(
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -140,7 +140,7 @@ fun CreateP2POfferScreen(
                         fontWeight = FontWeight.Bold
                     )
                     
-                    // Selector de Moneda
+                    // Coin selector
                     var expanded by remember { mutableStateOf(false) }
                     
                     ExposedDropdownMenuBox(
@@ -199,7 +199,7 @@ fun CreateP2POfferScreen(
                 }
             }
 
-            // Detalles
+            // Details
             Card(
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -224,7 +224,7 @@ fun CreateP2POfferScreen(
                 }
             }
 
-            // Configuraciones
+            // Flags and toggles
             Card(
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -288,7 +288,7 @@ fun CreateP2POfferScreen(
                 }
             }
 
-            // Mensaje y webhook
+            // Message and webhook
             Card(
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -382,7 +382,7 @@ fun CreateP2POfferScreen(
                 }
             }
 
-            // Botón crear
+            // Create button
             Button(
                 onClick = { viewModel.handleIntent(CreateP2POfferIntent.CreateOffer) },
                 modifier = Modifier.fillMaxWidth(),
@@ -405,7 +405,7 @@ fun CreateP2POfferScreen(
                 }
             }
 
-            // Espaciado al final
+            // Bottom spacer
             Spacer(modifier = Modifier.height(16.dp))
         }
     }

@@ -24,7 +24,7 @@ fun SettingsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     
-    // Observar efectos de navegación
+    // Observe navigation-related effects
     LaunchedEffect(Unit) {
         viewModel.effect.collect { effect ->
             when (effect) {

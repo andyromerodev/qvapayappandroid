@@ -6,19 +6,18 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
 
 /**
- * Extension functions para facilitar el uso del ThrottlingManager en ViewModels
- * siguiendo principios de Clean Architecture y SOLID
+ * Extension functions that make it easier to work with ThrottlingManager inside ViewModels,
+ * following Clean Architecture and SOLID principles.
  */
 
 private const val TAG = "ThrottlingExt"
 
 /**
- * Extension function para verificar throttling antes de ejecutar una operación
- * 
- * @param throttlingManager El manager de throttling inyectado
- * @param operationKey Clave única que identifica la operación
- * @param onThrottled Callback ejecutado si la operación está throttled
- * @param onAllowed Callback ejecutado si la operación puede proceder
+ * Extension function that checks throttling before running an operation.
+ *
+ * @param operationKey Unique key that identifies the operation
+ * @param onThrottled Callback invoked when the operation is throttled
+ * @param onAllowed Callback invoked when the operation may proceed
  */
 suspend fun ThrottlingManager.executeWithThrottling(
     operationKey: String,
@@ -48,13 +47,12 @@ suspend fun ThrottlingManager.executeWithThrottling(
 }
 
 /**
- * Extension function para ViewModels que facilita el manejo de throttling
- * con manejo automático de corrutinas
- * 
- * @param throttlingManager El manager de throttling inyectado
- * @param operationKey Clave única que identifica la operación
- * @param onThrottled Callback ejecutado si la operación está throttled
- * @param operation Operación a ejecutar si no está throttled
+ * ViewModel extension that wraps throttling with automatic coroutine handling.
+ *
+ * @param throttlingManager Injected throttling manager
+ * @param operationKey Unique key that identifies the operation
+ * @param onThrottled Callback invoked when the operation is throttled
+ * @param operation Work to perform when throttling allows it
  */
 fun ViewModel.executeWithThrottling(
     throttlingManager: ThrottlingManager,
@@ -85,11 +83,10 @@ fun ViewModel.executeWithThrottling(
 }
 
 /**
- * Extension function para obtener información de throttling de una operación
- * de forma más conveniente
- * 
- * @param operationKey Clave única que identifica la operación
- * @return ThrottlingInfo con información detallada
+ * Extension function that returns throttling information for an operation.
+ *
+ * @param operationKey Unique key that identifies the operation
+ * @return ThrottlingInfo with detailed data
  */
 suspend fun ThrottlingManager.getThrottlingInfo(operationKey: String): ThrottlingInfo {
     Log.d(TAG, "ℹ️ getThrottlingInfo() - operationKey: '$operationKey'")
@@ -112,9 +109,7 @@ suspend fun ThrottlingManager.getThrottlingInfo(operationKey: String): Throttlin
     return info
 }
 
-/**
- * Data class con información detallada de throttling para una operación
- */
+/** Data class containing throttling details for an operation. */
 data class ThrottlingInfo(
     val operationKey: String,
     val canExecute: Boolean,
@@ -124,9 +119,9 @@ data class ThrottlingInfo(
 )
 
 /**
- * Extension function para configurar múltiples operaciones de throttling de una vez
- * 
- * @param configurations Map de operationKey a ThrottlingConfig
+ * Extension function that applies throttling configuration to multiple operations at once.
+ *
+ * @param configurations Map of operationKey to ThrottlingConfig
  */
 suspend fun ThrottlingManager.configureOperations(
     configurations: Map<String, ThrottlingConfig>
@@ -141,9 +136,7 @@ suspend fun ThrottlingManager.configureOperations(
     Log.d(TAG, "✅ All operations configured successfully")
 }
 
-/**
- * Extension function para obtener configuraciones predefinidas para P2P
- */
+/** Returns the predefined throttling configuration used by the P2P module. */
 fun ThrottlingManager.getP2PConfigurations(): Map<String, ThrottlingConfig> {
     Log.d(TAG, "📋 getP2PConfigurations() - generating P2P throttling configs")
     

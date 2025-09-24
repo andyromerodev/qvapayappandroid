@@ -18,30 +18,30 @@
 
 ### 1. **JavaScriptExecutionUseCase**
 ```kotlin
-// Genera scripts JavaScript específicos para cada tipo de página
+// Generates JavaScript tailored to each page type
 fun generateExtractionScript(pageType: PageType = PageType.AUTO_DETECT): String
 
-// Tipos disponibles:
-- PageType.P2P_OFFERS    // Específico para ofertas P2P
-- PageType.GENERAL       // Página genérica
-- PageType.AUTO_DETECT   // Detección automática
+// Available types:
+- PageType.P2P_OFFERS    // Specific to P2P offers
+- PageType.GENERAL       // Generic page
+- PageType.AUTO_DETECT   // Automatic detection
 ```
 
 ### 2. **DataValidationUseCase**
 ```kotlin
-// Valida datos extraídos y genera reporte de calidad
+// Validates extracted data and produces a quality report
 fun validateExtractedData(rawData: String): ValidationResult
 
-// Incluye:
-- Validación de formato JSON
-- Validación de ofertas P2P
-- Puntuación de calidad (0-100)
-- Sugerencias de mejora
+// Includes:
+- JSON format validation
+- P2P offer validation
+- Quality score (0-100)
+- Improvement suggestions
 ```
 
 ### 3. **ConfigurationUseCase**
 ```kotlin
-// Centraliza todas las configuraciones
+// Centralises all configuration
 fun getScriptConfiguration(): ScriptConfig
 fun getWebViewConfiguration(): WebViewConfig
 fun getQvaPaySelectors(): QvaPaySelectors
@@ -51,13 +51,13 @@ fun getQvaPaySelectors(): QvaPaySelectors
 
 ### WebScraperViewModel (Refactorizado)
 ```kotlin
-// Nuevos métodos específicos
+// New dedicated methods
 fun executeDataExtraction(webView: WebView, pageType: PageType)
 fun executeP2PExtraction(webView: WebView)
 fun executeGeneralExtraction(webView: WebView)
 fun refreshAndExtract(webView: WebView)
 
-// Nuevas características
+// New capabilities
 fun getHistoryStats(): HistoryStats
 ```
 
@@ -101,12 +101,12 @@ data class HistoryStats(
 
 ### 3. **Configuraciones Centralizadas**
 ```kotlin
-// Selectores CSS organizados
+// Organised CSS selectors
 data class QvaPaySelectors(
     val offerCards: List<String>,
     val offerType: List<String>,
     val price: List<String>,
-    // ... más selectores
+    // ... additional selectors
 )
 ```
 
@@ -114,22 +114,22 @@ data class QvaPaySelectors(
 
 ### 1. **Extracción Específica por Tipo**
 ```kotlin
-// En el WebViewScreen
-viewModel.executeP2PExtraction(webView)        // Solo P2P
-viewModel.executeGeneralExtraction(webView)    // Genérico
-viewModel.executeDataExtraction(webView, PageType.AUTO_DETECT) // Auto
+// Within WebViewScreen
+viewModel.executeP2PExtraction(webView)        // P2P only
+viewModel.executeGeneralExtraction(webView)    // Generic extraction
+viewModel.executeDataExtraction(webView, PageType.AUTO_DETECT) // Auto detect
 ```
 
 ### 2. **Acceso a Estadísticas**
 ```kotlin
-// En cualquier Composable
+// Inside any Composable
 val historyStats = viewModel.getHistoryStats()
 println("Total ofertas: ${historyStats.totalOffersExtracted}")
 ```
 
 ### 3. **Configuración de Selectores**
 ```kotlin
-// Los selectores ahora están centralizados
+// Selectors are now centralised
 val selectors = configurationUseCase.getQvaPaySelectors()
 val cardSelectors = selectors.offerCards // [".card.mb-1", ".card", ...]
 ```

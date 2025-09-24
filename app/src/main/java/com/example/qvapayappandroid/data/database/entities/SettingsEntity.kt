@@ -6,7 +6,7 @@ import androidx.room.PrimaryKey
 @Entity(tableName = "settings")
 data class SettingsEntity(
     @PrimaryKey
-    val id: Int = 1, // Solo tendremos un registro de configuraciones
+    val id: Int = 1, // Single configuration row
     val theme: String = "Sistema",
     val language: String = "Español",
     val notificationsEnabled: Boolean = true,

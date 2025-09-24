@@ -288,7 +288,7 @@ class HomeViewModel(
             "cancelled", "cancelada" -> "cancelada"
             "paused", "pausada" -> "pausada"
             "pending", "pendiente" -> "pendiente"
-            else -> "pendiente" // default para estados desconocidos
+            else -> "pendiente" // default for unknown statuses
         }
     }
     

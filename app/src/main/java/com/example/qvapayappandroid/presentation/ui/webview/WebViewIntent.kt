@@ -1,46 +1,32 @@
 package com.example.qvapayappandroid.presentation.ui.webview
 
 /**
- * Intents del WebView que representan todas las acciones que el usuario puede realizar
+ * WebView intents covering every action the user can trigger.
  */
 sealed interface WebViewIntent {
     /**
-     * Mostrar el WebView con una URL específica
+     * Show the WebView with a specific URL.
      */
     data class ShowWebView(val url: String = WebViewFullScreenState.QVAPAY_LOGIN_URL) : WebViewIntent
     
-    /**
-     * Ocultar el WebView
-     */
+    /** Hide the WebView. */
     data object HideWebView : WebViewIntent
     
-    /**
-     * Recargar la página actual
-     */
+    /** Reload the current page. */
     data object Reload : WebViewIntent
     
-    /**
-     * Limpiar error y reintentar
-     */
+    /** Clear the error state so the UI can retry. */
     data object ClearError : WebViewIntent
     
-    /**
-     * Marcar que se está navegando a una nueva URL
-     */
+    /** Mark that navigation to a new URL is underway. */
     data object MarkNavigatingToNewUrl : WebViewIntent
     
-    /**
-     * Indicar que el WebView no está disponible
-     */
+    /** Indicate that the WebView is unavailable. */
     data object OnWebViewUnavailable : WebViewIntent
     
-    /**
-     * Actualizar estado de carga
-     */
+    /** Update the loading state. */
     data class SetLoading(val isLoading: Boolean) : WebViewIntent
     
-    /**
-     * Establecer un error
-     */
+    /** Set the current error message. */
     data class SetError(val error: String?) : WebViewIntent
 }

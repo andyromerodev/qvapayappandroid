@@ -8,11 +8,11 @@ data class OfferTemplatesState(
     val templates: List<OfferTemplate> = emptyList(),
     val filteredTemplates: List<OfferTemplate> = emptyList(),
     val searchQuery: String = "",
-    val selectedType: String? = null, // null = todas, "sell", "buy"
+    val selectedType: String? = null, // null = all, otherwise "sell" or "buy"
     val errorMessage: String? = null,
     val isEmpty: Boolean = false,
     val isSearching: Boolean = false,
-    val creatingOfferFromTemplateId: Long? = null // ID de la plantilla que se está usando para crear oferta
+    val creatingOfferFromTemplateId: Long? = null // Template ID currently used to spin up an offer
 ) {
     val displayTemplates: List<OfferTemplate>
         get() = if (searchQuery.isNotEmpty() || selectedType != null) filteredTemplates else templates

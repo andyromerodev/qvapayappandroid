@@ -9,13 +9,13 @@ import kotlinx.coroutines.sync.withLock
 import java.util.concurrent.ConcurrentHashMap
 
 /**
- * Implementación del ThrottlingManager que maneja throttling en memoria
- * 
- * Características:
- * - Thread-safe usando Mutex y ConcurrentHashMap
- * - Soporte para throttling simple por intervalo
- * - Soporte para rate limiting por ventana de tiempo
- * - Configuración dinámica por operación
+ * In-memory implementation of the ThrottlingManager.
+ *
+ * Features:
+ * - Thread-safe thanks to Mutex + ConcurrentHashMap
+ * - Supports basic interval throttling
+ * - Supports time-window based rate limiting
+ * - Allows per-operation configuration at runtime
  */
 class ThrottlingManagerImpl : ThrottlingManager {
 
@@ -61,7 +61,7 @@ class ThrottlingManagerImpl : ThrottlingManager {
             return globalResult
         }
 
-        // Verificar throttling por intervalo simple
+        // Check simple interval-based throttling
         val intervalResult = checkIntervalThrottling(operationKey, currentTime, config)
         if (!intervalResult.canExecute) {
             Log.d(TAG, "❌ BLOCKED by interval throttling - ${intervalResult.reason}")
@@ -69,7 +69,7 @@ class ThrottlingManagerImpl : ThrottlingManager {
             return intervalResult
         }
 
-        // Verificar rate limiting por ventana de tiempo (si está configurado)
+        // Check window-based rate limiting when configured
         config.maxExecutionsPerWindow?.let { maxExecutions ->
             Log.d(TAG, "🪟 Checking window throttling - max $maxExecutions executions per ${config.windowSizeMs}ms")
             val windowResult = checkWindowThrottling(operationKey, currentTime, config, maxExecutions)
@@ -182,7 +182,7 @@ class ThrottlingManagerImpl : ThrottlingManager {
         Log.d(TAG, "   • Max executions per window: $maxExecutions")
         Log.d(TAG, "   • History before cleanup: ${history.size} executions")
 
-        // Limpiar ejecuciones fuera de la ventana
+        // Remove executions that fall outside the current window
         val sizeBefore = history.size
         history.removeAll { it < currentTime - windowSize }
         val sizeAfter = history.size
@@ -212,7 +212,7 @@ class ThrottlingManagerImpl : ThrottlingManager {
         Log.d(TAG, "📝 recordExecution() - operationKey: '$operationKey'")
         Log.d(TAG, "   • Execution time: $currentTime")
 
-        // Registrar tiempo de última ejecución
+        // Store the last execution timestamp
         val previousTime = lastExecutionTimes[operationKey]
         lastExecutionTimes[operationKey] = currentTime
 
@@ -221,7 +221,7 @@ class ThrottlingManagerImpl : ThrottlingManager {
             Log.d(TAG, "   • Time between executions: ${currentTime - previousTime}ms")
         }
 
-        // Agregar a historial si hay configuración de ventana
+        // Add to the history if a window configuration exists
         val config = operationConfigs[operationKey]
         if (config?.maxExecutionsPerWindow != null) {
             val history = executionHistory.getOrPut(operationKey) { mutableListOf() }
@@ -230,7 +230,7 @@ class ThrottlingManagerImpl : ThrottlingManager {
 
             Log.d(TAG, "   • Added to execution history (size: ${sizeBefore} -> ${history.size})")
 
-            // Mantener solo las ejecuciones dentro de la ventana
+            // Keep only executions that fall within the window
             config.windowSizeMs?.let { windowSize ->
                 val sizeBeforeCleanup = history.size
                 history.removeAll { it < currentTime - windowSize }

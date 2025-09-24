@@ -68,7 +68,7 @@ fun P2PScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    // Cargar datos cuando se abre P2PScreen
+    // Load data when the P2P screen opens
     LaunchedEffect(Unit) {
         Log.d("P2PScreen", "P2PScreen opened - loading P2P data")
         viewModel.loadP2PData()
@@ -96,7 +96,7 @@ fun P2PScreen(
                     (uiState.isFiltering && uiState.currentPage == 1)
 
         when {
-            // Mostrar shimmer durante carga inicial, refresh o filtrado
+            // Show shimmer during the initial load, refresh, or filtering
             showBlockingLoader -> {
                 Box(
                     modifier = Modifier
@@ -157,14 +157,14 @@ private fun P2PContent(
             val lastVisibleIndex = layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1
 
             val hasContent = uiState.offers.isNotEmpty()
-            val atEnd = totalItems > 0 && lastVisibleIndex == totalItems - 1 // <- fin real de la lista
+            val atEnd = totalItems > 0 && lastVisibleIndex == totalItems - 1 // <- actual end of the list
             val notLastPage = uiState.totalPages > 0 && uiState.currentPage < uiState.totalPages
             val idle = !uiState.isLoading && !uiState.isLoadingMore && !uiState.isFiltering
             val noError = uiState.errorMessage == null
 
-            // Requiere:
-            // - que el usuario haya scrolleado alguna vez (evita auto-carga si todo cabe en pantalla)
-            // - estar exactamente en el último elemento
+            // Requires:
+            // - the user to scroll at least once (prevents auto-loading when everything fits on screen)
+            // - reaching the last item in the list
             val result = userHasScrolled &&
                     hasContent &&
                     atEnd &&
@@ -203,7 +203,7 @@ private fun P2PContent(
                 .fillMaxSize()
                 .padding(horizontal = 12.dp)
         ) {
-            // Header con contador de ofertas
+            // Header with offer count
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -216,7 +216,7 @@ private fun P2PContent(
                 )
             }
 
-            // CHIPS DE ORDENACIÓN
+            // Sorting chips
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -253,7 +253,7 @@ private fun P2PContent(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Ordenar lista localmente antes de mostrar
+            // Sort the list locally before rendering
             val sortedOffers = remember(uiState.offers, uiState.sortBy, uiState.sortAsc) {
                 when (uiState.sortBy) {
                     "ratio" -> {
@@ -271,11 +271,11 @@ private fun P2PContent(
                 }
             }
             
-            // Ofertas, error o mensaje de vacío
-            // Nota: Los estados de carga (isFiltering, isRefreshing, isLoading) ya se manejan en P2PScreen
-            // por lo que aquí solo necesitamos manejar: errores, lista vacía, o lista con contenido
+            // Offers, error, or empty-state message
+            // Note: loading states (isFiltering, isRefreshing, isLoading) are handled in P2PScreen,
+            // so here we only deal with errors, empty lists, or content
             when {
-                // Mostrar errores
+                // Show errors
                 uiState.errorMessage != null || uiState.isRetryingFirstLoad -> {
                     Box(
                         modifier = Modifier.weight(1f),
@@ -289,8 +289,6 @@ private fun P2PContent(
                     }
                 }
 
-                // Mostrar mensaje de vacío SOLO cuando el resultado del filtro/carga es definitivamente vacío
-                // No cuando la lista está vacía temporalmente durante el filtrado
                 sortedOffers.isEmpty() && uiState.totalOffers == 0 && !uiState.isFiltering -> {
                     Box(
                         modifier = Modifier.weight(1f),
@@ -375,4 +373,3 @@ private fun AnimatedListItem(
         )
     }
 }
-

@@ -139,7 +139,7 @@ fun WebViewFullScreen(
                 onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
             }
 
-            // Guardar estado al salir de la pantalla
+            // Save state when leaving the screen
             DisposableEffect(Unit) {
                 onDispose { viewModel.saveWebViewState() }
             }

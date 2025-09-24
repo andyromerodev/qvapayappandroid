@@ -28,13 +28,13 @@ class SplashViewModel(
             _uiState.value = _uiState.value.copy(isLoading = true)
             
             try {
-                // Inicializar configuraciones por defecto
+                // Initialize default settings
                 initializeSettingsUseCase()
                 
-                // Mostrar splash por al menos 2.5 segundos para la animación
+                // Keep the splash visible for at least 2.5s so the animation plays
                 delay(2500)
                 
-                // Verificar si el usuario está logueado
+                // Check whether the user is already signed in
                 val isLoggedIn = checkSessionUseCase()
                 
                 val destination = when {
@@ -49,7 +49,7 @@ class SplashViewModel(
                 )
                 
             } catch (e: Exception) {
-                // En caso de error, ir a login
+                // On error, fall back to the login screen
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
                     isInitialized = true,

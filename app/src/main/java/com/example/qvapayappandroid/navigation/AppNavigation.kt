@@ -25,7 +25,7 @@ import com.example.qvapayappandroid.presentation.ui.splash.SplashScreen
 fun AppNavigation(
     navController: NavHostController = rememberNavController()
 ) {
-    // Box para contener la navegación y el WebView global
+    // Box that wraps navigation and the shared WebView
     Box(modifier = Modifier.fillMaxSize()) {
         NavHost(
         navController = navController,
@@ -152,7 +152,7 @@ fun AppNavigation(
         }
     }
         
-    // WebView global - una sola instancia para toda la aplicación
+    // Global WebView — keep a single instance for the entire app
     // GlobalWebViewContainer()
     }
 }

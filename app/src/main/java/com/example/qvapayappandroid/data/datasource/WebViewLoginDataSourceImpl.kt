@@ -38,7 +38,7 @@ class WebViewLoginDataSourceImpl : WebViewLoginDataSource {
             
             val targetUrl = "https://qvapay.com/p2p/$offerId"
             
-            // JavaScript básico para probar si la página carga correctamente
+            // Basic JavaScript to verify the page loads correctly
             val basicTestJs = """
                 (function() {
                     try {
@@ -49,10 +49,10 @@ class WebViewLoginDataSourceImpl : WebViewLoginDataSource {
                             return;
                         }
                         
-                        // Reportar estado inicial (solo para debugging - no es error)
+                        // Log initial state (debug only—not an error)
                         console.log('🔍 TEST - Estado inicial URL: ' + window.location.href);
                         
-                        // Función para verificar si estamos en la página correcta
+                        // Function that validates we are on the expected page
                         function checkPageLoad() {
                             const currentUrl = window.location.href;
                             const expectedOfferId = '$offerId';
@@ -63,13 +63,13 @@ class WebViewLoginDataSourceImpl : WebViewLoginDataSource {
                             if (currentUrl.includes(expectedOfferId)) {
                                 window.AndroidInterface.onApplySuccess('✅ TEST EXITOSO: Página cargada correctamente - URL: ' + currentUrl);
                             } else {
-                                // Intentar navegar a la URL correcta
+                                // Attempt to navigate to the intended URL
                                 console.log('🌐 Navegando a URL correcta...');
                                 window.AndroidInterface.onApplyError('🌐 Navegando a: ' + '$targetUrl');
                                 
                                 window.location.href = '$targetUrl';
                                 
-                                // Verificar después de navegar
+                                // Re-check after navigation completes
                                 setTimeout(function() {
                                     const newUrl = window.location.href;
                                     if (newUrl.includes(expectedOfferId)) {
@@ -81,7 +81,7 @@ class WebViewLoginDataSourceImpl : WebViewLoginDataSource {
                             }
                         }
                         
-                        // Iniciar verificación
+                        // Kick off the verification
                         checkPageLoad();
                         
                     } catch (error) {
@@ -91,30 +91,30 @@ class WebViewLoginDataSourceImpl : WebViewLoginDataSource {
                 })();
             """.trimIndent()
             
-            // Configurar callbacks
+            // Register the callbacks we want to reuse
             currentApplySuccessCallback = onSuccess
             currentApplyErrorCallback = onError
             
-            // Timeout más corto para la prueba
+            // Use a shorter timeout for this smoke test
             webView.postDelayed({
                 if (currentApplySuccessCallback != null || currentApplyErrorCallback != null) {
                     Log.w("WebViewLoginDataSource", "⏰ TEST: Timeout después de 10 segundos")
                     currentApplyErrorCallback?.invoke("❌ TEST TIMEOUT: La prueba tardó más de 10 segundos")
                     clearApplyCallbacks()
                 }
-            }, 10000) // 10 segundos para la prueba
+            }, 10000) // 10-second timeout for the smoke test
             
             Log.d("WebViewLoginDataSource", "🔍 TEST: WebView URL actual antes del test: ${webView.url}")
             
-            // Verificar estado del WebView antes de ejecutar JavaScript
+            // Check the WebView state before executing JavaScript
             Log.d("WebViewLoginDataSource", "🔍 TEST: WebView attached to window: ${webView.isAttachedToWindow}")
             Log.d("WebViewLoginDataSource", "🔍 TEST: WebView visibility: ${webView.visibility}")
             
-            // Ejecutar JavaScript directamente en el hilo principal
+            // Execute JavaScript directly on the main thread
             try {
                 Log.d("WebViewLoginDataSource", "🚀 TEST: Ejecutando JavaScript de prueba...")
                 
-                // Verificar que AndroidInterface esté disponible primero
+                // Confirm that AndroidInterface is available first
                 webView.evaluateJavascript("typeof window.AndroidInterface") { interfaceCheck ->
                     Log.d("WebViewLoginDataSource", "🔍 TEST: AndroidInterface check: $interfaceCheck")
                     
@@ -125,7 +125,7 @@ class WebViewLoginDataSourceImpl : WebViewLoginDataSource {
                         return@evaluateJavascript
                     }
                     
-                    // Ejecutar el JavaScript principal
+                    // Execute the main JavaScript payload
                     webView.evaluateJavascript(basicTestJs) { result ->
                         Log.d("WebViewLoginDataSource", "📄 TEST: JavaScript ejecutado, resultado: $result")
                         
@@ -163,43 +163,43 @@ class WebViewLoginDataSourceImpl : WebViewLoginDataSource {
         try {
             Log.d("WebViewLoginDataSource", "Aplicando a oferta en segundo plano: $offerId (intento ${retryCount + 1}/3)")
 
-            // JavaScript optimizado para trabajo en segundo plano con debugging mejorado
+            // JavaScript tuned for background execution with improved debugging
             val javascript = """
                 (function() {
                     try {
                         console.log('🚀 Iniciando aplicación a oferta: $offerId');
                         
-                        // Verificar AndroidInterface inmediatamente
+                        // Check AndroidInterface immediately
                         if (typeof window.AndroidInterface === 'undefined') {
                             console.error('❌ AndroidInterface no está disponible');
                             return;
                         }
                         console.log('✅ AndroidInterface disponible');
                         
-                        // Reportar estado inicial
+                        // Report the initial state
                         window.AndroidInterface.onApplyInfo('🔍 JavaScript iniciado correctamente - URL actual: ' + window.location.href);
                         
-                        // Función para aplicar a la oferta
+                        // Function responsible for applying to the offer
                         function applyToOffer() {
                             console.log('🔍 applyToOffer() - URL actual:', window.location.href);
                             
-                            // Si ya estamos en la página correcta, buscar el botón directamente
+                            // If already on the correct page, look for the button immediately
                             if (window.location.href.includes('$offerId')) {
                                 console.log('✅ Ya estamos en la página correcta, buscando botón...');
                                 clickApplyButton();
                             } else {
-                                // Navegar a la URL de la oferta
+                                // Navigate to the offer URL
                                 console.log('🌐 Navegando a oferta: $offerId');
                                 window.AndroidInterface.onApplyInfo('🌐 Navegando a: https://qvapay.com/p2p/$offerId');
                                 window.location.href = 'https://qvapay.com/p2p/$offerId';
                                 
-                                // Esperar a que la página cargue - tiempo extendido para background
+                                // Wait for the page to load—longer timeout for background execution
                                 setTimeout(function() {
                                     console.log('⏳ Página debería haber cargado, verificando URL...');
                                     console.log('📍 URL después de navegación:', window.location.href);
                                     window.AndroidInterface.onApplyInfo('📍 URL después de 6s: ' + window.location.href);
                                     clickApplyButton();
-                                }, 6000); // Tiempo extendido para WebView en segundo plano
+                                }, 6000); // Extended delay for background WebView usage
                             }
                         }
                         
@@ -217,7 +217,7 @@ class WebViewLoginDataSourceImpl : WebViewLoginDataSource {
                                     searchAttempts++;
                                     console.log('Intento de búsqueda #' + searchAttempts);
                                     
-                                    // Método 1: Por texto del botón (más confiable basado en tu HTML)
+                                    // Method 1: search button text (most reliable for your HTML)
                                     const buttons = document.querySelectorAll('button');
                                     console.log('Método 1 - Buscando entre ' + buttons.length + ' botones por texto');
                                     for (let btn of buttons) {
@@ -230,7 +230,7 @@ class WebViewLoginDataSourceImpl : WebViewLoginDataSource {
                                         }
                                     }
                                     
-                                    // Método 2: Por clase btn-primary dentro de d-grid
+                                    // Method 2: use .d-grid .btn-primary
                                     if (!button) {
                                         button = document.querySelector('.d-grid .btn-primary');
                                         console.log('Método 2 - .d-grid .btn-primary:', button ? 'Encontrado' : 'No encontrado');
@@ -239,7 +239,7 @@ class WebViewLoginDataSourceImpl : WebViewLoginDataSource {
                                         }
                                     }
                                     
-                                    // Método 3: Por atributo wire:click usando getAttribute
+                                    // Method 3: match the wire:click attribute via getAttribute
                                     if (!button) {
                                         const allButtons = document.querySelectorAll('button');
                                         for (let btn of allButtons) {
@@ -252,7 +252,7 @@ class WebViewLoginDataSourceImpl : WebViewLoginDataSource {
                                         console.log('Método 3 - wire:click getAttribute:', button ? 'Encontrado' : 'No encontrado');
                                     }
                                     
-                                    // Método 4: Por clase específica y contenido
+                                    // Method 4: match a specific class combination and content
                                     if (!button) {
                                         button = document.querySelector('button.btn.btn-primary.waves-effect.waves-float.waves-light');
                                         console.log('Método 4 - clases específicas:', button ? 'Encontrado' : 'No encontrado');
@@ -266,7 +266,7 @@ class WebViewLoginDataSourceImpl : WebViewLoginDataSource {
                                 
                                 button = findButton();
                                 
-                                // Si no se encuentra el botón, reintentar después de un momento
+                                // If the button isn't found, retry shortly
                                 if (!button && searchAttempts < maxAttempts) {
                                     console.log('⚠️ Botón no encontrado, reintentando en 2 segundos...');
                                     window.AndroidInterface.onApplyInfo('⚠️ Botón no encontrado, intento ' + searchAttempts + '/' + maxAttempts + ' - reintentando...');
@@ -280,16 +280,16 @@ class WebViewLoginDataSourceImpl : WebViewLoginDataSource {
                                     console.log('✅ Botón encontrado, aplicando...');
                                     window.AndroidInterface.onApplyInfo('✅ Botón encontrado! Haciendo click...');
                                     
-                                    // Verificar que el botón sea visible y clickeable
+                                    // Make sure the button is visible and clickable
                                     const rect = button.getBoundingClientRect();
                                     if (rect.width > 0 && rect.height > 0) {
                                         button.click();
                                         window.AndroidInterface.onApplyInfo('🖱️ Click realizado, esperando resultado...');
                                         
-                                        // Verificar resultado después de un momento - tiempo extendido
+                                        // Check the result after a slightly longer pause
                                         setTimeout(function() {
                                             checkApplicationResult();
-                                        }, 5000); // Más tiempo para procesar la aplicación
+                                        }, 5000); // Allow extra time for the application flow
                                     } else {
                                         console.log('❌ El botón no es clickeable');
                                         window.AndroidInterface.onApplyError('❌ El botón no es clickeable (rect: ' + rect.width + 'x' + rect.height + ')');
@@ -309,7 +309,7 @@ class WebViewLoginDataSourceImpl : WebViewLoginDataSource {
                             try {
                                 console.log('Verificando resultado de aplicación...');
                                 
-                                // Buscar indicadores de éxito
+                                // Look for success indicators
                                 const successSelectors = [
                                     '.alert-success',
                                     '.toast-success', 
@@ -318,7 +318,7 @@ class WebViewLoginDataSourceImpl : WebViewLoginDataSource {
                                     '.swal2-success' // SweetAlert success
                                 ];
                                 
-                                // Buscar indicadores de error
+                                // Look for error indicators
                                 const errorSelectors = [
                                     '.alert-danger',
                                     '.alert-error',
@@ -331,7 +331,7 @@ class WebViewLoginDataSourceImpl : WebViewLoginDataSource {
                                 let result = null;
                                 let isSuccess = false;
                                 
-                                // Verificar éxito
+                                // Check for a success marker
                                 for (let selector of successSelectors) {
                                     const element = document.querySelector(selector);
                                     if (element && element.textContent && element.textContent.trim()) {
@@ -342,7 +342,7 @@ class WebViewLoginDataSourceImpl : WebViewLoginDataSource {
                                     }
                                 }
                                 
-                                // Verificar error si no hubo éxito
+                                // Check for errors if success was not found
                                 if (!isSuccess) {
                                     for (let selector of errorSelectors) {
                                         const element = document.querySelector(selector);
@@ -356,10 +356,10 @@ class WebViewLoginDataSourceImpl : WebViewLoginDataSource {
                                 }
                                 
                                 if (isSuccess) {
-                                    // Deshabilitar el botón después del éxito
+                                    // Disable the button once we succeed
                                     let successButton = document.querySelector('.d-grid .btn-primary');
                                     if (!successButton) {
-                                        // Fallback: buscar por getAttribute
+                                        // Fallback: inspect via getAttribute
                                         const allButtons = document.querySelectorAll('button');
                                         for (let btn of allButtons) {
                                             if (btn.getAttribute && btn.getAttribute('wire:click') === 'apply') {
@@ -375,10 +375,10 @@ class WebViewLoginDataSourceImpl : WebViewLoginDataSource {
                                     }
                                     window.AndroidInterface.onApplySuccess(result || 'Aplicación exitosa');
                                 } else {
-                                    // Verificar cambios en el botón como indicador de éxito
+                                    // Check button changes as a success hint
                                     let buttonAfter = document.querySelector('.d-grid .btn-primary');
                                     if (!buttonAfter) {
-                                        // Fallback: buscar por getAttribute
+                                        // Fallback: inspect via getAttribute
                                         const allButtons = document.querySelectorAll('button');
                                         for (let btn of allButtons) {
                                             if (btn.getAttribute && btn.getAttribute('wire:click') === 'apply') {
@@ -391,10 +391,10 @@ class WebViewLoginDataSourceImpl : WebViewLoginDataSource {
                                         console.log('Botón deshabilitado - asumiendo éxito');
                                         window.AndroidInterface.onApplySuccess('Aplicación completada exitosamente');
                                     } else {
-                                        // Verificar si hay algún cambio en la página que indique éxito
+                                        // Look for any page change that signals success
                                         const pageTitle = document.title.toLowerCase();
                                         if (pageTitle.includes('éxito') || pageTitle.includes('success')) {
-                                            // También deshabilitar botón en este caso
+                                            // Also disable the button in this branch
                                             if (buttonAfter) {
                                                 buttonAfter.disabled = true;
                                                 buttonAfter.innerHTML = buttonAfter.innerHTML.replace('Aplicar', 'Aplicado ✓');
@@ -411,7 +411,7 @@ class WebViewLoginDataSourceImpl : WebViewLoginDataSource {
                             }
                         }
                         
-                        // Iniciar el proceso
+                        // Kick off the process
                         applyToOffer();
                         
                     } catch (error) {
@@ -421,20 +421,20 @@ class WebViewLoginDataSourceImpl : WebViewLoginDataSource {
                 })();
             """.trimIndent()
 
-            // Configurar callbacks para esta operación específica
+            // Register callbacks specific to this attempt
             currentApplySuccessCallback = onSuccess
             currentApplyErrorCallback = onError
 
-            // Timeout de seguridad en caso de que el JavaScript no responda
+            // Safety timeout in case the JavaScript never responds
             webView.postDelayed({
                 if (currentApplySuccessCallback != null || currentApplyErrorCallback != null) {
                     Log.w("WebViewLoginDataSource", "⏰ JavaScript timeout - no response after 25 seconds")
                     currentApplyErrorCallback?.invoke("Timeout: La aplicación tardó demasiado en responder")
                     clearApplyCallbacks()
                 }
-            }, 25000) // 25 segundos timeout
+            }, 25000) // 25-second timeout
 
-            // Verificar que el WebView esté en un estado válido
+            // Ensure the WebView is currently in a valid state
             val currentUrl = try {
                 webView.url ?: "null"
             } catch (e: Exception) {
@@ -443,13 +443,13 @@ class WebViewLoginDataSourceImpl : WebViewLoginDataSource {
             }
             Log.d("WebViewLoginDataSource", "🔍 WebView URL before JavaScript: $currentUrl")
             
-            // Validar estado del WebView
+            // Validate the WebView state
             if (currentUrl == "null" || currentUrl == "error" || currentUrl.startsWith("about:") || currentUrl == "") {
                 Log.w("WebViewLoginDataSource", "⚠️ WebView no tiene URL válida ($currentUrl), navegando primero a QvaPay...")
                 webView.post {
                     webView.loadUrl("https://qvapay.com")
                     webView.postDelayed({
-                        // Reintentar después de cargar la página
+                        // Retry once the page finishes loading
                         Log.d("WebViewLoginDataSource", "🔄 Reintentando después de cargar QvaPay...")
                         applyToOfferWithRetryOld(offerId, onSuccess, onError, retryCount + 1)
                     }, 3000)
@@ -457,7 +457,7 @@ class WebViewLoginDataSourceImpl : WebViewLoginDataSource {
                 return
             }
             
-            // Ejecutar JavaScript si el WebView tiene URL válida
+            // Execute JavaScript when the WebView has a valid URL
             executeJavaScriptWithValidation(webView, javascript, offerId, onSuccess, onError)
 
         } catch (e: Exception) {
@@ -477,9 +477,9 @@ class WebViewLoginDataSourceImpl : WebViewLoginDataSource {
             Log.d("WebViewLoginDataSource", "🚀 Ejecutando JavaScript para oferta: $offerId")
             Log.d("WebViewLoginDataSource", "📍 WebView URL at execution time: ${webView.url}")
             
-            // Ejecutar JavaScript directamente (sin webView.post que no funciona en WebView invisible)
+            // Execute JavaScript directly (webView.post does not work on hidden WebViews)
             try {
-                // Primero verificar que AndroidInterface esté disponible
+                // First confirm that AndroidInterface is available
                 webView.evaluateJavascript("typeof window.AndroidInterface") { interfaceCheck ->
                     Log.d("WebViewLoginDataSource", "🔍 AndroidInterface check: $interfaceCheck")
                     
@@ -490,11 +490,11 @@ class WebViewLoginDataSourceImpl : WebViewLoginDataSource {
                         return@evaluateJavascript
                     }
                     
-                    // Ejecutar el JavaScript principal
+                    // Execute the main JavaScript payload
                     webView.evaluateJavascript(javascript) { result ->
                         Log.d("WebViewLoginDataSource", "📄 Background JavaScript executed, result: $result")
                         
-                        // Verificar si hubo error inmediato en el JavaScript
+                        // Check for immediate errors returned by the JavaScript
                         if (result != null && result.contains("error", ignoreCase = true)) {
                             Log.e("WebViewLoginDataSource", "❌ Immediate JavaScript error: $result")
                             currentApplyErrorCallback?.invoke("Error en JavaScript: $result")

@@ -13,34 +13,34 @@ Cuando usas filtros variadamente en el P2PScreen, el sistema estaba causando err
 
 ### 1. **Throttling Aumentado**
 ```kotlin
-// Antes: 10 segundos
+// Before: 10 seconds
 ThrottlingConfig(intervalMs = 10000L)
 
-// Ahora: 15 segundos
-ThrottlingConfig(intervalMs = 15000L) // Para filtros múltiples
+// Now: 15 seconds
+ThrottlingConfig(intervalMs = 15000L) // Handles multiple filter combinations
 ```
 
 ### 2. **Peticiones Secuenciales**
 ```kotlin
-// Antes: Paralelas (problemático)
+// Before: parallel calls (problematic)
 val deferredResults = coinsToQuery.map { coin ->
     async { getP2POffersUseCase(filters) }
 }
 val results = deferredResults.awaitAll()
 
-// Ahora: Secuenciales (respeta throttling)
+// Now: sequential calls (respects throttling)
 for (coin in coinsToQuery) {
     getP2POffersUseCase(filters)
-    delay(1000) // Pausa entre monedas
+    delay(1000) // Pause between coin requests
 }
 ```
 
 ### 3. **Debouncing Mejorado**
 ```kotlin
-// Antes: 300ms
+// Before: 300ms
 delay(300)
 
-// Ahora: 1000ms
+// Now: 1000ms
 delay(1000) // Prevent rapid successive calls when filtering
 ```
 

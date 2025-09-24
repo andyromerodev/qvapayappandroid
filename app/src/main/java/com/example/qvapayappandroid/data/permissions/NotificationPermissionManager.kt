@@ -28,21 +28,21 @@ class NotificationPermissionManager(private val context: Context) {
     fun getNotificationPermissionStatus(): NotificationPermissionStatus {
         val isAndroid13Plus = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
         
-        // Para Android 13+, verificar permiso POST_NOTIFICATIONS
+        // On Android 13+, check the POST_NOTIFICATIONS permission
         val isGranted = if (isAndroid13Plus) {
             ContextCompat.checkSelfPermission(
                 context,
                 Manifest.permission.POST_NOTIFICATIONS
             ) == PackageManager.PERMISSION_GRANTED
         } else {
-            // Para Android < 13, las notificaciones están habilitadas por defecto
+            // On Android < 13, notifications are enabled by default
             true
         }
 
-        // Verificar si las notificaciones están habilitadas a nivel de app
+        // Check whether app-wide notifications are enabled
         val canShowNotifications = NotificationManagerCompat.from(context).areNotificationsEnabled()
 
-        // Verificar si el canal específico está habilitado
+        // Check whether the specific channel is enabled
         val isChannelEnabled = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             val channel = notificationManager.getNotificationChannel("offer_alerts_channel")

@@ -92,7 +92,7 @@ class P2PViewModel(
                             _uiState.value.offers + response.data
                         }
                         
-                        // Procesar números de teléfono
+                        // Process phone numbers for these offers
                         val newPhoneNumbers = processOffersWithPhoneNumbers(response.data)
                         val updatedPhoneNumbers = _uiState.value.phoneNumbersMap + newPhoneNumbers
                         
@@ -129,7 +129,7 @@ class P2PViewModel(
                     onFailure = { error ->
                         val currentStateForError = _uiState.value
                         if (currentStateForError.currentPage > 1 && currentStateForError.offers.isNotEmpty()) {
-                            // Error en paginación - mantener ofertas existentes
+                            // Pagination error—keep the offers we already have
                             _uiState.value = _uiState.value.copy(
                                 isLoading = false,
                                 isLoadingMore = false,
@@ -137,7 +137,7 @@ class P2PViewModel(
                                 allowAutoPagination = _uiState.value.allowAutoPagination
                             )
                         } else {
-                            // Error en primera carga - limpiar ofertas
+                            // Initial load error—clear the existing offers
                             _uiState.value = _uiState.value.copy(
                                 isLoading = false,
                                 isLoadingMore = false,
@@ -159,7 +159,7 @@ class P2PViewModel(
                 
                 val currentStateForError = _uiState.value
                 if (currentStateForError.currentPage > 1 && currentStateForError.offers.isNotEmpty()) {
-                    // Error en paginación - mantener ofertas existentes
+                    // Pagination error—keep the offers we already have
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
                         isLoadingMore = false,
@@ -167,7 +167,7 @@ class P2PViewModel(
                         allowAutoPagination = _uiState.value.allowAutoPagination
                     )
                 } else {
-                    // Error en primera carga - limpiar ofertas
+                    // Initial load error—clear the existing offers
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
                         isLoadingMore = false,
@@ -183,7 +183,7 @@ class P2PViewModel(
     }
     
     /**
-     * Carga las ofertas P2P. Se debe llamar manualmente cuando se abra P2PScreen
+     * Loads the P2P offers. Call this manually when the P2P screen is opened.
      */
     fun loadP2PData() {
         if (!hasInitialLoadStarted) {
@@ -196,7 +196,7 @@ class P2PViewModel(
     }
     
     /**
-     * Refresca las ofertas P2P manteniendo los filtros aplicados
+     * Refreshes P2P offers while keeping any filters applied.
      */
     fun refresh() {
         viewModelScope.launch {
@@ -210,14 +210,14 @@ class P2PViewModel(
                 val filters = P2PFilterRequest(
                     type = if (currentState.selectedOfferType == "all") null else currentState.selectedOfferType,
                     coin = if (currentState.selectedCoins.isEmpty()) null else currentState.selectedCoins.joinToString(","),
-                    page = 1 // Resetear a la primera página en refresh
+                    page = 1 // Reset to the first page during refresh
                 )
                 
                 Log.d("P2PViewModel", "Refreshing P2P offers with filters: $filters")
                 
                 getP2POffersUseCase(filters).fold(
                     onSuccess = { response ->
-                        // Procesar números de teléfono
+                        // Process phone numbers
                         val phoneNumbers = processOffersWithPhoneNumbers(response.data)
                         
                         _uiState.value = _uiState.value.copy(
@@ -268,7 +268,7 @@ class P2PViewModel(
             
             if (is429Error) {
                 Log.d("P2PViewModel", "HTTP 429 detected, waiting 15 seconds before retry")
-                delay(15000) // 15 segundos de espera
+                delay(15000) // Wait 15 seconds before trying again
             }
             
             _uiState.value = _uiState.value.copy(
@@ -294,7 +294,7 @@ class P2PViewModel(
             
             if (is429Error) {
                 Log.d("P2PViewModel", "HTTP 429 detected on first load, waiting 15 seconds before retry")
-                delay(15000) // 15 segundos de espera
+                delay(15000) // Wait 15 seconds before trying again
             }
             
             _uiState.value = _uiState.value.copy(
@@ -335,12 +335,12 @@ class P2PViewModel(
             try {
                 val currentState = _uiState.value
                 val coinsToQuery = currentState.selectedCoins.ifEmpty {
-                    listOf("all") // Si no hay monedas seleccionadas, buscar todas
+                    listOf("all") // If nothing is selected, query all coins
                 }
                 
                 Log.d("P2PViewModel", "Loading P2P offers for coins: $coinsToQuery")
                 
-                // Hacer peticiones SECUENCIALES para respetar el throttling
+                // Send sequential requests to honor throttling limits
                 val allOffers = mutableListOf<P2POffer>()
                 var totalOffersCount = 0
                 var maxPages = 1
@@ -424,7 +424,7 @@ class P2PViewModel(
                 if (hasError) {
                     val currentStateForError = _uiState.value
                     if (currentStateForError.currentPage > 1 && currentStateForError.offers.isNotEmpty()) {
-                        // Error en paginación - mantener ofertas existentes
+                        // Pagination error—keep the offers we already have
                         _uiState.value = _uiState.value.copy(
                             isFiltering = false,
                             isLoadingMore = false,
@@ -432,7 +432,7 @@ class P2PViewModel(
                             allowAutoPagination = _uiState.value.allowAutoPagination
                         )
                     } else {
-                        // Error en primera carga - limpiar ofertas
+                        // Initial load error—clear the existing offers
                         Log.d("P2PViewModel", "loadP2PDataImmediate - ERROR (hasError): setting isFiltering = false")
                         _uiState.value = _uiState.value.copy(
                             isFiltering = false,
@@ -443,7 +443,7 @@ class P2PViewModel(
                         )
                     }
                 } else {
-                    // Deduplicar ofertas por UUID
+                    // Deduplicate offers by UUID
                     val uniqueOffers = allOffers.distinctBy { it.uuid }
                     
                     val finalOffers = if (currentState.currentPage == 1) {
@@ -452,7 +452,7 @@ class P2PViewModel(
                         (_uiState.value.offers + uniqueOffers).distinctBy { it.uuid }
                     }
                     
-                    // Procesar números de teléfono para todas las ofertas finales
+                    // Process phone numbers for the final set of offers
                     val phoneNumbers = processOffersWithPhoneNumbers(finalOffers)
                     
                     Log.d("P2PViewModel", "loadP2PDataImmediate - SUCCESS: setting isFiltering = false, offers count = ${finalOffers.size}")
@@ -485,7 +485,7 @@ class P2PViewModel(
                 
                 val currentStateForError = _uiState.value
                 if (currentStateForError.currentPage > 1 && currentStateForError.offers.isNotEmpty()) {
-                    // Error en paginación - mantener ofertas existentes
+                    // Pagination error—keep the offers we already have
                     _uiState.value = _uiState.value.copy(
                         isFiltering = false,
                         isLoadingMore = false,
@@ -493,7 +493,7 @@ class P2PViewModel(
                         allowAutoPagination = _uiState.value.allowAutoPagination
                     )
                 } else {
-                    // Error en primera carga - limpiar ofertas
+                    // Initial load error—clear the existing offers
                     Log.d("P2PViewModel", "loadP2PDataImmediate - ERROR (catch): setting isFiltering = false")
                     _uiState.value = _uiState.value.copy(
                         isFiltering = false,
@@ -579,21 +579,21 @@ class P2PViewModel(
     }
 
     /**
-     * Extrae número de teléfono del mensaje usando múltiples expresiones regulares
-     * Busca números de diferentes países y formatos
+     * Extracts phone numbers from a message using multiple regular expressions,
+     * covering several countries and formats.
      */
     fun extractPhoneFromMessage(message: String?): String? {
         if (message.isNullOrBlank()) return null
         
-        // Lista de expresiones regulares para diferentes países
+        // Regular expressions for different countries
         val phonePatterns = listOf(
-            // Cuba: +53XXXXXXXX, 53XXXXXXXX, 5XXXXXXXX (móviles cubanos)
+            // Cuba: +53XXXXXXXX, 53XXXXXXXX, 5XXXXXXXX (mobile numbers)
             Regex("""\+?53[\s\-]?[5-9]\d{7}"""),
-            // Estados Unidos/Canadá: +1XXXXXXXXXX, 1XXXXXXXXXX
+            // United States/Canada: +1XXXXXXXXXX, 1XXXXXXXXXX
             Regex("""\+?1[\s\-]?\d{10}"""),
-            // México: +52XXXXXXXXXX
+            // Mexico: +52XXXXXXXXXX
             Regex("""\+?52[\s\-]?1?\d{10}"""),
-            // España: +34XXXXXXXXX
+            // Spain: +34XXXXXXXXX
             Regex("""\+?34[\s\-]?\d{9}"""),
             // Argentina: +54XXXXXXXXXX
             Regex("""\+?54[\s\-]?\d{10}"""),
@@ -601,21 +601,21 @@ class P2PViewModel(
             Regex("""\+?57[\s\-]?\d{10}"""),
             // Venezuela: +58XXXXXXXXXX
             Regex("""\+?58[\s\-]?\d{10}"""),
-            // Brasil: +55XXXXXXXXXXX
+            // Brazil: +55XXXXXXXXXXX
             Regex("""\+?55[\s\-]?\d{11}"""),
             // Chile: +56XXXXXXXXX
             Regex("""\+?56[\s\-]?\d{9}"""),
-            // Perú: +51XXXXXXXXX
+            // Peru: +51XXXXXXXXX
             Regex("""\+?51[\s\-]?\d{9}"""),
             // Ecuador: +593XXXXXXXXX
             Regex("""\+?593[\s\-]?\d{9}"""),
-            // Patrón genérico para números internacionales (8-15 dígitos)
+            // Generic pattern for international numbers (8-15 digits)
             Regex("""\+\d{1,4}[\s\-]?\d{8,12}"""),
-            // Números locales de 8-11 dígitos (sin código de país)
+            // Local numbers (8-11 digits) without a country code
             Regex("""\b\d{8,11}\b""")
         )
         
-        // Buscar coincidencias con cada patrón
+        // Try each pattern until one matches
         for (pattern in phonePatterns) {
             val matches = pattern.findAll(message)
             val match = matches.firstOrNull()
@@ -642,7 +642,7 @@ data class P2PUiState(
     val offers: List<P2POffer> = emptyList(),
     val selectedOfferType: String = "all", // "all", "buy", "sell"
     val selectedCoin: String = "all", // "all" or specific coin
-    val selectedCoins: List<String> = emptyList(), // Lista de monedas seleccionadas
+    val selectedCoins: List<String> = emptyList(), // Selected coins
     val currentPage: Int = 1,
     val totalPages: Int = 1,
     val totalOffers: Int = 0,
@@ -651,9 +651,9 @@ data class P2PUiState(
         "USDCASH", "CLASICA", "BANK_MLC", "NEOMOON", "USDT", "BANK_EUR", 
         "QVAPAY", "BANDECPREPAGO", "CUPCASH", "WISE", "EURCASH", "USDTBSC", "BOLSATM"
     ),
-    val sortBy: String = "ratio",    // "ratio" o "nombre"
+    val sortBy: String = "ratio",    // Either "ratio" or "nombre"
     val sortAsc: Boolean = false,
-    // Mapa para almacenar números de teléfono extraídos por UUID de oferta
+    // Map that holds phone numbers extracted per offer UUID
     val phoneNumbersMap: Map<String, String> = emptyMap(),
     val allowAutoPagination: Boolean = false
 )

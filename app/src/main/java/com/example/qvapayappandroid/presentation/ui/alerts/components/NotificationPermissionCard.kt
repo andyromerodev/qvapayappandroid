@@ -28,14 +28,14 @@ import com.example.qvapayappandroid.data.permissions.NotificationPermissionManag
 ) {
     val context = LocalContext.current
     
-    // Launcher para solicitar permisos de notificaciones (Android 13+)
+    // Launcher used to request notification permission on Android 13+
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { isGranted ->
         onPermissionChanged()
     }
     
-    // Launcher para abrir configuración de la app
+    // Launcher that opens the app's settings screen
     val settingsLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) {
@@ -107,7 +107,7 @@ import com.example.qvapayappandroid.data.permissions.NotificationPermissionManag
                 }
             }
 
-            // Estado detallado (solo mostrar si no está completamente habilitado)
+            // Detailed state (only when the setup is not fully enabled)
             if (!permissionStatus.isFullyEnabled) {
                 Divider(
                     color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.3f)
@@ -140,7 +140,7 @@ import com.example.qvapayappandroid.data.permissions.NotificationPermissionManag
                     )
                 }
 
-                // Botones de acción
+                // Action buttons
                 Divider(
                     color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.3f)
                 )
@@ -149,7 +149,7 @@ import com.example.qvapayappandroid.data.permissions.NotificationPermissionManag
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    // Botón para solicitar permiso (Android 13+)
+                    // Button to request the permission (Android 13+)
                     if (!permissionStatus.isGranted && NotificationPermissionManager.shouldRequestPermission(context)) {
                         Button(
                             onClick = {
@@ -172,7 +172,7 @@ import com.example.qvapayappandroid.data.permissions.NotificationPermissionManag
                         }
                     }
                     
-                    // Botón para abrir configuración
+                    // Button to jump into system settings
                     OutlinedButton(
                         onClick = {
                             val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {

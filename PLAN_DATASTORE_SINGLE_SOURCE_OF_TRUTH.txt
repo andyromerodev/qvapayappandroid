@@ -117,7 +117,7 @@ data class FilterPreferencesEntity(
 **Repository Pattern Expandido:**
 
 ```kotlin
-// UserRepository como única fuente de verdad
+// UserRepository as the single source of truth
 class UserRepository(
     private val userDao: UserDao,
     private val userPreferencesRepository: UserPreferencesRepository,
@@ -125,13 +125,13 @@ class UserRepository(
     private val networkMonitor: NetworkMonitor
 ) {
     
-    // Datos siempre desde DB local
+    // Always load from the local DB
     fun getUserProfile(): Flow<UserProfile?> = 
         userDao.getUserProfile().map { entity ->
             entity?.toDomainModel()
         }
     
-    // Sincronización automática en background
+    // Automatic background sync
     suspend fun syncUserProfile(): Result<Unit> = try {
         if (networkMonitor.isOnline()) {
             val remoteUser = apiService.getUserProfile()
@@ -201,7 +201,7 @@ class NetworkMonitor @Inject constructor(
 ### 2. Sync Manager para Datos
 
 ```kotlin
-// Coordinador de sincronización
+// Sync coordinator
 class SyncManager(
     private val userRepository: UserRepository,
     private val p2pRepository: P2PRepository,
@@ -209,7 +209,7 @@ class SyncManager(
     private val workManager: WorkManager
 ) {
     
-    // Auto-sync periódico en background
+    // Periodic auto-sync in the background
     fun schedulePeriodicSync() {
         val syncWork = PeriodicWorkRequestBuilder<SyncWorker>(15, TimeUnit.MINUTES)
             .setConstraints(
@@ -227,13 +227,13 @@ class SyncManager(
         )
     }
     
-    // Sync manual con retry
+    // Manual sync with retry
     suspend fun syncAll(): Result<Unit> = try {
         if (!networkMonitor.isOnline().first()) {
             return Result.failure(Exception("No internet connection"))
         }
         
-        // Sync en paralelo
+        // Parallel sync
         val userSync = async { userRepository.syncUserProfile() }
         val p2pSync = async { p2pRepository.refreshP2POffers() }
         
@@ -256,11 +256,11 @@ class ConflictResolver {
         remote: UserProfileEntity
     ): UserProfileEntity {
         return when {
-            // Remoto más nuevo
+            // Remote record is newer
             remote.lastUpdated > local.lastUpdated -> remote
-            // Local modificado y no sincronizado
+            // Local record changed and is not synced
             !local.isSynced -> local.copy(isSynced = false) // Marcar para sync
-            // Default: mantener local
+            // Default: keep the local record
             else -> local
         }
     }
@@ -269,7 +269,7 @@ class ConflictResolver {
         local: P2POfferCacheEntity,
         remote: P2POfferCacheEntity
     ): P2POfferCacheEntity {
-        // Lógica similar basada en timestamps y estado de sync
+        // Similar logic based on timestamps and sync state
         return if (remote.createdAt > local.cachedAt) remote else local
     }
 }

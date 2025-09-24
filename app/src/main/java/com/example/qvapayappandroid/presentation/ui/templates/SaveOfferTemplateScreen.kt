@@ -24,16 +24,16 @@ fun SaveOfferTemplateScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    // Manejo de effects
+    // Handle one-off view effects
     LaunchedEffect(Unit) {
         viewModel.effect.collect { effect ->
             when (effect) {
                 is SaveOfferTemplateEffect.NavigateBack -> onBackClick()
                 is SaveOfferTemplateEffect.ShowSuccess -> {
-                    // Mensaje de éxito manejado por el estado
+                    // Success message is handled via state
                 }
                 is SaveOfferTemplateEffect.ShowError -> {
-                    // Error manejado por el estado
+                    // Error details come from state
                 }
                 is SaveOfferTemplateEffect.TemplateSavedSuccessfully -> {
                     onSuccess()
@@ -64,7 +64,7 @@ fun SaveOfferTemplateScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Información básica de la plantilla
+            // Core template information
             Card(
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -97,7 +97,7 @@ fun SaveOfferTemplateScreen(
                 }
             }
 
-            // Tipo de oferta
+            // Offer type
             Card(
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -131,7 +131,7 @@ fun SaveOfferTemplateScreen(
                 }
             }
 
-            // Datos básicos
+            // Primary offer data
             Card(
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -145,7 +145,7 @@ fun SaveOfferTemplateScreen(
                         fontWeight = FontWeight.Bold
                     )
                     
-                    // Selector de Moneda
+                    // Coin selector
                     var expanded by remember { mutableStateOf(false) }
                     
                     ExposedDropdownMenuBox(
@@ -204,7 +204,7 @@ fun SaveOfferTemplateScreen(
                 }
             }
 
-            // Detalles
+            // Contact details
             Card(
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -229,7 +229,7 @@ fun SaveOfferTemplateScreen(
                 }
             }
 
-            // Configuraciones
+            // Flags and switches
             Card(
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -293,7 +293,7 @@ fun SaveOfferTemplateScreen(
                 }
             }
 
-            // Mensaje y webhook
+            // Message and webhook
             Card(
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -387,7 +387,7 @@ fun SaveOfferTemplateScreen(
                 }
             }
 
-            // Botón guardar
+            // Save button
             Button(
                 onClick = { viewModel.handleIntent(SaveOfferTemplateIntent.SaveTemplate) },
                 modifier = Modifier.fillMaxWidth(),
@@ -410,7 +410,7 @@ fun SaveOfferTemplateScreen(
                 }
             }
 
-            // Espaciado al final
+            // Bottom spacer
             Spacer(modifier = Modifier.height(16.dp))
         }
     }

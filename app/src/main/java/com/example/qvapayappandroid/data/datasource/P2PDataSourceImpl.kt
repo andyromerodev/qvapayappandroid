@@ -28,7 +28,7 @@ class P2PDataSourceImpl(
     
     init {
         Log.d(TAG, "🔧 P2PDataSourceImpl initialized - configuring throttling")
-        // Configurar throttling para las operaciones P2P
+        // Configure throttling for every P2P operation
         configureThrottling()
     }
     
@@ -36,47 +36,47 @@ class P2PDataSourceImpl(
         Log.d(TAG, "⚙️ configureThrottling() - setting up P2P operation throttling")
         
         kotlinx.coroutines.runBlocking {
-            // Configurar throttling específico para cada operación P2P
+            // Configure throttling for each P2P operation
             Log.d(TAG, "   • Configuring P2P_GET_OFFERS: 15000ms interval")
             throttlingManager.configureOperation(
                 ThrottlingOperations.P2P_GET_OFFERS,
-                ThrottlingConfig.DEFAULT_API_CONFIG // 15 segundos para listados (aumentado por filtros múltiples)
+                ThrottlingConfig.DEFAULT_API_CONFIG // 15 seconds for listings (wider slack for multi-filter)
             )
             
             Log.d(TAG, "   • Configuring P2P_GET_OFFER_BY_ID: 5000ms interval")
             throttlingManager.configureOperation(
                 ThrottlingOperations.P2P_GET_OFFER_BY_ID,
-                ThrottlingConfig.DEFAULT_API_CONFIG // 5 segundos para detalles
+                ThrottlingConfig.DEFAULT_API_CONFIG // 5 seconds when fetching details
             )
             
             Log.d(TAG, "   • Configuring P2P_CREATE_OFFER: CREATE_OPERATIONS_CONFIG")
             throttlingManager.configureOperation(
                 ThrottlingOperations.P2P_CREATE_OFFER, 
-                ThrottlingConfig.DEFAULT_API_CONFIG // 10 segundos para creación
+                ThrottlingConfig.DEFAULT_API_CONFIG // 10 seconds for offer creation
             )
             
             Log.d(TAG, "   • Configuring P2P_APPLY_TO_OFFER: CREATE_OPERATIONS_CONFIG")
             throttlingManager.configureOperation(
                 ThrottlingOperations.P2P_APPLY_TO_OFFER, 
-                ThrottlingConfig.DEFAULT_API_CONFIG // 10 segundos para aplicar
+                ThrottlingConfig.DEFAULT_API_CONFIG // 10 seconds before applying
             )
             
             Log.d(TAG, "   • Configuring P2P_CANCEL_OFFER: 5000ms interval")
             throttlingManager.configureOperation(
                 ThrottlingOperations.P2P_CANCEL_OFFER, 
-                ThrottlingConfig.DEFAULT_API_CONFIG // 5 segundos para cancelar
+                ThrottlingConfig.DEFAULT_API_CONFIG // 5 seconds before canceling
             )
             
             Log.d(TAG, "   • Configuring P2P_GET_MY_OFFERS: 3000ms interval")
             throttlingManager.configureOperation(
                 ThrottlingOperations.P2P_GET_MY_OFFERS,
-                ThrottlingConfig.DEFAULT_API_CONFIG // 3 segundos para mis ofertas
+                ThrottlingConfig.DEFAULT_API_CONFIG // 3 seconds for "my offers"
             )
             
             // Configure global API throttling to prevent 429 errors
             Log.d(TAG, "   • Configuring Global API throttling: 15000ms interval")
             throttlingManager.configureGlobalApi(
-                ThrottlingConfig.DEFAULT_API_CONFIG // 15 segundos entre cualquier llamada a la API
+                ThrottlingConfig.DEFAULT_API_CONFIG // 15 seconds between any API calls
             )
             
             Log.d(TAG, "✅ All P2P throttling configurations completed")
@@ -90,7 +90,7 @@ class P2PDataSourceImpl(
         return try {
             Log.d(TAG, "📋 getP2POffers() called with filters: $filters")
             
-            // Verificar throttling usando el manager
+            // Check throttling through the manager
             Log.d(TAG, "🔍 Checking throttling for P2P_GET_OFFERS operation")
             val throttlingResult = throttlingManager.canExecute(ThrottlingOperations.P2P_GET_OFFERS)
             
@@ -103,7 +103,7 @@ class P2PDataSourceImpl(
                 Log.d(TAG, "✅ Not throttled - proceeding immediately")
             }
             
-            // Registrar la ejecución
+            // Record the execution attempt
             Log.d(TAG, "📝 Recording execution for P2P_GET_OFFERS")
             throttlingManager.recordExecution(ThrottlingOperations.P2P_GET_OFFERS)
             
@@ -161,7 +161,7 @@ class P2PDataSourceImpl(
             Log.d(TAG, "   • Current page: ${responseBody.currentPage}")
             Log.d(TAG, "   • Offers in response: ${responseBody.data.size}")
             
-            // Crear un conjunto único de monedas para evitar duplicados
+            // Build a unique set of coins to avoid duplicates
             val uniqueCoins = responseBody.data
                 .mapNotNull { it.coinData }
                 .distinctBy { it.coinsCategoriesId }
@@ -185,7 +185,7 @@ class P2PDataSourceImpl(
         accessToken: String?
     ): Result<P2POffer> {
         return try {
-            // Verificar throttling usando el manager
+            // Check throttling before hitting the network
             val throttlingResult = throttlingManager.canExecute(ThrottlingOperations.P2P_GET_OFFER_BY_ID)
             
             if (!throttlingResult.canExecute) {
@@ -193,7 +193,7 @@ class P2PDataSourceImpl(
                 kotlinx.coroutines.delay(throttlingResult.remainingTimeMs)
             }
             
-            // Registrar la ejecución
+            // Record the execution attempt
             throttlingManager.recordExecution(ThrottlingOperations.P2P_GET_OFFER_BY_ID)
             
             Log.d("P2PDataSource", "Getting P2P offer by ID: $offerId")
@@ -243,7 +243,7 @@ class P2PDataSourceImpl(
         accessToken: String?
     ): Result<P2PApplyResponse> {
         return try {
-            // Verificar throttling usando el manager
+            // Check throttling via the manager
             val throttlingResult = throttlingManager.canExecute(ThrottlingOperations.P2P_APPLY_TO_OFFER)
             
             if (!throttlingResult.canExecute) {
@@ -251,7 +251,7 @@ class P2PDataSourceImpl(
                 kotlinx.coroutines.delay(throttlingResult.remainingTimeMs)
             }
             
-            // Registrar la ejecución
+            // Record the execution attempt
             throttlingManager.recordExecution(ThrottlingOperations.P2P_APPLY_TO_OFFER)
             
             Log.d("P2PDataSource", "Applying to P2P offer ID: $offerId")
@@ -326,7 +326,7 @@ class P2PDataSourceImpl(
         accessToken: String?
     ): Result<P2PCreateResponse> {
         return try {
-            // Verificar throttling usando el manager
+            // Check throttling via the manager
             val throttlingResult = throttlingManager.canExecute(ThrottlingOperations.P2P_CREATE_OFFER)
             
             if (!throttlingResult.canExecute) {
@@ -334,7 +334,7 @@ class P2PDataSourceImpl(
                 kotlinx.coroutines.delay(throttlingResult.remainingTimeMs)
             }
             
-            // Registrar la ejecución
+            // Record the execution attempt
             throttlingManager.recordExecution(ThrottlingOperations.P2P_CREATE_OFFER)
             
             Log.d("P2PDataSource", "Creating P2P offer: $request")
@@ -390,7 +390,7 @@ class P2PDataSourceImpl(
         page: Int?
     ): Result<P2POfferResponse> {
         return try {
-            // Verificar throttling usando el manager
+            // Check throttling via the manager
             val throttlingResult = throttlingManager.canExecute(ThrottlingOperations.P2P_GET_MY_OFFERS)
             
             if (!throttlingResult.canExecute) {
@@ -398,7 +398,7 @@ class P2PDataSourceImpl(
                 kotlinx.coroutines.delay(throttlingResult.remainingTimeMs)
             }
             
-            // Registrar la ejecución
+            // Record the execution attempt
             throttlingManager.recordExecution(ThrottlingOperations.P2P_GET_MY_OFFERS)
             
             Log.d("P2PDataSource", "Getting my P2P offers with page: $page")
@@ -449,7 +449,7 @@ class P2PDataSourceImpl(
         accessToken: String?
     ): Result<P2PCancelResponse> {
         return try {
-            // Verificar throttling usando el manager
+            // Check throttling via the manager
             val throttlingResult = throttlingManager.canExecute(ThrottlingOperations.P2P_CANCEL_OFFER)
             
             if (!throttlingResult.canExecute) {
@@ -457,7 +457,7 @@ class P2PDataSourceImpl(
                 kotlinx.coroutines.delay(throttlingResult.remainingTimeMs)
             }
             
-            // Registrar la ejecución
+            // Record the execution attempt
             throttlingManager.recordExecution(ThrottlingOperations.P2P_CANCEL_OFFER)
             
             Log.d("P2PDataSource", "Cancelling P2P offer ID: $offerId")

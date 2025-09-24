@@ -19,7 +19,7 @@ class OfferAlertWorkManager(private val context: Context) {
             .build()
 
         val workRequest = PeriodicWorkRequestBuilder<OfferCheckWorker>(
-            repeatInterval = maxOf(intervalMinutes, 15), // Mínimo 15 minutos
+            repeatInterval = maxOf(intervalMinutes, 15), // Minimum interval is 15 minutes
             repeatIntervalTimeUnit = TimeUnit.MINUTES
         )
             .setConstraints(constraints)

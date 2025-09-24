@@ -65,7 +65,7 @@ private fun MyOfferCardShimmer() {
                 .padding(8.dp)
                 .fillMaxWidth()
         ) {
-            // Primera fila: avatar owner, flecha, avatar peer, estado
+            // First row: owner avatar, arrow, peer avatar, status
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
@@ -143,7 +143,7 @@ private fun MyOfferCardShimmer() {
             Column(
                 verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                // Primera fila
+                // First row
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -155,7 +155,7 @@ private fun MyOfferCardShimmer() {
                         MiniCardShimmer()
                     }
                 }
-                // Segunda fila
+                // Second row
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(6.dp)

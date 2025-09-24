@@ -29,7 +29,7 @@ fun OfferTemplatesScreen(
     var showDeleteDialog by remember { mutableStateOf<com.example.qvapayappandroid.domain.model.OfferTemplate?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
     
-    // Manejo de effects
+    // Handle view effects
     LaunchedEffect(Unit) {
         viewModel.effect.collect { effect ->
             when (effect) {
@@ -75,7 +75,7 @@ fun OfferTemplatesScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            // Barra de búsqueda y filtros
+            // Search bar and filters
             SearchAndFilters(
                 searchQuery = uiState.searchQuery,
                 selectedType = uiState.selectedType,
@@ -85,7 +85,7 @@ fun OfferTemplatesScreen(
                 onClearSearch = { viewModel.handleIntent(OfferTemplatesIntent.ClearSearch) }
             )
             
-            // Contenido principal
+            // Main content area
             Box(modifier = Modifier.fillMaxSize()) {
                 when {
                     uiState.isLoading -> {
@@ -123,7 +123,7 @@ fun OfferTemplatesScreen(
         }
     }
     
-    // Diálogo de confirmación de eliminación
+    // Delete confirmation dialog
     showDeleteDialog?.let { template ->
         DeleteConfirmationDialog(
             templateName = template.name,
@@ -156,7 +156,7 @@ private fun SearchAndFilters(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Barra de búsqueda
+            // Search field
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = onSearchQueryChange,
@@ -173,7 +173,7 @@ private fun SearchAndFilters(
                 singleLine = true
             )
             
-            // Filtros de tipo
+            // Type filters
             Text(
                 text = "Tipo de oferta",
                 style = MaterialTheme.typography.labelMedium,

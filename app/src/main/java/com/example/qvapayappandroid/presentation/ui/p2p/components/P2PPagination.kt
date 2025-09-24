@@ -32,31 +32,31 @@ fun P2PPagination(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = 2.dp), // Menos padding vertical
+            .padding(vertical = 2.dp), // Less vertical padding
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically
     ) {
         IconButton(
             onClick = onPreviousPage,
             enabled = currentPage > 1 && totalPages > 1,
-            modifier = Modifier.size(32.dp) // Botón más pequeño
+            modifier = Modifier.size(32.dp) // Slightly smaller button
         ) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.NavigateBefore,
                 contentDescription = "Anterior",
-                modifier = Modifier.size(18.dp) // Icono más pequeño
+                modifier = Modifier.size(18.dp) // Smaller icon
             )
         }
 
-        Spacer(modifier = Modifier.width(4.dp)) // Menor separación
+        Spacer(modifier = Modifier.width(4.dp)) // Narrower gap
 
         Text(
             text = if (totalPages > 0) "Página $currentPage de $totalPages" else "Sin páginas",
-            style = MaterialTheme.typography.bodySmall, // Texto más pequeño
+            style = MaterialTheme.typography.bodySmall, // Smaller text style
             modifier = Modifier.padding(horizontal = 8.dp)
         )
 
-        Spacer(modifier = Modifier.width(4.dp)) // Menor separación
+        Spacer(modifier = Modifier.width(4.dp)) // Narrower gap
 
         IconButton(
             onClick = onNextPage,
@@ -71,4 +71,3 @@ fun P2PPagination(
         }
     }
 }
-

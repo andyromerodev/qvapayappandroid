@@ -169,7 +169,7 @@ class OfferTemplatesViewModel(
         
         val filtered = when {
             currentState.searchQuery.isNotEmpty() -> {
-                // Si hay búsqueda, usar los resultados de búsqueda y aplicar filtro de tipo
+                // When searching, filter results first and then apply the type filter
                 val searchResults = baseTemplates.filter { template ->
                     template.name.contains(currentState.searchQuery, ignoreCase = true) ||
                     template.description?.contains(currentState.searchQuery, ignoreCase = true) == true
@@ -182,11 +182,11 @@ class OfferTemplatesViewModel(
                 }
             }
             currentState.selectedType != null -> {
-                // Solo filtro de tipo
+                // Only type filter active
                 baseTemplates.filter { it.type == currentState.selectedType }
             }
             else -> {
-                // Sin filtros
+                // No filters applied
                 baseTemplates
             }
         }
@@ -217,11 +217,11 @@ class OfferTemplatesViewModel(
     
     private fun useTemplate(template: OfferTemplate) {
         viewModelScope.launch {
-            // Marcar que estamos creando una oferta desde esta plantilla
+            // Flag that we are creating an offer from this template
             _uiState.value = _uiState.value.copy(creatingOfferFromTemplateId = template.id)
             
             try {
-                // Crear request P2P usando los datos de la plantilla
+                // Build the P2P request from the template data
                 val request = P2PCreateRequest(
                     type = template.type,
                     coin = template.coinId.toIntOrNull() ?: 0,
@@ -236,10 +236,10 @@ class OfferTemplatesViewModel(
                     webhook = template.webhook.ifEmpty { null }
                 )
                 
-                // Crear la oferta P2P
+                // Submit the P2P offer
                 val result = createP2POfferUseCase(request)
                 
-                // Limpiar estado de creación
+                // Clear the creation indicator
                 _uiState.value = _uiState.value.copy(creatingOfferFromTemplateId = null)
                 
                 if (result.isSuccess) {
@@ -249,7 +249,7 @@ class OfferTemplatesViewModel(
                 }
                 
             } catch (e: Exception) {
-                // Limpiar estado de creación en caso de error
+                // Clear the creation indicator if something fails
                 _uiState.value = _uiState.value.copy(creatingOfferFromTemplateId = null)
                 _effect.emit(OfferTemplatesEffect.ShowErrorMessage("Error al crear oferta P2P: ${e.message}"))
             }
@@ -264,7 +264,7 @@ class OfferTemplatesViewModel(
                     val originalTemplate = result.getOrNull()
                     if (originalTemplate != null) {
                         val duplicatedTemplate = originalTemplate.copy(
-                            id = 0, // Nuevo ID será asignado por la base de datos
+                            id = 0, // Let the database assign a fresh ID
                             name = "Copy - ${originalTemplate.name}",
                             createdAt = System.currentTimeMillis(),
                             updatedAt = System.currentTimeMillis()

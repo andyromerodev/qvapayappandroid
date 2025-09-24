@@ -48,7 +48,7 @@ fun TemplateCard(
         Column(
             modifier = Modifier.padding(16.dp)
         ) {
-            // Header con nombre y tipo
+            // Header showing name and type
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -74,13 +74,13 @@ fun TemplateCard(
                     }
                 }
                 
-                // Badge del tipo de oferta
+                // Offer type badge
                 OfferTypeBadge(type = template.type)
             }
             
             Spacer(modifier = Modifier.height(12.dp))
             
-            // Información de la oferta
+            // Offer details
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
@@ -103,7 +103,7 @@ fun TemplateCard(
             
             Spacer(modifier = Modifier.height(12.dp))
             
-            // Configuraciones
+            // Additional flags
             Row(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.fillMaxWidth()
@@ -124,7 +124,7 @@ fun TemplateCard(
             
             Spacer(modifier = Modifier.height(12.dp))
             
-            // Footer con fecha y acciones
+            // Footer with metadata and actions
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -185,7 +185,7 @@ fun TemplateCard(
         }
         }
         
-        // Menú contextual
+        // Context menu
         DropdownMenu(
             expanded = showContextMenu,
             onDismissRequest = { showContextMenu = false }

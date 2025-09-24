@@ -17,7 +17,7 @@ fun AppTheme(
     val systemInDarkTheme = isSystemInDarkTheme()
     val context = LocalContext.current
     
-    // Usar Flow para observar cambios en tiempo real
+    // Use a Flow to observe real-time settings changes
     val settingsFlow = remember { getSettingsUseCase.flow() }
     val settings by settingsFlow.collectAsState(initial = null)
     

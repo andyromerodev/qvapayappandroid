@@ -90,7 +90,7 @@ fun P2PFiltersScreen(
                 )
                 .padding(8.dp)
         ) {
-            // Tipo de oferta
+            // Offer type
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(8.dp)
@@ -133,7 +133,7 @@ fun P2PFiltersScreen(
 
             Spacer(modifier = Modifier.height(6.dp))
 
-            // Monedas
+            // Coins
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -153,7 +153,7 @@ fun P2PFiltersScreen(
 
                     Spacer(modifier = Modifier.height(4.dp))
 
-                    // Toggle para "Todas las monedas" - Mutually exclusive
+                    // Toggle for "All coins"—mutually exclusive
                     CoinToggleRow(
                         text = "Todas las monedas",
                         isChecked = localSelectedCoins.isEmpty(),
@@ -167,7 +167,7 @@ fun P2PFiltersScreen(
                     if (availableCoins.isNotEmpty()) {
                         HorizontalDivider(modifier = Modifier.padding(vertical = 3.dp))
 
-                        // Grid de toggles para monedas específicas - Mutually exclusive
+                        // Grid of toggles for specific coins—mutually exclusive
 
                         Box(Modifier.weight(1f, fill = true)) {
                             CoinSelectionGrid(
@@ -175,10 +175,10 @@ fun P2PFiltersScreen(
                                 selectedCoins = localSelectedCoins,
                                 onCoinSelected = { selectedCoin ->
                                     localSelectedCoins = if (selectedCoin.isEmpty()) {
-                                        // Si desactiva una moneda, vuelve a "Todas las monedas"
+                                        // If a coin is deselected, fall back to "All coins"
                                         setOf()
                                     } else {
-                                        // Solo permitir una moneda seleccionada a la vez
+                                        // Only allow one selected coin at a time
                                         setOf(selectedCoin)
                                     }
                                 }
@@ -219,7 +219,7 @@ private fun CoinToggleRow(
             onCheckedChange = onCheckedChange,
             modifier = Modifier
                 .scale(switchScale)
-                .minimumInteractiveComponentSize() // ← usa el Local (24.dp o 0.dp)
+                .minimumInteractiveComponentSize() // Uses the locally provided minimum (24.dp or 0.dp)
         )
     }
 }
@@ -233,9 +233,9 @@ private fun CoinSelectionGrid(
     onCoinSelected: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    // 1) Permite componentes compactos
+    // 1) Allow compact components
     CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides 24.dp) {
-        // ó 0.dp si quieres desactivar completamente el mínimo
+        // or 0.dp if you want to disable the minimum entirely
         LazyVerticalGrid(
             columns = GridCells.Fixed(2),
             verticalArrangement = Arrangement.spacedBy(0.dp),

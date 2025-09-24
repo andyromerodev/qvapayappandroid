@@ -1,47 +1,30 @@
 package com.example.qvapayappandroid.presentation.ui.webview
 
 /**
- * Effects del WebView que representan efectos secundarios o eventos únicos
- * que deben ser manejados por la UI
+ * WebView effects representing one-off events the UI must handle.
  */
 sealed interface WebViewEffect {
-    /**
-     * Navegación completada exitosamente
-     */
+    /** Navigation completed successfully. */
     data object NavigationCompleted : WebViewEffect
     
-    /**
-     * Error de navegación ocurrido
-     */
+    /** Navigation failed with an error. */
     data class NavigationError(val error: String) : WebViewEffect
     
-    /**
-     * WebView se ha cargado completamente
-     */
+    /** WebView finished loading. */
     data object WebViewLoaded : WebViewEffect
     
-    /**
-     * Se requiere mostrar un mensaje al usuario
-     */
+    /** Request to show a message to the user. */
     data class ShowMessage(val message: String) : WebViewEffect
     
-    /**
-     * Se debe cerrar el WebView
-     */
+    /** Instruct the UI to close the WebView. */
     data object CloseWebView : WebViewEffect
     
-    /**
-     * Página comenzó a cargar
-     */
+    /** Page started loading. */
     data class PageStarted(val url: String) : WebViewEffect
     
-    /**
-     * Error HTTP recibido
-     */
+    /** HTTP error response was received. */
     data class HttpError(val code: Int, val url: String) : WebViewEffect
     
-    /**
-     * WebView no está disponible en el dispositivo
-     */
+    /** WebView is unavailable on the device. */
     data object WebViewUnavailable : WebViewEffect
 }

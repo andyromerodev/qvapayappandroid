@@ -112,24 +112,24 @@ fun MyOfferDetailScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Estado y participantes
+            // Status and participants
             ParticipantsCard(offer = offer)
 
-            // Información de la transacción
+            // Transaction details
             TransactionInfoCard(offer = offer)
 
-            // Detalles adicionales
+            // Additional details
             AdditionalDetailsCard(offer = offer)
 
-            // Mensaje si existe
+            // Message when present
             offer.message?.takeIf { it.isNotBlank() }?.let { message ->
                 MessageCard(message = message)
             }
 
-            // Información temporal
+            // Timing information
             DateInfoCard(offer = offer)
 
-            // Botón de cancelar si el status es "processing" o "open"
+            // Show the cancel button only for processing or open offers
             if (offer.status?.lowercase() == "processing" || offer.status?.lowercase() == "open") {
                 CancelOfferButton(
                     offerId = offer.uuid ?: "",
@@ -161,7 +161,7 @@ private fun ParticipantsCard(
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
-            // Header con estado
+            // Header showing the current status
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -177,13 +177,13 @@ private fun ParticipantsCard(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Participantes
+            // Participants
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center
             ) {
-                // Owner (Yo)
+                // Owner (me)
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
@@ -390,7 +390,7 @@ private fun AdditionalDetailsCard(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Información adicional
+            // Extra information
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -601,6 +601,6 @@ private fun formatDate(dateString: String): String {
         val date = inputFormat.parse(dateString)
         outputFormat.format(date ?: Date())
     } catch (_: Exception) {
-        dateString.take(10) // Fallback: mostrar solo la fecha
+        dateString.take(10) // Fallback: show only the date portion
     }
 }

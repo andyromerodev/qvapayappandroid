@@ -30,7 +30,7 @@ class CreateP2POfferViewModel(
     }
 
     /**
-     * Maneja todos los intents de creación de ofertas P2P
+     * Handles every intent involved in creating P2P offers.
      */
     fun handleIntent(intent: CreateP2POfferIntent) {
         when (intent) {
@@ -125,7 +125,7 @@ class CreateP2POfferViewModel(
     private fun createOffer() {
         val currentState = _uiState.value
         
-        // Verificar throttling
+        // Check throttling
         val currentTime = System.currentTimeMillis()
         val timeSinceLastRequest = currentTime - lastCreateOfferRequestTime
         
@@ -141,12 +141,12 @@ class CreateP2POfferViewModel(
             )
             emitEffect(CreateP2POfferEffect.ShowError(errorMessage))
             
-            // Iniciar countdown
+            // Start the countdown
             startThrottleCountdown(remainingSeconds)
             return
         }
         
-        // Validaciones básicas
+        // Basic validations
         if (currentState.amount.isBlank()) {
             val errorMessage = "El monto es requerido"
             _uiState.value = _uiState.value.copy(errorMessage = errorMessage)
@@ -171,7 +171,7 @@ class CreateP2POfferViewModel(
             return
         }
         
-        // Validar que los detalles no estén vacíos
+        // Ensure every detail entry is filled in
         val emptyDetail = currentState.details.find { it.value.isBlank() }
         if (emptyDetail != null) {
             val errorMessage = "Todos los detalles son requeridos: ${emptyDetail.name}"
@@ -190,11 +190,11 @@ class CreateP2POfferViewModel(
             )
             emitEffect(CreateP2POfferEffect.ShowLoading)
             
-            // Actualizar el timestamp de la última petición
+            // Update the timestamp of the latest request
             lastCreateOfferRequestTime = System.currentTimeMillis()
             
             try {
-                // Convertir los detalles a JSON string
+                // Convert the details to a JSON string
                 val detailsJson = Json.encodeToString(currentState.details)
                 
                 val request = P2PCreateRequest(

@@ -1,12 +1,12 @@
 package com.example.qvapayappandroid.domain.throttling
 
 /**
- * Configuración para throttling de operaciones
- * 
- * @param intervalMs Intervalo mínimo entre ejecuciones en milisegundos
- * @param maxExecutionsPerWindow Número máximo de ejecuciones por ventana de tiempo (opcional)
- * @param windowSizeMs Tamaño de la ventana de tiempo en milisegundos (usado con maxExecutionsPerWindow)
- * @param enabled Si el throttling está habilitado para esta operación
+ * Configuration object for throttling operations.
+ *
+ * @param intervalMs Minimum interval between executions in milliseconds
+ * @param maxExecutionsPerWindow Maximum executions per window (optional)
+ * @param windowSizeMs Window size in milliseconds (used with maxExecutionsPerWindow)
+ * @param enabled Whether throttling is enabled for this operation
  */
 data class ThrottlingConfig(
     val intervalMs: Long,
@@ -16,11 +16,11 @@ data class ThrottlingConfig(
 ) {
     companion object {
         /**
-         * Configuraciones predefinidas para casos comunes
+         * Predefined configurations for common scenarios
          */
-        val DEFAULT_API_CONFIG = ThrottlingConfig(intervalMs = 15000L) // 5 segundo
-        val HEAVY_API_CONFIG = ThrottlingConfig(intervalMs = 5000L) // 5 segundos
-        val CREATE_OPERATIONS_CONFIG = ThrottlingConfig(intervalMs = 15000L) // 15 segundos
+        val DEFAULT_API_CONFIG = ThrottlingConfig(intervalMs = 15000L) // 15 seconds
+        val HEAVY_API_CONFIG = ThrottlingConfig(intervalMs = 5000L) // 5 seconds
+        val CREATE_OPERATIONS_CONFIG = ThrottlingConfig(intervalMs = 15000L) // 15 seconds
         val RATE_LIMITED_CONFIG = ThrottlingConfig(
             intervalMs = 1000L,
             maxExecutionsPerWindow = 10,

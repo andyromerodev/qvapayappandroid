@@ -38,29 +38,29 @@ class OfferCheckWorker(
 
     override suspend fun doWork(): Result {
         return try {
-            // Verificar si hay alertas activas
+            // Check if there are any active alerts
             val activeAlerts = offerAlertRepository.getActiveAlerts().first()
             
             if (activeAlerts.isEmpty()) {
-                // No hay alertas activas, no hacer nada
+                // No alerts to process, nothing else to do
                 return Result.success()
             }
 
-            // Verificar si tenemos sesión activa
+            // Ensure there is an active session
             val accessToken = sessionRepository.getAccessToken()
             if (accessToken.isNullOrEmpty()) {
-                // Sin sesión, no podemos hacer peticiones
+                // Without a session we cannot make API calls
                 return Result.success()
             }
 
-            // Verificar cada alerta
+            // Evaluate each alert
             activeAlerts.forEach { alert ->
                 checkAlertCriteria(alert, accessToken)
             }
 
             Result.success()
         } catch (e: Exception) {
-            // Log error y reintentar
+            // Log the error and retry later
             android.util.Log.e("OfferCheckWorker", "Error checking offers", e)
             Result.retry()
         }
@@ -68,7 +68,7 @@ class OfferCheckWorker(
 
     private suspend fun checkAlertCriteria(alert: OfferAlert, accessToken: String) {
         try {
-            // Crear filtros según los criterios de la alerta
+            // Build the filter request based on the alert criteria
             val filterRequest = P2PFilterRequest(
                 type = if (alert.offerType == "both") null else alert.offerType,
                 coin = alert.coinType,
@@ -76,23 +76,23 @@ class OfferCheckWorker(
                 max = alert.maxAmount,
                 vip = if (alert.onlyVip) true else null,
                 page = 1,
-                perPage = 50 // Límite para evitar rate limiting
+                perPage = 50 // Limit to avoid hitting rate limits
             )
             
-            // Obtener ofertas según los criterios de la alerta
+            // Fetch the offers that match the requested filters
             val offerResponse = p2pRepository.getP2POffers(filterRequest, accessToken).getOrNull()
 
             offerResponse?.data?.forEach { offer ->
                 if (doesOfferMatchCriteria(offer, alert)) {
-                    // La oferta cumple los criterios, enviar notificación
+                    // The offer meets the criteria—send a notification
                     sendOfferNotification(alert, offer)
                     
-                    // Actualizar timestamp de última activación
+                    // Update the last-triggered timestamp
                     offerAlertRepository.updateLastTriggeredAt(alert.id, System.currentTimeMillis())
                 }
             }
 
-            // Actualizar timestamp de última verificación
+            // Update the last-checked timestamp
             offerAlertRepository.updateLastCheckedAt(alert.id, System.currentTimeMillis())
 
         } catch (e: Exception) {
@@ -101,17 +101,17 @@ class OfferCheckWorker(
     }
 
     private fun doesOfferMatchCriteria(offer: P2POffer, alert: OfferAlert): Boolean {
-        // Verificar tipo de oferta
+        // Enforce offer type
         if (alert.offerType != "both" && offer.type != alert.offerType) {
             return false
         }
 
-        // Verificar moneda
+        // Enforce coin filter
         if (offer.coin != alert.coinType) {
             return false
         }
 
-        // Verificar monto
+        // Enforce amount boundaries
         val offerAmount = offer.amount?.toDoubleOrNull() ?: return false
         alert.minAmount?.let { min ->
             if (offerAmount < min) return false
@@ -120,7 +120,7 @@ class OfferCheckWorker(
             if (offerAmount > max) return false
         }
 
-        // Verificar tasa/ratio
+        // Enforce rate comparison
         val offerRate = offer.receive?.toDoubleOrNull() ?: return false
         when (alert.rateComparison) {
             "greater" -> if (offerRate <= alert.targetRate) return false
@@ -128,12 +128,12 @@ class OfferCheckWorker(
             "equal" -> if (kotlin.math.abs(offerRate - alert.targetRate) > 0.01) return false
         }
 
-        // Verificar KYC si es requerido
+        // Require KYC when needed
         if (alert.onlyKyc && offer.onlyKyc != 1) {
             return false
         }
 
-        // Verificar VIP si es requerido  
+        // Require VIP status when needed  
         if (alert.onlyVip && offer.onlyVip != 1) {
             return false
         }
@@ -142,7 +142,7 @@ class OfferCheckWorker(
     }
 
     private fun sendOfferNotification(alert: OfferAlert, offer: P2POffer) {
-        // Verificar permisos de notificaciones antes de enviar
+        // Check notification permissions before sending anything
         val permissionManager = NotificationPermissionManager(applicationContext)
         val permissionStatus = permissionManager.getNotificationPermissionStatus()
         
@@ -176,7 +176,7 @@ class OfferCheckWorker(
         val notificationText = "${alert.name}: ${offer.type?.uppercase() ?: "OFERTA"} ${offer.amount ?: "N/A"} ${offer.coin ?: ""} a ${offer.receive ?: "N/A"}"
 
         val notification = NotificationCompat.Builder(applicationContext, NOTIFICATION_CHANNEL_ID)
-            .setSmallIcon(R.drawable.doublecheck) // Asegúrate de tener este ícono
+            .setSmallIcon(R.drawable.doublecheck) // Ensure this icon exists in resources
             .setContentTitle(notificationTitle)
             .setContentText(notificationText)
             .setStyle(

@@ -113,13 +113,13 @@ private fun MyP2POffersSection(
             val condition2 = lastVisibleItemIndex >= totalItemsNumber - 3
             val condition3 = uiState.hasNextPage
             val condition4 = !uiState.isLoadingMore
-            // Ignorar loadingOffers si hay páginas disponibles - solo verificar que no esté ya paginando
-            val condition5 = true // Removemos la condición de loadingOffers
+            // Ignore loadingOffers when more pages exist—just ensure we are not already paging
+            val condition5 = true // Dropped the loadingOffers guard
             val condition6 = uiState.offersError == null
 
             val result = condition1 && condition2 && condition3 && condition4 && condition5 && condition6
             
-            // Solo log cuando las condiciones cambian
+            // Only log when the conditions shift
             if (totalItemsNumber > 0) {
                 Log.d("HomeScreen", "shouldLoadMore check - total: $totalItemsNumber, lastVisible: $lastVisibleItemIndex, hasNext: ${uiState.hasNextPage}, loadingMore: ${uiState.isLoadingMore}, loadingOffers: ${uiState.isLoadingOffers}, error: ${uiState.offersError}")
                 Log.d("HomeScreen", "Conditions - 1: $condition1, 2: $condition2, 3: $condition3, 4: $condition4, 5: $condition5, 6: $condition6, RESULT: $result")
@@ -233,4 +233,3 @@ private fun AnimatedOfferItem(
         )
     }
 }
-

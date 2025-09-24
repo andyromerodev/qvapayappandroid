@@ -12,10 +12,10 @@ class WebViewRepositoryImpl(
     
     override suspend fun applyToP2POffer(offerId: String, webView: WebView): Result<String> {
         return suspendCancellableCoroutine { continuation ->
-            // Configurar el WebView en el DataSource
+            // Wire the WebView into the data source
             webViewDataSource.setWebView(webView)
             
-            // Ejecutar la aplicación de oferta
+            // Run the offer application flow
             webViewDataSource.applyToOffer(
                 offerId = offerId,
                 onSuccess = { result ->

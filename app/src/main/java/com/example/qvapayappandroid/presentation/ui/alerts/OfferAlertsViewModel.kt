@@ -38,7 +38,7 @@ class OfferAlertsViewModel(
     private val _effects = MutableSharedFlow<OfferAlertsEffect>()
     val effects: SharedFlow<OfferAlertsEffect> = _effects.asSharedFlow()
 
-    // Flow reactivo para permisos de notificaciones
+    // Reactive flow that tracks the current notification permission status
     val notificationPermissionStatus = getNotificationPermissionStatusUseCase()
         .stateIn(
             scope = viewModelScope,
@@ -155,7 +155,7 @@ class OfferAlertsViewModel(
                         ) 
                     }
                     _effects.emit(OfferAlertsEffect.ShowSuccessMessage("Alerta eliminada correctamente"))
-                    // Gestionar WorkManager después de eliminar una alerta
+                    // Update the WorkManager setup after removing an alert
                     manageAlertWorkManagerUseCase()
                 }
                 .onFailure { error ->
@@ -188,7 +188,7 @@ class OfferAlertsViewModel(
                     _state.update { it.copy(isProcessing = false) }
                     val message = if (isActive) "Alerta activada" else "Alerta desactivada"
                     _effects.emit(OfferAlertsEffect.ShowSuccessMessage(message))
-                    // Gestionar WorkManager después de cambiar el estado de una alerta
+                    // Update the WorkManager setup after toggling an alert
                     manageAlertWorkManagerUseCase()
                 }
                 .onFailure { error ->
@@ -210,7 +210,7 @@ class OfferAlertsViewModel(
                 .onSuccess {
                     _state.update { it.copy(isProcessing = false) }
                     _effects.emit(OfferAlertsEffect.ShowSuccessMessage("Alerta creada correctamente"))
-                    // Gestionar WorkManager después de crear una alerta
+                    // Update the WorkManager setup once a new alert is saved
                     manageAlertWorkManagerUseCase()
                 }
                 .onFailure { error ->
