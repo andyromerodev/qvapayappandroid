@@ -2,7 +2,6 @@ package com.example.qvapayappandroid.presentation.ui.login
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.qvapayappandroid.data.model.LoginResponse
 import com.example.qvapayappandroid.domain.usecase.LoginUseCase
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,69 +15,69 @@ class LoginViewModel(
     private val loginUseCase: LoginUseCase
 ) : ViewModel() {
     
-    private val _uiState = MutableStateFlow(LoginUiState())
-    val uiState: StateFlow<LoginUiState> = _uiState.asStateFlow()
+    private val _state = MutableStateFlow(LoginState())
+    val state: StateFlow<LoginState> = _state.asStateFlow()
     
     private val _effect = MutableSharedFlow<LoginEffect>()
     val effect: SharedFlow<LoginEffect> = _effect.asSharedFlow()
     
-    fun updateEmail(email: String) {
-        _uiState.value = _uiState.value.copy(email = email, errorMessage = null)
+    fun handleIntent(intent: LoginIntent) {
+        when (intent) {
+            is LoginIntent.UpdateEmail -> updateEmail(intent.email)
+            is LoginIntent.UpdatePassword -> updatePassword(intent.password)
+            is LoginIntent.UpdateCode -> updateCode(intent.code)
+            is LoginIntent.Login -> login()
+            is LoginIntent.ClearError -> clearError()
+        }
     }
     
-    fun updatePassword(password: String) {
-        _uiState.value = _uiState.value.copy(password = password, errorMessage = null)
+    private fun updateEmail(email: String) {
+        _state.value = _state.value.copy(email = email, errorMessage = null)
     }
     
-    fun updateCode(code: String) {
-        _uiState.value = _uiState.value.copy(code = code, errorMessage = null)
+    private fun updatePassword(password: String) {
+        _state.value = _state.value.copy(password = password, errorMessage = null)
     }
     
-    fun login() {
-        if (_uiState.value.isLoading) return
+    private fun updateCode(code: String) {
+        _state.value = _state.value.copy(code = code, errorMessage = null)
+    }
+    
+    private fun login() {
+        if (_state.value.isLoading) return
         
-        _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
+        _state.value = _state.value.copy(isLoading = true, errorMessage = null)
         
         viewModelScope.launch {
             val result = loginUseCase(
-                email = _uiState.value.email,
-                password = _uiState.value.password,
-                code = _uiState.value.code
+                email = _state.value.email,
+                password = _state.value.password,
+                code = _state.value.code
             )
             
             result.fold(
                 onSuccess = { response ->
-                    _uiState.value = _uiState.value.copy(
+                    _state.value = _state.value.copy(
                         isLoading = false,
-                        loginResponse = response
+                        loginResponse = response,
+                        errorMessage = null
                     )
-                    // Emit a navigation effect
+                    _effect.emit(LoginEffect.ShowSuccessMessage("¡Inicio de sesión exitoso!"))
                     _effect.emit(LoginEffect.NavigateToHome)
                 },
                 onFailure = { error ->
-                    _uiState.value = _uiState.value.copy(
+                    val errorMessage = error.message ?: "Error desconocido al iniciar sesión"
+                    _state.value = _state.value.copy(
                         isLoading = false,
-                        errorMessage = error.message ?: "Unknown error occurred"
+                        errorMessage = errorMessage
                     )
+                    _effect.emit(LoginEffect.ShowErrorMessage(errorMessage))
                 }
             )
         }
     }
     
-    fun clearError() {
-        _uiState.value = _uiState.value.copy(errorMessage = null)
+    private fun clearError() {
+        _state.value = _state.value.copy(errorMessage = null)
     }
-}
-
-data class LoginUiState(
-    val email: String = "",
-    val password: String = "",
-    val code: String = "",
-    val isLoading: Boolean = false,
-    val errorMessage: String? = null,
-    val loginResponse: LoginResponse? = null
-)
-
-sealed class LoginEffect {
-    object NavigateToHome : LoginEffect()
 }

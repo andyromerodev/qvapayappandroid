@@ -14,6 +14,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Refresh
@@ -46,7 +47,7 @@ import org.koin.androidx.compose.koinViewModel
 @Composable
 fun UserProfileScreen(
     onLogout: () -> Unit = {},
-    onShowMessage: (String) -> Unit = {},
+    onNavigateBack: () -> Unit = {},
     viewModel: UserProfileViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -74,6 +75,14 @@ fun UserProfileScreen(
         topBar = {
             TopAppBar(
                 title = { Text("Mi Perfil") },
+                navigationIcon = {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Volver"
+                        )
+                    }
+                },
                 actions = {
                     IconButton(
                         onClick = { viewModel.handleIntent(UserProfileIntent.RefreshUserProfile) },

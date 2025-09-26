@@ -1,5 +1,53 @@
 # Changelog - QvaPay Android App
 
+## 🚀 v3.12.0 - MVI Architecture Refactor and UI Optimization (2025-09-26)
+
+### 🏗️ MVI Architecture Implementation
+- **Home Section MVI Pattern**: Complete refactor of home section following MVI (Model-View-Intent) architecture
+  - Created `HomeIntent.kt` with sealed interface for user actions (LoadOffers, RefreshOffers, CancelOffer, etc.)
+  - Implemented `HomeState.kt` with computed properties for reactive UI state management
+  - Added `HomeEffect.kt` for side effects (ShowSuccessMessage, ShowErrorMessage, NavigateToOfferDetail)
+  - Centralized intent handling with `handleIntent()` method in `HomeViewModel`
+  - Reactive state management using StateFlow and SharedFlow
+
+- **Login Section MVI Pattern**: Applied consistent MVI architecture to login functionality
+  - Created `LoginIntent.kt` for authentication actions (UpdateEmail, UpdatePassword, Login, ClearError)
+  - Implemented `LoginState.kt` with computed properties (isLoginEnabled, isLoginSuccessful, userDisplayName)
+  - Added `LoginEffect.kt` for navigation and message effects
+  - Enhanced error handling and success messaging through effects system
+
+### 🎨 TopAppBar Optimization
+- **Compact TopAppBar Design**: Significantly reduced TopAppBar padding across all main screens
+  - Reduced title text size using `MaterialTheme.typography.titleMedium`
+  - Eliminated system window insets with `WindowInsets(0, 0, 0, 0)`
+  - Applied consistent styling to Home, P2P, and Templates screens
+  - Enhanced scroll behavior with smooth hide/show animations on scroll
+
+### 🔄 Enhanced Scroll Behavior
+- **Smooth TopAppBar Animations**: Implemented `enterAlwaysScrollBehavior()` across main screens
+  - TopAppBar hides smoothly when scrolling down for more content space
+  - TopAppBar appears immediately when scrolling up
+  - Applied to HomeScreen, P2PScreen, and OfferTemplatesScreen for consistency
+
+### 👤 Profile Screen Enhancements
+- **Full-Screen Profile View**: Enhanced user profile screen for better focus
+  - Added back arrow navigation for intuitive navigation flow
+  - Implemented full-screen display by conditionally hiding bottom navigation
+  - Updated navigation logic in MainScreen to support full-screen routes
+
+### 🎯 UI/UX Improvements
+- **Reduced Visual Clutter**: Optimized spacing and padding throughout the app
+  - Minimized StatusFilterChips padding for cleaner appearance
+  - Improved content-to-chrome ratio with compact TopAppBars
+  - Enhanced visual hierarchy with consistent typography sizing
+
+### 🔧 Technical Architecture Improvements
+- **Consistent State Management**: Unified state handling pattern across screens
+- **Enhanced Error Handling**: Centralized error messaging through effects system
+- **Improved Code Organization**: Better separation of concerns with MVI pattern
+- **Reactive UI Updates**: Leveraged StateFlow for automatic UI synchronization
+- **Type Safety**: Sealed interfaces ensure compile-time safety for intents and effects
+
 ## 🚀 v3.11.0 - Enhanced UI Animations and P2P System Improvements (2025-09-23)
 
 ### ✨ Splash Screen and Login UI Animation Enhancements

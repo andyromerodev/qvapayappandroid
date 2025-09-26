@@ -36,6 +36,7 @@ import com.example.qvapayappandroid.presentation.ui.p2p.P2PViewModel
 import com.example.qvapayappandroid.presentation.ui.templates.OfferTemplatesScreen
 import com.example.qvapayappandroid.presentation.ui.templates.SaveOfferTemplateScreen
 import com.example.qvapayappandroid.presentation.ui.alerts.OfferAlertsScreen
+import com.example.qvapayappandroid.presentation.ui.home.HomeIntent
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
@@ -49,12 +50,29 @@ fun MainScreen(
     val p2pViewModel: P2PViewModel = koinViewModel()
     val offerDetailViewModel: P2POfferDetailViewModel = koinViewModel()
 
+    // Routes that should not show the bottom navigation bar
+    val routesWithoutBottomNav = setOf(
+        AppDestinations.UserProfile.route,
+        AppDestinations.MyOfferDetail.route,
+        AppDestinations.P2POfferDetail.route,
+        AppDestinations.CreateP2POffer.route,
+        AppDestinations.P2PFilters.route,
+//        AppDestinations.WebView.route,
+        AppDestinations.P2PWebView.route,
+        AppDestinations.OfferAlerts.route,
+//        AppDestinations.Templates.route,
+        AppDestinations.SaveOfferTemplate.route,
+        AppDestinations.EditOfferTemplate.route
+    )
+
     Scaffold(
         bottomBar = {
-            BottomNavigationBar(
-                navController = navController,
-                currentRoute = currentRoute
-            )
+            if (currentRoute !in routesWithoutBottomNav) {
+                BottomNavigationBar(
+                    navController = navController,
+                    currentRoute = currentRoute
+                )
+            }
         }
     ) { innerPadding ->
         NavHost(
@@ -76,7 +94,7 @@ fun MainScreen(
                 val offerId = backStackEntry.arguments?.getString("offerId")
 
                 if (offerId != null) {
-                    val uiState by homeViewModel.uiState.collectAsState()
+                    val uiState by homeViewModel.state.collectAsState()
 
                     homeViewModel.getOfferById(offerId)?.let { offer ->
                         MyOfferDetailScreen(
@@ -87,7 +105,7 @@ fun MainScreen(
                             isCancellingOffer = uiState.isCancellingOffer,
                             cancelOfferError = uiState.cancelOfferError,
                             onCancelOffer = { id, onSuccess ->
-                                homeViewModel.cancelOffer(id, onSuccess)
+                                homeViewModel.handleIntent(HomeIntent.CancelOffer(id, onSuccess))
                             },
                             onEditOffer = { offer ->
                                 // TODO: Hook up navigation to the edit screen
@@ -302,7 +320,10 @@ fun MainScreen(
             
             composable(AppDestinations.UserProfile.route) {
                 UserProfileScreen(
-                    onLogout = onLogout
+                    onLogout = onLogout,
+                    onNavigateBack = {
+                        navController.navigateUp()
+                    }
                 )
             }
             

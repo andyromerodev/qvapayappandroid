@@ -11,6 +11,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.qvapayappandroid.domain.model.OfferTemplate
@@ -22,12 +23,13 @@ import org.koin.androidx.compose.koinViewModel
 fun OfferTemplatesScreen(
     onNavigateToEditTemplate: (Long) -> Unit = {},
     onNavigateToCreateTemplate: () -> Unit = {},
-    onNavigateToCreateOffer: (com.example.qvapayappandroid.domain.model.OfferTemplate) -> Unit = {},
+    onNavigateToCreateOffer: (OfferTemplate) -> Unit = {},
     viewModel: OfferTemplatesViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    var showDeleteDialog by remember { mutableStateOf<com.example.qvapayappandroid.domain.model.OfferTemplate?>(null) }
+    var showDeleteDialog by remember { mutableStateOf<OfferTemplate?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
+    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
     
     // Handle view effects
     LaunchedEffect(Unit) {
@@ -56,14 +58,25 @@ fun OfferTemplatesScreen(
     }
     
     Scaffold(
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             TopAppBar(
-                title = { Text("Plantillas de Ofertas") },
+                title = { 
+                    Text(
+                        text = "Plantillas de Ofertas",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                },
                 actions = {
                     IconButton(onClick = { viewModel.handleIntent(OfferTemplatesIntent.CreateNewTemplate) }) {
                         Icon(Icons.Default.Add, contentDescription = "Crear plantilla")
                     }
-                }
+                },
+                scrollBehavior = scrollBehavior,
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                ),
+                windowInsets = WindowInsets(0, 0, 0, 0)
             )
         },
         snackbarHost = {

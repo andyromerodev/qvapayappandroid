@@ -41,6 +41,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import org.koin.androidx.compose.koinViewModel
 import kotlinx.coroutines.delay
+import android.util.Log
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -48,7 +49,7 @@ fun LoginScreen(
     viewModel: LoginViewModel = koinViewModel(),
     onLoginSuccess: () -> Unit = {}
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.state.collectAsState()
     val screenVisibilityState = remember {
         MutableTransitionState(false).apply { targetState = true }
     }
@@ -61,6 +62,14 @@ fun LoginScreen(
                 is LoginEffect.NavigateToHome -> {
                     pendingNavigation = true
                     screenVisibilityState.targetState = false
+                }
+                is LoginEffect.ShowSuccessMessage -> {
+                    // Success messages can be handled here with snackbar or similar
+                    Log.d("LoginScreen", "Success: ${effect.message}")
+                }
+                is LoginEffect.ShowErrorMessage -> {
+                    // Error messages can be handled here with snackbar or similar
+                    Log.e("LoginScreen", "Error: ${effect.message}")
                 }
             }
         }
@@ -108,7 +117,7 @@ fun LoginScreen(
 
 @Composable
 private fun LoginForm(
-    uiState: LoginUiState,
+    uiState: LoginState,
     viewModel: LoginViewModel,
     focusManager: androidx.compose.ui.focus.FocusManager,
     passwordVisible: Boolean,
@@ -128,7 +137,7 @@ private fun LoginForm(
         AnimatedField(delayMillis = 80) {
             EmailField(
                 value = uiState.email,
-                onValueChange = viewModel::updateEmail,
+                onValueChange = { viewModel.handleIntent(LoginIntent.UpdateEmail(it)) },
                 isEnabled = !uiState.isLoading,
                 focusManager = focusManager
             )
@@ -137,7 +146,7 @@ private fun LoginForm(
         AnimatedField(delayMillis = 160) {
             PasswordField(
                 value = uiState.password,
-                onValueChange = viewModel::updatePassword,
+                onValueChange = { viewModel.handleIntent(LoginIntent.UpdatePassword(it)) },
                 isEnabled = !uiState.isLoading,
                 isVisible = passwordVisible,
                 onVisibilityToggle = onPasswordVisibilityToggle,
@@ -148,12 +157,12 @@ private fun LoginForm(
         AnimatedField(delayMillis = 240) {
             CodeField(
                 value = uiState.code,
-                onValueChange = viewModel::updateCode,
+                onValueChange = { viewModel.handleIntent(LoginIntent.UpdateCode(it)) },
                 isEnabled = !uiState.isLoading,
                 focusManager = focusManager,
                 onDone = { 
                     focusManager.clearFocus()
-                    viewModel.login()
+                    viewModel.handleIntent(LoginIntent.Login)
                 }
             )
         }
@@ -163,17 +172,17 @@ private fun LoginForm(
             uiState = uiState,
             onLogin = {
                 focusManager.clearFocus()
-                viewModel.login()
+                viewModel.handleIntent(LoginIntent.Login)
             }
         )
 
         // Error Message
         ErrorMessage(uiState.errorMessage) {
-            viewModel.clearError()
+            viewModel.handleIntent(LoginIntent.ClearError)
         }
 
         // Success Message
-        SuccessMessage(uiState.loginResponse)
+        SuccessMessage(uiState)
     }
 }
 
@@ -383,7 +392,7 @@ private fun CodeField(
 
 @Composable
 private fun LoginButtons(
-    uiState: LoginUiState,
+    uiState: LoginState,
     onLogin: () -> Unit,
 ) {
     // Login Button
@@ -392,7 +401,7 @@ private fun LoginButtons(
         modifier = Modifier
             .fillMaxWidth()
             .height(56.dp),
-        enabled = !uiState.isLoading && uiState.email.isNotBlank() && uiState.password.isNotBlank(),
+        enabled = uiState.isLoginEnabled,
         shape = RoundedCornerShape(12.dp),
         colors = ButtonDefaults.buttonColors(
             containerColor = Color.White,
@@ -466,8 +475,8 @@ private fun ErrorMessage(
 }
 
 @Composable
-private fun SuccessMessage(loginResponse: com.example.qvapayappandroid.data.model.LoginResponse?) {
-    loginResponse?.let { response ->
+private fun SuccessMessage(uiState: LoginState) {
+    if (uiState.isLoginSuccessful) {
         Spacer(modifier = Modifier.height(16.dp))
         Card(
             modifier = Modifier.fillMaxWidth(),
@@ -495,14 +504,14 @@ private fun SuccessMessage(loginResponse: com.example.qvapayappandroid.data.mode
                     textAlign = TextAlign.Center
                 )
                 Text(
-                    text = "Bienvenido, ${response.me.name} ${response.me.lastname}",
+                    text = "Bienvenido, ${uiState.userDisplayName}",
                     modifier = Modifier.padding(top = 8.dp),
                     style = MaterialTheme.typography.bodyMedium,
                     color = Color(0xFF716EC5).copy(alpha = 0.8f),
                     textAlign = TextAlign.Center
                 )
                 Text(
-                    text = "Balance: $${response.me.balance}",
+                    text = "Balance: $${uiState.userBalance}",
                     modifier = Modifier.padding(top = 4.dp),
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Medium,

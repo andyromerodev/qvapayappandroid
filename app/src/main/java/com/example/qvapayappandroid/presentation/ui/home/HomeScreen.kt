@@ -1,9 +1,11 @@
 package com.example.qvapayappandroid.presentation.ui.home
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -19,10 +21,13 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -34,6 +39,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import android.util.Log
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.navigation.NavController
 import com.example.qvapayappandroid.data.model.P2POffer
 import com.example.qvapayappandroid.navigation.AppDestinations
@@ -52,12 +58,49 @@ fun HomeScreen(
     viewModel: HomeViewModel,
     navController: NavController? = null
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.state.collectAsState()
+    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
     
+    // Handle effects
+    LaunchedEffect(Unit) {
+        viewModel.effect.collect { effect ->
+            when (effect) {
+                is HomeEffect.ShowSuccessMessage -> {
+                    // Success messages can be handled here with snackbar or similar
+                    Log.d("HomeScreen", "Success: ${effect.message}")
+                }
+                is HomeEffect.ShowErrorMessage -> {
+                    // Error messages can be handled here with snackbar or similar
+                    Log.e("HomeScreen", "Error: ${effect.message}")
+                }
+                is HomeEffect.NavigateToOfferDetail -> {
+                    navController?.navigate(AppDestinations.MyOfferDetail.createRoute(effect.offerId))
+                }
+                is HomeEffect.NavigateToCreateOffer -> {
+                    onCreateOffer()
+                }
+                is HomeEffect.RefreshOffers -> {
+                    // Could trigger UI refresh animation or other visual feedback
+                }
+            }
+        }
+    }
+
     Scaffold(
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             TopAppBar(
-                title = { Text("Mis Ofertas P2P") }
+                title = { 
+                    Text(
+                        text = "Mis Ofertas",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                },
+                scrollBehavior = scrollBehavior,
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                ),
+                windowInsets = WindowInsets(0, 0, 0, 0)
             )
         },
         floatingActionButton = {
@@ -73,10 +116,10 @@ fun HomeScreen(
     ) { paddingValues ->
         MyP2POffersSection(
             uiState = uiState,
-            onRefresh = { viewModel.refreshOffers() },
-            onLoadMore = { viewModel.loadMoreOffers() },
-            onClearError = { viewModel.clearOffersError() },
-            onStatusToggle = { viewModel.toggleStatusFilter(it) },
+            onRefresh = { viewModel.handleIntent(HomeIntent.RefreshOffers) },
+            onLoadMore = { viewModel.handleIntent(HomeIntent.LoadMoreOffers) },
+            onClearError = { viewModel.handleIntent(HomeIntent.ClearOffersError) },
+            onStatusToggle = { viewModel.handleIntent(HomeIntent.ToggleStatusFilter(it)) },
             onOfferClick = { offer ->
                 offer.uuid?.let { offerId ->
                     navController?.navigate(AppDestinations.MyOfferDetail.createRoute(offerId))
@@ -93,7 +136,7 @@ fun HomeScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun MyP2POffersSection(
-    uiState: HomeUiState,
+    uiState: HomeState,
     onRefresh: () -> Unit,
     onLoadMore: () -> Unit,
     onClearError: () -> Unit,
@@ -109,20 +152,12 @@ private fun MyP2POffersSection(
             val totalItemsNumber = layoutInfo.totalItemsCount
             val lastVisibleItemIndex = (layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1)
 
-            val condition1 = totalItemsNumber > 0
-            val condition2 = lastVisibleItemIndex >= totalItemsNumber - 3
-            val condition3 = uiState.hasNextPage
-            val condition4 = !uiState.isLoadingMore
-            // Ignore loadingOffers when more pages exist—just ensure we are not already paging
-            val condition5 = true // Dropped the loadingOffers guard
-            val condition6 = uiState.offersError == null
-
-            val result = condition1 && condition2 && condition3 && condition4 && condition5 && condition6
+            val result = totalItemsNumber > 0 && 
+                    lastVisibleItemIndex >= totalItemsNumber - 3 && 
+                    uiState.canLoadMore
             
-            // Only log when the conditions shift
             if (totalItemsNumber > 0) {
-                Log.d("HomeScreen", "shouldLoadMore check - total: $totalItemsNumber, lastVisible: $lastVisibleItemIndex, hasNext: ${uiState.hasNextPage}, loadingMore: ${uiState.isLoadingMore}, loadingOffers: ${uiState.isLoadingOffers}, error: ${uiState.offersError}")
-                Log.d("HomeScreen", "Conditions - 1: $condition1, 2: $condition2, 3: $condition3, 4: $condition4, 5: $condition5, 6: $condition6, RESULT: $result")
+                Log.d("HomeScreen", "shouldLoadMore check - total: $totalItemsNumber, lastVisible: $lastVisibleItemIndex, canLoadMore: ${uiState.canLoadMore}, RESULT: $result")
             }
 
             result
@@ -145,7 +180,7 @@ private fun MyP2POffersSection(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(horizontal = 8.dp)
         ) {
             StatusFilterChips(
                 selectedStatuses = uiState.selectedStatusFilters,
@@ -161,22 +196,18 @@ private fun MyP2POffersSection(
                     )
                 }
                 
-                uiState.isLoadingOffers && uiState.myOffers.isEmpty() -> {
+                uiState.shouldShowLoading -> {
                     MyOfferShimmerEffect()
                 }
                 
-                uiState.myOffers.isEmpty() -> {
+                uiState.shouldShowEmpty -> {
                     EmptyOffersState(
                         onRetry = onRefresh
                     )
                 }
                 
                 else -> {
-                    val offersToShow = if (uiState.selectedStatusFilters.isEmpty()) {
-                        uiState.myOffers
-                    } else {
-                        uiState.filteredOffers
-                    }
+                    val offersToShow = uiState.displayOffers
                     
                     LazyColumn(
                         state = listState,
