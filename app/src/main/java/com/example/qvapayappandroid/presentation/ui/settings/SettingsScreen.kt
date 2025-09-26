@@ -157,6 +157,8 @@ fun SettingsScreen(
                         Spacer(modifier = Modifier.height(8.dp))
                         Text("Canal de Telegram: https://t.me/qvapayandroid")
                         Spacer(modifier = Modifier.height(8.dp))
+                        Text("Sitio del proyecto: https://andyromerodev.github.io/qvapayappandroid")
+                        Spacer(modifier = Modifier.height(8.dp))
                         Text("Este proyecto no está afiliado a QvaPay. ‘QvaPay’ es marca de sus respectivos titulares.")
                     }
                 }

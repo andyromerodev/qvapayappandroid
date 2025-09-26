@@ -6,6 +6,10 @@ Cliente Android (no oficial) para el ecosistema QvaPay. Construido con Jetpack C
 - Builds de desarrollo y pre‑release en el canal de Telegram:
   - https://t.me/qvapayandroid
 
+## Sitio del proyecto
+- GitHub Pages (documentación y novedades):
+  - https://andyromerodev.github.io/qvapayappandroid
+
 ## Licencia
 Este repositorio se publica bajo **Apache License 2.0**. En resumen:
 - Puedes usarlo, modificarlo, redistribuirlo y comercializar derivados.
