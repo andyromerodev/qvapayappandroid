@@ -36,6 +36,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -60,12 +61,12 @@ fun P2POfferCard(
     Card(
         modifier = modifier.fillMaxWidth(),
         onClick = { onClick(offer) },
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        colors = CardDefaults.cardColors(containerColor = colorResource(id = R.color.qvapay_surface_light)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         shape = RoundedCornerShape(14.dp),
         border = BorderStroke(
             width = 1.dp,
-            color = MaterialTheme.colorScheme.outlineVariant
+            color = colorResource(id = R.color.qvapay_purple_light)
         )
     ) {
         Column(
@@ -94,12 +95,12 @@ fun P2POfferCard(
                         modifier = Modifier
                             .size(28.dp)
                             .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.surfaceVariant),
+                            .background(colorResource(id = R.color.qvapay_purple_primary)),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
                             text = initial,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            color = colorResource(id = R.color.white),
                             fontWeight = FontWeight.Bold,
                             fontSize = 13.sp
                         )
@@ -136,8 +137,8 @@ fun P2POfferCard(
                     offer.owner?.averageRating?.toDoubleOrNull()?.let { rating ->
                         if (rating > 0.0) {
                             Surface(
-                                color = MaterialTheme.colorScheme.secondaryContainer,
-                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.secondary),
+                                color = colorResource(id = R.color.qvapay_purple_light),
+                                border = BorderStroke(1.dp, colorResource(id = R.color.qvapay_purple_primary)),
                                 shape = RoundedCornerShape(4.dp),
                                 shadowElevation = 0.dp
                             ) {
@@ -148,13 +149,13 @@ fun P2POfferCard(
                                     Icon(
                                         imageVector = Icons.Filled.Star,
                                         contentDescription = "Rating",
-                                        tint = MaterialTheme.colorScheme.secondary,
+                                        tint = colorResource(id = R.color.qvapay_purple_primary),
                                         modifier = Modifier.size(12.dp)
                                     )
                                     Text(
                                         text = String.format(Locale.US, "%.1f", rating),
                                         fontWeight = FontWeight.SemiBold,
-                                        color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                        color = colorResource(id = R.color.qvapay_purple_text),
                                         fontSize = 10.sp,
                                         modifier = Modifier.Companion.padding(horizontal = 3.dp, vertical = 1.dp)
                                     )

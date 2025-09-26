@@ -1,5 +1,6 @@
 package com.example.qvapayappandroid.presentation.ui.templates
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -14,6 +15,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.colorResource
+import androidx.compose.foundation.background
+import com.example.qvapayappandroid.R
 import com.example.qvapayappandroid.domain.model.OfferTemplate
 import com.example.qvapayappandroid.presentation.ui.templates.components.TemplateCard
 import org.koin.androidx.compose.koinViewModel
@@ -74,7 +78,8 @@ fun OfferTemplatesScreen(
                 },
                 scrollBehavior = scrollBehavior,
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
+                    containerColor = colorResource(id = R.color.qvapay_surface_light),
+                    scrolledContainerColor = colorResource(id = R.color.qvapay_surface_light)
                 ),
                 windowInsets = WindowInsets(0, 0, 0, 0)
             )
@@ -87,6 +92,7 @@ fun OfferTemplatesScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
+                .background(colorResource(id = R.color.qvapay_surface_light))
         ) {
             // Search bar and filters
             SearchAndFilters(
@@ -163,7 +169,9 @@ private fun SearchAndFilters(
         modifier = Modifier
             .fillMaxWidth()
             .padding(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = CardDefaults.cardColors(containerColor = colorResource(id = R.color.qvapay_surface_light)),
+        border = BorderStroke(1.dp, colorResource(id = R.color.qvapay_purple_light))
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
@@ -202,7 +210,13 @@ private fun SearchAndFilters(
                         onClick = { onTypeFilterChange(filter.value) },
                         label = { Text(filter.name) },
                         selected = selectedType == filter.value,
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f),
+                        colors = FilterChipDefaults.filterChipColors(
+                            containerColor = colorResource(id = R.color.qvapay_surface_medium),
+                            labelColor = colorResource(id = R.color.qvapay_purple_text),
+                            selectedContainerColor = colorResource(id = R.color.qvapay_purple_primary),
+                            selectedLabelColor = colorResource(id = R.color.white)
+                        )
                     )
                 }
             }
@@ -294,10 +308,20 @@ private fun ErrorMessage(
             Row(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                TextButton(onClick = onRetry) {
+                TextButton(
+                    onClick = onRetry,
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = colorResource(id = R.color.qvapay_purple_primary)
+                    )
+                ) {
                     Text("Reintentar")
                 }
-                TextButton(onClick = onDismiss) {
+                TextButton(
+                    onClick = onDismiss,
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = colorResource(id = R.color.qvapay_purple_text)
+                    )
+                ) {
                     Text("Cerrar")
                 }
             }
@@ -316,12 +340,22 @@ private fun DeleteConfirmationDialog(
         title = { Text("Eliminar plantilla") },
         text = { Text("¿Estás seguro de que quieres eliminar la plantilla \"$templateName\"?") },
         confirmButton = {
-            TextButton(onClick = onConfirm) {
+            TextButton(
+                onClick = onConfirm,
+                colors = ButtonDefaults.textButtonColors(
+                    contentColor = colorResource(id = R.color.qvapay_purple_primary)
+                )
+            ) {
                 Text("Eliminar")
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
+            TextButton(
+                onClick = onDismiss,
+                colors = ButtonDefaults.textButtonColors(
+                    contentColor = colorResource(id = R.color.qvapay_purple_text)
+                )
+            ) {
                 Text("Cancelar")
             }
         }

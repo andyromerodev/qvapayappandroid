@@ -6,7 +6,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.background
 import androidx.compose.material3.*
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.colorResource
+import com.example.qvapayappandroid.R
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -73,12 +77,17 @@ fun MainScreen(
                     currentRoute = currentRoute
                 )
             }
-        }
+        },
+        modifier = Modifier
+            .fillMaxSize()
+            .background(colorResource(id = R.color.qvapay_surface_light))
     ) { innerPadding ->
         NavHost(
             navController = navController,
             startDestination = AppDestinations.Home.route,
-            modifier = Modifier.padding(innerPadding)
+            modifier = Modifier
+                .padding(innerPadding)
+                .background(colorResource(id = R.color.qvapay_surface_light))
         ) {
             composable(AppDestinations.Home.route) {
                 HomeScreen(

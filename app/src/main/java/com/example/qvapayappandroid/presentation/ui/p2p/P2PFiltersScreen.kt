@@ -1,5 +1,6 @@
 package com.example.qvapayappandroid.presentation.ui.p2p
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -19,6 +20,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.res.colorResource
+import androidx.compose.foundation.background
+import com.example.qvapayappandroid.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -46,12 +50,20 @@ fun P2PFiltersScreen(
                     IconButton(onClick = onBackClick) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver")
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = colorResource(id = R.color.qvapay_surface_light),
+                    scrolledContainerColor = colorResource(id = R.color.qvapay_surface_light)
+                ),
+                windowInsets = WindowInsets(0, 0, 0, 0)
             )
         },
 
         bottomBar = {
-            Surface(tonalElevation = 2.dp) {
+            Surface(
+                tonalElevation = 2.dp,
+                color = colorResource(id = R.color.qvapay_surface_light)
+            ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -65,7 +77,11 @@ fun P2PFiltersScreen(
                             localSelectedCoins = setOf()
                         },
                         modifier = Modifier.weight(1f),
-                        contentPadding = PaddingValues(vertical = 4.dp)
+                        contentPadding = PaddingValues(vertical = 4.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = colorResource(id = R.color.qvapay_purple_primary)
+                        ),
+                        border = BorderStroke(1.dp, colorResource(id = R.color.qvapay_purple_primary))
                     ) { Text("Limpiar", fontSize = 13.sp) }
 
                     Button(
@@ -74,7 +90,11 @@ fun P2PFiltersScreen(
                             onBackClick()
                         },
                         modifier = Modifier.weight(1f),
-                        contentPadding = PaddingValues(vertical = 4.dp)
+                        contentPadding = PaddingValues(vertical = 4.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = colorResource(id = R.color.qvapay_purple_primary),
+                            contentColor = colorResource(id = R.color.white)
+                        )
                     ) { Text("Filtrar", fontSize = 13.sp) }
                 }
             }
@@ -83,6 +103,7 @@ fun P2PFiltersScreen(
         Column(
             modifier = modifier
                 .fillMaxSize()
+                .background(colorResource(id = R.color.qvapay_surface_light))
                 .padding(
                     start = paddingValues.calculateStartPadding(LocalLayoutDirection.current),
                     top   = paddingValues.calculateTopPadding(),
@@ -93,7 +114,9 @@ fun P2PFiltersScreen(
             // Offer type
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(8.dp)
+                shape = RoundedCornerShape(8.dp),
+                colors = CardDefaults.cardColors(containerColor = colorResource(id = R.color.qvapay_surface_light)),
+                border = BorderStroke(1.dp, colorResource(id = R.color.qvapay_purple_light))
             ) {
                 Column(
                     modifier = Modifier.padding(8.dp)
@@ -124,7 +147,13 @@ fun P2PFiltersScreen(
                                 onClick = { localSelectedOfferType = type },
                                 label = { Text(label, fontSize = 13.sp) },
                                 selected = localSelectedOfferType == type,
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier.weight(1f),
+                                colors = FilterChipDefaults.filterChipColors(
+                                    containerColor = colorResource(id = R.color.qvapay_surface_medium),
+                                    labelColor = colorResource(id = R.color.qvapay_purple_text),
+                                    selectedContainerColor = colorResource(id = R.color.qvapay_purple_primary),
+                                    selectedLabelColor = colorResource(id = R.color.white)
+                                )
                             )
                         }
                     }
@@ -138,7 +167,9 @@ fun P2PFiltersScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f),                 // ⬅️ ocupa todo el espacio libre
-                shape = RoundedCornerShape(8.dp)
+                shape = RoundedCornerShape(8.dp),
+                colors = CardDefaults.cardColors(containerColor = colorResource(id = R.color.qvapay_surface_light)),
+                border = BorderStroke(1.dp, colorResource(id = R.color.qvapay_purple_light))
             ) {
                 Column(
                     modifier = Modifier
@@ -219,7 +250,13 @@ private fun CoinToggleRow(
             onCheckedChange = onCheckedChange,
             modifier = Modifier
                 .scale(switchScale)
-                .minimumInteractiveComponentSize() // Uses the locally provided minimum (24.dp or 0.dp)
+                .minimumInteractiveComponentSize(), // Uses the locally provided minimum (24.dp or 0.dp)
+            colors = SwitchDefaults.colors(
+                checkedThumbColor = colorResource(id = R.color.white),
+                checkedTrackColor = colorResource(id = R.color.qvapay_purple_primary),
+                uncheckedThumbColor = colorResource(id = R.color.qvapay_purple_text),
+                uncheckedTrackColor = colorResource(id = R.color.qvapay_surface_medium)
+            )
         )
     }
 }

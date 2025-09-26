@@ -33,13 +33,15 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.unit.dp
+import com.example.qvapayappandroid.R
 
 @Composable
 fun P2PShimmerEffect() {
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(12.dp),
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth().background(color = colorResource(R.color.qvapay_surface_light))
     ) {
         items(4) {
             P2POfferCardShimmer()
@@ -51,12 +53,12 @@ fun P2PShimmerEffect() {
 private fun P2POfferCardShimmer() {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        colors = CardDefaults.cardColors(containerColor = colorResource(id = R.color.qvapay_surface_light)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         shape = RoundedCornerShape(14.dp),
         border = BorderStroke(
             width = 1.dp,
-            color = MaterialTheme.colorScheme.outlineVariant
+            color = colorResource(id = R.color.qvapay_purple_light)
         )
     ) {
         Column(
@@ -177,11 +179,15 @@ private fun MiniCardShimmer() {
     )
 }
 
+@Composable
 private fun Modifier.shimmerEffect(): Modifier = composed {
+    val purpleLight = colorResource(id = R.color.qvapay_purple_light)
+    val surfaceLight = colorResource(id = R.color.qvapay_surface_light)
+    
     val shimmerColors = listOf(
-        Color.LightGray.copy(alpha = 0.6f),
-        Color.LightGray.copy(alpha = 0.2f),
-        Color.LightGray.copy(alpha = 0.6f),
+        purpleLight.copy(alpha = 0.3f),
+        surfaceLight.copy(alpha = 0.1f),
+        purpleLight.copy(alpha = 0.3f),
     )
 
     val transition = rememberInfiniteTransition(label = "shimmerTransition")

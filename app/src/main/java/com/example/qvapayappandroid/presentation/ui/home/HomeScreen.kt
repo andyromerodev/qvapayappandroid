@@ -7,6 +7,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.background
+import androidx.compose.ui.res.colorResource
+import com.example.qvapayappandroid.R
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -87,10 +90,12 @@ fun HomeScreen(
     }
 
     Scaffold(
-        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        modifier = Modifier
+            .nestedScroll(scrollBehavior.nestedScrollConnection)
+            .background(color = colorResource(id = R.color.qvapay_surface_light)),
         topBar = {
             TopAppBar(
-                title = { 
+                title = {
                     Text(
                         text = "Mis Ofertas",
                         style = MaterialTheme.typography.titleMedium
@@ -98,14 +103,17 @@ fun HomeScreen(
                 },
                 scrollBehavior = scrollBehavior,
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
+                    containerColor = colorResource(id = R.color.qvapay_surface_light),
+                    scrolledContainerColor = colorResource(id = R.color.qvapay_surface_light)
                 ),
                 windowInsets = WindowInsets(0, 0, 0, 0)
             )
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = onCreateOffer
+                onClick = onCreateOffer,
+                containerColor = colorResource(id = R.color.qvapay_purple_dark),
+                contentColor = colorResource(id = R.color.white)
             ) {
                 Icon(
                     Icons.Default.Add,
@@ -127,7 +135,7 @@ fun HomeScreen(
             },
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
+                .padding(paddingValues).background(color = colorResource(id = R.color.qvapay_surface_light))
         )
     }
 }
@@ -181,6 +189,7 @@ private fun MyP2POffersSection(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 8.dp)
+                .background(color = colorResource(id = R.color.qvapay_surface_light))
         ) {
             StatusFilterChips(
                 selectedStatuses = uiState.selectedStatusFilters,

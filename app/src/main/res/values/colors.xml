@@ -9,4 +9,16 @@
     <color name="white">#FFFFFFFF</color>
     <color name="qvapay_splash_background">#716EC5</color>
     <color name="qvapay_splash_icon_background">#716EC5</color>
+    
+    <!-- QvaPay Purple Palette -->
+    <color name="qvapay_purple_primary">#716EC5</color>
+    <color name="qvapay_purple_dark">#5A56B8</color>
+    <color name="qvapay_purple_light">#8B87D4</color>
+    <color name="qvapay_purple_very_light">#f5f6ff</color>
+    <color name="qvapay_purple_text">#3E3A7A</color>
+    
+    <!-- App Background Colors -->
+    <color name="qvapay_background_primary">#F8F7FF</color>
+    <color name="qvapay_surface_light">#EFEEFC</color>
+    <color name="qvapay_surface_medium">#E6E4F9</color>
 </resources>

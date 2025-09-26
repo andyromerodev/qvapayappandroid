@@ -30,7 +30,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.colorResource
 import coil.compose.AsyncImage
+import com.example.qvapayappandroid.R
 import com.example.qvapayappandroid.data.model.P2POffer
 import com.example.qvapayappandroid.presentation.ui.p2p.components.KycChipMiniM3
 import com.example.qvapayappandroid.presentation.ui.p2p.components.MiniCardM3
@@ -47,12 +49,12 @@ fun MyOfferCard(
     Card(
         modifier = modifier.fillMaxWidth(),
         onClick = { onClick(offer) },
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        colors = CardDefaults.cardColors(containerColor = colorResource(id = R.color.qvapay_surface_light)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         shape = RoundedCornerShape(14.dp),
         border = BorderStroke(
             width = 1.dp,
-            color = MaterialTheme.colorScheme.outlineVariant
+            color = colorResource(id = R.color.qvapay_purple_light)
         )
     ) {
         Column(
@@ -79,13 +81,13 @@ fun MyOfferCard(
                         modifier = Modifier
                             .size(32.dp)
                             .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.primaryContainer),
+                            .background(colorResource(id = R.color.qvapay_purple_primary)),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = Icons.Default.Person,
                             contentDescription = "Mi oferta",
-                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                            tint = colorResource(id = R.color.white),
                             modifier = Modifier.size(18.dp)
                         )
                     }
@@ -124,13 +126,13 @@ fun MyOfferCard(
                             modifier = Modifier
                                 .size(20.dp)
                                 .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.surfaceVariant),
+                                .background(colorResource(id = R.color.qvapay_surface_medium)),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Person,
                                 contentDescription = "Usuario",
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                tint = colorResource(id = R.color.qvapay_purple_text),
                                 modifier = Modifier.size(12.dp)
                             )
                         }

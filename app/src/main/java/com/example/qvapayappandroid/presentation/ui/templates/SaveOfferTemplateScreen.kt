@@ -13,6 +13,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.colorResource
+import androidx.compose.foundation.background
+import androidx.compose.foundation.BorderStroke
+import com.example.qvapayappandroid.R
 import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -52,7 +56,11 @@ fun SaveOfferTemplateScreen(
                     IconButton(onClick = { viewModel.handleIntent(SaveOfferTemplateIntent.NavigateBack) }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver")
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = colorResource(id = R.color.qvapay_surface_light),
+                    scrolledContainerColor = colorResource(id = R.color.qvapay_surface_light)
+                )
             )
         }
     ) { paddingValues ->
@@ -60,13 +68,16 @@ fun SaveOfferTemplateScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
+                .background(colorResource(id = R.color.qvapay_background_primary))
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // Core template information
             Card(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = colorResource(id = R.color.qvapay_surface_light)),
+                border = BorderStroke(1.dp, colorResource(id = R.color.qvapay_purple_light))
             ) {
                 Column(
                     modifier = Modifier.padding(16.dp),
@@ -99,7 +110,9 @@ fun SaveOfferTemplateScreen(
 
             // Offer type
             Card(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = colorResource(id = R.color.qvapay_surface_light)),
+                border = BorderStroke(1.dp, colorResource(id = R.color.qvapay_purple_light))
             ) {
                 Column(
                     modifier = Modifier.padding(16.dp)
@@ -119,13 +132,25 @@ fun SaveOfferTemplateScreen(
                             onClick = { viewModel.handleIntent(SaveOfferTemplateIntent.ChangeType("sell")) },
                             label = { Text("Vender") },
                             selected = uiState.type == "sell",
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.weight(1f),
+                            colors = FilterChipDefaults.filterChipColors(
+                                containerColor = colorResource(id = R.color.qvapay_surface_medium),
+                                labelColor = colorResource(id = R.color.qvapay_purple_text),
+                                selectedContainerColor = colorResource(id = R.color.qvapay_purple_primary),
+                                selectedLabelColor = colorResource(id = R.color.white)
+                            )
                         )
                         FilterChip(
                             onClick = { viewModel.handleIntent(SaveOfferTemplateIntent.ChangeType("buy")) },
                             label = { Text("Comprar") },
                             selected = uiState.type == "buy",
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.weight(1f),
+                            colors = FilterChipDefaults.filterChipColors(
+                                containerColor = colorResource(id = R.color.qvapay_surface_medium),
+                                labelColor = colorResource(id = R.color.qvapay_purple_text),
+                                selectedContainerColor = colorResource(id = R.color.qvapay_purple_primary),
+                                selectedLabelColor = colorResource(id = R.color.white)
+                            )
                         )
                     }
                 }
@@ -133,7 +158,9 @@ fun SaveOfferTemplateScreen(
 
             // Primary offer data
             Card(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = colorResource(id = R.color.qvapay_surface_light)),
+                border = BorderStroke(1.dp, colorResource(id = R.color.qvapay_purple_light))
             ) {
                 Column(
                     modifier = Modifier.padding(16.dp),
@@ -206,7 +233,9 @@ fun SaveOfferTemplateScreen(
 
             // Contact details
             Card(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = colorResource(id = R.color.qvapay_surface_light)),
+                border = BorderStroke(1.dp, colorResource(id = R.color.qvapay_purple_light))
             ) {
                 Column(
                     modifier = Modifier.padding(16.dp),
@@ -231,7 +260,9 @@ fun SaveOfferTemplateScreen(
 
             // Flags and switches
             Card(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = colorResource(id = R.color.qvapay_surface_light)),
+                border = BorderStroke(1.dp, colorResource(id = R.color.qvapay_purple_light))
             ) {
                 Column(
                     modifier = Modifier.padding(16.dp),
@@ -251,7 +282,13 @@ fun SaveOfferTemplateScreen(
                         Text("Solo usuarios KYC")
                         Switch(
                             checked = uiState.onlyKyc,
-                            onCheckedChange = { viewModel.handleIntent(SaveOfferTemplateIntent.ChangeOnlyKyc(it)) }
+                            onCheckedChange = { viewModel.handleIntent(SaveOfferTemplateIntent.ChangeOnlyKyc(it)) },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = colorResource(id = R.color.white),
+                                checkedTrackColor = colorResource(id = R.color.qvapay_purple_primary),
+                                uncheckedThumbColor = colorResource(id = R.color.qvapay_purple_text),
+                                uncheckedTrackColor = colorResource(id = R.color.qvapay_surface_medium)
+                            )
                         )
                     }
                     
@@ -263,7 +300,13 @@ fun SaveOfferTemplateScreen(
                         Text("Oferta privada")
                         Switch(
                             checked = uiState.private,
-                            onCheckedChange = { viewModel.handleIntent(SaveOfferTemplateIntent.ChangePrivate(it)) }
+                            onCheckedChange = { viewModel.handleIntent(SaveOfferTemplateIntent.ChangePrivate(it)) },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = colorResource(id = R.color.white),
+                                checkedTrackColor = colorResource(id = R.color.qvapay_purple_primary),
+                                uncheckedThumbColor = colorResource(id = R.color.qvapay_purple_text),
+                                uncheckedTrackColor = colorResource(id = R.color.qvapay_surface_medium)
+                            )
                         )
                     }
                     
@@ -275,7 +318,13 @@ fun SaveOfferTemplateScreen(
                         Text("Promocionar oferta")
                         Switch(
                             checked = uiState.promoteOffer,
-                            onCheckedChange = { viewModel.handleIntent(SaveOfferTemplateIntent.ChangePromoteOffer(it)) }
+                            onCheckedChange = { viewModel.handleIntent(SaveOfferTemplateIntent.ChangePromoteOffer(it)) },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = colorResource(id = R.color.white),
+                                checkedTrackColor = colorResource(id = R.color.qvapay_purple_primary),
+                                uncheckedThumbColor = colorResource(id = R.color.qvapay_purple_text),
+                                uncheckedTrackColor = colorResource(id = R.color.qvapay_surface_medium)
+                            )
                         )
                     }
                     
@@ -287,7 +336,13 @@ fun SaveOfferTemplateScreen(
                         Text("Solo usuarios VIP")
                         Switch(
                             checked = uiState.onlyVip,
-                            onCheckedChange = { viewModel.handleIntent(SaveOfferTemplateIntent.ChangeOnlyVip(it)) }
+                            onCheckedChange = { viewModel.handleIntent(SaveOfferTemplateIntent.ChangeOnlyVip(it)) },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = colorResource(id = R.color.white),
+                                checkedTrackColor = colorResource(id = R.color.qvapay_purple_primary),
+                                uncheckedThumbColor = colorResource(id = R.color.qvapay_purple_text),
+                                uncheckedTrackColor = colorResource(id = R.color.qvapay_surface_medium)
+                            )
                         )
                     }
                 }
@@ -295,7 +350,9 @@ fun SaveOfferTemplateScreen(
 
             // Message and webhook
             Card(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = colorResource(id = R.color.qvapay_surface_light)),
+                border = BorderStroke(1.dp, colorResource(id = R.color.qvapay_purple_light))
             ) {
                 Column(
                     modifier = Modifier.padding(16.dp),
@@ -348,7 +405,10 @@ fun SaveOfferTemplateScreen(
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         TextButton(
-                            onClick = { viewModel.handleIntent(SaveOfferTemplateIntent.DismissError) }
+                            onClick = { viewModel.handleIntent(SaveOfferTemplateIntent.DismissError) },
+                            colors = ButtonDefaults.textButtonColors(
+                                contentColor = colorResource(id = R.color.qvapay_purple_primary)
+                            )
                         ) {
                             Text("Cerrar")
                         }
@@ -361,7 +421,7 @@ fun SaveOfferTemplateScreen(
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                        containerColor = colorResource(id = R.color.qvapay_purple_light)
                     )
                 ) {
                     Column(
@@ -370,16 +430,19 @@ fun SaveOfferTemplateScreen(
                         Text(
                             text = "¡Éxito!",
                             style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                            color = colorResource(id = R.color.qvapay_purple_text),
                             fontWeight = FontWeight.Bold
                         )
                         Text(
                             text = uiState.successMessage!!,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                            color = colorResource(id = R.color.qvapay_purple_text)
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         TextButton(
-                            onClick = { viewModel.handleIntent(SaveOfferTemplateIntent.DismissSuccessMessage) }
+                            onClick = { viewModel.handleIntent(SaveOfferTemplateIntent.DismissSuccessMessage) },
+                            colors = ButtonDefaults.textButtonColors(
+                                contentColor = colorResource(id = R.color.qvapay_purple_primary)
+                            )
                         ) {
                             Text("Cerrar")
                         }
@@ -391,7 +454,11 @@ fun SaveOfferTemplateScreen(
             Button(
                 onClick = { viewModel.handleIntent(SaveOfferTemplateIntent.SaveTemplate) },
                 modifier = Modifier.fillMaxWidth(),
-                enabled = !uiState.isLoading && uiState.isValid
+                enabled = !uiState.isLoading && uiState.isValid,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = colorResource(id = R.color.qvapay_purple_primary),
+                    contentColor = colorResource(id = R.color.white)
+                )
             ) {
                 if (uiState.isLoading) {
                     Row(
@@ -400,7 +467,8 @@ fun SaveOfferTemplateScreen(
                     ) {
                         CircularProgressIndicator(
                             modifier = Modifier.size(20.dp),
-                            strokeWidth = 2.dp
+                            strokeWidth = 2.dp,
+                            color = colorResource(id = R.color.white)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(if (uiState.isEditing) "Actualizando..." else "Guardando...")

@@ -1,5 +1,7 @@
 package com.example.qvapayappandroid.presentation.ui.profile
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -29,6 +31,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -37,10 +40,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.material3.TopAppBarDefaults
 import coil.compose.SubcomposeAsyncImage
+import com.example.qvapayappandroid.R
 import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -52,6 +60,7 @@ fun UserProfileScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val (snackbarController, snackbarHostState) = rememberSnackbarController()
+    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
 
     LaunchedEffect(Unit) {
         viewModel.effect.collect { effect ->
@@ -71,6 +80,7 @@ fun UserProfileScreen(
     }
     
     Scaffold(
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
             TopAppBar(
@@ -114,13 +124,20 @@ fun UserProfileScreen(
                             Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = "Logout")
                         }
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = colorResource(id = R.color.qvapay_surface_light),
+                    scrolledContainerColor = colorResource(id = R.color.qvapay_surface_light)
+                ),
+                windowInsets = WindowInsets(0, 0, 0, 0),
+                scrollBehavior = scrollBehavior
             )
         }
     ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .background(colorResource(id = R.color.qvapay_surface_light))
                 .padding(paddingValues)
                 .verticalScroll(rememberScrollState())
         ) {
@@ -175,12 +192,18 @@ fun UserProfileScreen(
                                 horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
                                 TextButton(
-                                    onClick = { viewModel.handleIntent(UserProfileIntent.RetryLoadProfile) }
+                                    onClick = { viewModel.handleIntent(UserProfileIntent.RetryLoadProfile) },
+                                    colors = ButtonDefaults.textButtonColors(
+                                        contentColor = colorResource(id = R.color.qvapay_purple_primary)
+                                    )
                                 ) {
                                     Text("Reintentar")
                                 }
                                 TextButton(
-                                    onClick = { viewModel.handleIntent(UserProfileIntent.ClearError) }
+                                    onClick = { viewModel.handleIntent(UserProfileIntent.ClearError) },
+                                    colors = ButtonDefaults.textButtonColors(
+                                        contentColor = colorResource(id = R.color.qvapay_purple_text)
+                                    )
                                 ) {
                                     Text("Cerrar")
                                 }
@@ -206,8 +229,9 @@ private fun UserProfileContent(
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer
-            )
+                containerColor = colorResource(id = R.color.qvapay_purple_primary)
+            ),
+            border = BorderStroke(1.dp, colorResource(id = R.color.qvapay_purple_light))
         ) {
             Column(
                 modifier = Modifier.padding(16.dp),
@@ -243,7 +267,7 @@ private fun UserProfileContent(
                                 Icons.Default.Person,
                                 contentDescription = null,
                                 modifier = Modifier.size(50.dp),
-                                tint = MaterialTheme.colorScheme.onPrimaryContainer
+                                tint = colorResource(id = R.color.white)
                             )
                         }
                     }
@@ -255,13 +279,13 @@ private fun UserProfileContent(
                     text = state.userDisplayName,
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                    color = colorResource(id = R.color.white)
                 )
                 
                 Text(
                     text = state.userUsername,
                     style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                    color = colorResource(id = R.color.white)
                 )
                 
                 if (state.hasBio) {
@@ -269,7 +293,7 @@ private fun UserProfileContent(
                     Text(
                         text = user.bio!!,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                        color = colorResource(id = R.color.white)
                     )
                 }
             }
@@ -281,8 +305,9 @@ private fun UserProfileContent(
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.secondaryContainer
-            )
+                containerColor = colorResource(id = R.color.qvapay_purple_light)
+            ),
+            border = BorderStroke(1.dp, colorResource(id = R.color.qvapay_purple_primary))
         ) {
             Column(
                 modifier = Modifier.padding(16.dp)
@@ -291,7 +316,7 @@ private fun UserProfileContent(
                     text = "Balance",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                    color = colorResource(id = R.color.white)
                 )
                 Spacer(modifier = Modifier.height(12.dp))
                 
@@ -303,13 +328,13 @@ private fun UserProfileContent(
                         Text(
                             text = "Disponible",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSecondaryContainer
+                            color = colorResource(id = R.color.white)
                         )
                         Text(
                             text = state.formattedBalance,
                             style = MaterialTheme.typography.headlineLarge,
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSecondaryContainer
+                            color = colorResource(id = R.color.white)
                         )
                     }
                     
@@ -319,13 +344,13 @@ private fun UserProfileContent(
                         Text(
                             text = "Pendiente",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSecondaryContainer
+                            color = colorResource(id = R.color.white)
                         )
                         Text(
                             text = state.formattedPendingBalance,
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Medium,
-                            color = MaterialTheme.colorScheme.onSecondaryContainer
+                            color = colorResource(id = R.color.white)
                         )
                     }
                 }
@@ -334,7 +359,7 @@ private fun UserProfileContent(
                 Text(
                     text = "Satoshis: ${state.formattedSatoshis}",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                    color = colorResource(id = R.color.white)
                 )
             }
         }
@@ -343,7 +368,9 @@ private fun UserProfileContent(
         
         // Account Info Card
         Card(
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = colorResource(id = R.color.qvapay_surface_light)),
+            border = BorderStroke(1.dp, colorResource(id = R.color.qvapay_purple_light))
         ) {
             Column(
                 modifier = Modifier.padding(16.dp)
@@ -351,7 +378,8 @@ private fun UserProfileContent(
                 Text(
                     text = "Información de la cuenta",
                     style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    color = colorResource(id = R.color.qvapay_purple_primary)
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 
@@ -382,13 +410,14 @@ private fun ProfileInfoRow(
         Text(
             text = label,
             style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = colorResource(id = R.color.qvapay_purple_text),
             fontWeight = FontWeight.Medium
         )
         Text(
             text = value,
             style = MaterialTheme.typography.bodyLarge,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
+            color = colorResource(id = R.color.qvapay_purple_primary)
         )
     }
 }

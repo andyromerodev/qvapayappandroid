@@ -1,5 +1,7 @@
 package com.example.qvapayappandroid.presentation.ui.settings
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -10,8 +12,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.example.qvapayappandroid.BuildConfig
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.example.qvapayappandroid.R
 import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -25,6 +31,8 @@ fun SettingsScreen(
     val uiState by viewModel.uiState.collectAsState()
     
     // Observe navigation-related effects
+    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
+    
     LaunchedEffect(Unit) {
         viewModel.effect.collect { effect ->
             when (effect) {
@@ -36,15 +44,27 @@ fun SettingsScreen(
         }
     }
     
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-    ) {
-        // TopAppBar
-        TopAppBar(
-            title = { Text("Configuración") }
-        )
+    Scaffold(
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        topBar = {
+            TopAppBar(
+                title = { Text("Configuración") },
+                scrollBehavior = scrollBehavior,
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = colorResource(id = R.color.qvapay_surface_light),
+                    scrolledContainerColor = colorResource(id = R.color.qvapay_surface_light)
+                ),
+                windowInsets = WindowInsets(0, 0, 0, 0)
+            )
+        }
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(colorResource(id = R.color.qvapay_surface_light))
+                .padding(paddingValues)
+                .verticalScroll(rememberScrollState())
+        ) {
         
         when {
             uiState.isLoading -> {
@@ -113,11 +133,40 @@ fun SettingsScreen(
                 }
             }
         }
+        }
+
+        // About dialog
+        if (uiState.showAboutDialog) {
+            AlertDialog(
+                onDismissRequest = { viewModel.dismissAbout() },
+                confirmButton = {
+                    TextButton(onClick = { viewModel.dismissAbout() }) {
+                        Text("Cerrar")
+                    }
+                },
+                title = { Text("Acerca de") },
+                text = {
+                    Column {
+                        Text("QvaPay Android (no oficial)", style = MaterialTheme.typography.titleMedium)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text("Versión: v${BuildConfig.VERSION_NAME}")
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text("Desarrollado por: Andy Luis Hernandez Romero")
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text("Licencia: Apache-2.0")
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text("Canal de Telegram: https://t.me/qvapayandroid")
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text("Este proyecto no está afiliado a QvaPay. ‘QvaPay’ es marca de sus respectivos titulares.")
+                    }
+                }
+            )
+        }
     }
 }
 
 @Composable
-private fun SettingsContent(
+fun SettingsContent(
     modifier: Modifier = Modifier,
     userSettings: UserSettings,
     onNotificationsToggle: (Boolean) -> Unit,
@@ -247,6 +296,7 @@ private fun SettingsContent(
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.errorContainer
             ),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.error),
             onClick = onLogout
         ) {
             Row(
@@ -294,12 +344,14 @@ private fun SettingsContent(
 }
 
 @Composable
-private fun SettingsSection(
+fun SettingsSection(
     title: String,
     content: @Composable () -> Unit
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = colorResource(id = R.color.qvapay_surface_light)),
+        border = BorderStroke(1.dp, colorResource(id = R.color.qvapay_purple_light))
     ) {
         Column(
             modifier = Modifier.padding(16.dp)
@@ -308,7 +360,7 @@ private fun SettingsSection(
                 text = title,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
+                color = colorResource(id = R.color.qvapay_purple_primary)
             )
             Spacer(modifier = Modifier.height(12.dp))
             content()
@@ -317,7 +369,7 @@ private fun SettingsSection(
 }
 
 @Composable
-private fun SettingsItem(
+fun SettingsItem(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     title: String,
     subtitle: String,
@@ -329,8 +381,9 @@ private fun SettingsItem(
             .fillMaxWidth()
             .padding(vertical = 2.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
+            containerColor = colorResource(id = R.color.qvapay_surface_medium)
         ),
+        border = BorderStroke(1.dp, colorResource(id = R.color.qvapay_purple_light)),
         onClick = onClick
     ) {
         Row(
@@ -342,7 +395,7 @@ private fun SettingsItem(
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                tint = colorResource(id = R.color.qvapay_purple_primary)
             )
             
             Spacer(modifier = Modifier.width(16.dp))
@@ -368,7 +421,7 @@ private fun SettingsItem(
 }
 
 @Composable
-private fun SettingsSwitchItem(
+fun SettingsSwitchItem(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     title: String,
     subtitle: String,
@@ -380,8 +433,9 @@ private fun SettingsSwitchItem(
             .fillMaxWidth()
             .padding(vertical = 2.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        )
+            containerColor = colorResource(id = R.color.qvapay_surface_medium)
+        ),
+        border = BorderStroke(1.dp, colorResource(id = R.color.qvapay_purple_light))
     ) {
         Row(
             modifier = Modifier
@@ -392,7 +446,7 @@ private fun SettingsSwitchItem(
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                tint = colorResource(id = R.color.qvapay_purple_primary)
             )
             
             Spacer(modifier = Modifier.width(16.dp))
@@ -414,14 +468,20 @@ private fun SettingsSwitchItem(
             
             Switch(
                 checked = checked,
-                onCheckedChange = onCheckedChange
+                onCheckedChange = onCheckedChange,
+                colors = SwitchDefaults.colors(
+                    checkedThumbColor = colorResource(id = R.color.white),
+                    checkedTrackColor = colorResource(id = R.color.qvapay_purple_primary),
+                    uncheckedThumbColor = colorResource(id = R.color.qvapay_purple_text),
+                    uncheckedTrackColor = colorResource(id = R.color.qvapay_surface_medium)
+                )
             )
         }
     }
 }
 
 @Composable
-private fun ThemeSelectionDialog(
+fun ThemeSelectionDialog(
     currentTheme: String,
     onThemeSelected: (String) -> Unit,
     onDismiss: () -> Unit
@@ -447,7 +507,11 @@ private fun ThemeSelectionDialog(
                     ) {
                         RadioButton(
                             selected = currentTheme == theme,
-                            onClick = { onThemeSelected(theme) }
+                            onClick = { onThemeSelected(theme) },
+                            colors = RadioButtonDefaults.colors(
+                                selectedColor = colorResource(id = R.color.qvapay_purple_primary),
+                                unselectedColor = colorResource(id = R.color.qvapay_purple_text)
+                            )
                         )
                         Spacer(modifier = Modifier.width(12.dp))
                         Text(
@@ -459,7 +523,12 @@ private fun ThemeSelectionDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = onDismiss) {
+            TextButton(
+                onClick = onDismiss,
+                colors = ButtonDefaults.textButtonColors(
+                    contentColor = colorResource(id = R.color.qvapay_purple_primary)
+                )
+            ) {
                 Text("Cancelar")
             }
         }

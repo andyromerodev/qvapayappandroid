@@ -8,9 +8,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.qvapayappandroid.R
 
 @Composable
 fun MyOfferStatusChip(
@@ -19,13 +21,13 @@ fun MyOfferStatusChip(
 ) {
     val (containerColor, contentColor, text) = when (status?.lowercase()) {
         "open", "abierta", "activa" -> Triple(
-            MaterialTheme.colorScheme.primaryContainer,
-            MaterialTheme.colorScheme.onPrimaryContainer,
+            colorResource(id = R.color.qvapay_purple_primary),
+            colorResource(id = R.color.white),
             "ACTIVA"
         )
         "completed", "completada", "finalizada" -> Triple(
-            MaterialTheme.colorScheme.tertiaryContainer,
-            MaterialTheme.colorScheme.onTertiaryContainer,
+            colorResource(id = R.color.qvapay_purple_light),
+            colorResource(id = R.color.qvapay_purple_text),
             "COMPLETADA"
         )
         "cancelled", "cancelada" -> Triple(
@@ -34,18 +36,18 @@ fun MyOfferStatusChip(
             "CANCELADA"
         )
         "paused", "pausada" -> Triple(
-            MaterialTheme.colorScheme.secondaryContainer,
-            MaterialTheme.colorScheme.onSecondaryContainer,
+            colorResource(id = R.color.qvapay_surface_medium),
+            colorResource(id = R.color.qvapay_purple_text),
             "PAUSADA"
         )
         "pending", "pendiente" -> Triple(
-            MaterialTheme.colorScheme.surfaceVariant,
-            MaterialTheme.colorScheme.onSurfaceVariant,
+            colorResource(id = R.color.qvapay_surface_medium),
+            colorResource(id = R.color.qvapay_purple_text),
             "PENDIENTE"
         )
         else -> Triple(
-            MaterialTheme.colorScheme.surfaceVariant,
-            MaterialTheme.colorScheme.onSurfaceVariant,
+            colorResource(id = R.color.qvapay_surface_medium),
+            colorResource(id = R.color.qvapay_purple_text),
             status?.uppercase() ?: "N/A"
         )
     }

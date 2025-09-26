@@ -143,8 +143,12 @@ class SettingsViewModel(
     fun showAbout() {
         viewModelScope.launch {
             Log.d("SettingsViewModel", "Show about action triggered")
-            _effect.emit(SettingsEffect.ShowMessage("QvaPay App v1.0.0"))
+            _uiState.value = _uiState.value.copy(showAboutDialog = true)
         }
+    }
+
+    fun dismissAbout() {
+        _uiState.value = _uiState.value.copy(showAboutDialog = false)
     }
     
     fun logout() {
@@ -177,7 +181,8 @@ data class SettingsUiState(
     val isLoading: Boolean = true,
     val isLoggingOut: Boolean = false,
     val userSettings: UserSettings = UserSettings(),
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    val showAboutDialog: Boolean = false
 )
 
 data class UserSettings(

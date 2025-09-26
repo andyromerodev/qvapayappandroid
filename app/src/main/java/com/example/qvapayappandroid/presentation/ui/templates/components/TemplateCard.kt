@@ -19,6 +19,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.colorResource
+import androidx.compose.foundation.BorderStroke
+import com.example.qvapayappandroid.R
 import com.example.qvapayappandroid.domain.model.OfferTemplate
 import java.text.SimpleDateFormat
 import java.util.*
@@ -43,7 +46,9 @@ fun TemplateCard(
                     onClick = onEdit,
                     onLongClick = { showContextMenu = true }
                 ),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+            colors = CardDefaults.cardColors(containerColor = colorResource(id = R.color.qvapay_surface_light)),
+            border = BorderStroke(1.dp, colorResource(id = R.color.qvapay_purple_light))
         ) {
         Column(
             modifier = Modifier.padding(16.dp)
@@ -109,16 +114,16 @@ fun TemplateCard(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 if (template.onlyKyc) {
-                    ConfigChip(text = "Solo KYC", color = MaterialTheme.colorScheme.primary)
+                    ConfigChip(text = "Solo KYC", color = colorResource(id = R.color.qvapay_purple_primary))
                 }
                 if (template.onlyVip) {
-                    ConfigChip(text = "Solo VIP", color = MaterialTheme.colorScheme.secondary)
+                    ConfigChip(text = "Solo VIP", color = colorResource(id = R.color.qvapay_purple_light))
                 }
                 if (template.private) {
-                    ConfigChip(text = "Privada", color = MaterialTheme.colorScheme.tertiary)
+                    ConfigChip(text = "Privada", color = colorResource(id = R.color.qvapay_purple_dark))
                 }
                 if (template.promoteOffer) {
-                    ConfigChip(text = "Promocionada", color = MaterialTheme.colorScheme.primary)
+                    ConfigChip(text = "Promocionada", color = colorResource(id = R.color.qvapay_purple_primary))
                 }
             }
             
@@ -148,13 +153,13 @@ fun TemplateCard(
                             CircularProgressIndicator(
                                 modifier = Modifier.size(16.dp),
                                 strokeWidth = 2.dp,
-                                color = MaterialTheme.colorScheme.primary
+                                color = colorResource(id = R.color.qvapay_purple_primary)
                             )
                         } else {
                             Icon(
                                 Icons.Default.PlayArrow,
                                 contentDescription = "Usar plantilla",
-                                tint = MaterialTheme.colorScheme.primary
+                                tint = colorResource(id = R.color.qvapay_purple_primary)
                             )
                         }
                     }
@@ -166,7 +171,7 @@ fun TemplateCard(
                         Icon(
                             Icons.Default.Edit,
                             contentDescription = "Editar plantilla",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            tint = colorResource(id = R.color.qvapay_purple_text)
                         )
                     }
                     
@@ -210,9 +215,9 @@ fun TemplateCard(
 @Composable
 private fun OfferTypeBadge(type: String) {
     val (text, color) = when (type) {
-        "sell" -> "VENTA" to MaterialTheme.colorScheme.primary
-        "buy" -> "COMPRA" to MaterialTheme.colorScheme.secondary
-        else -> "DESCONOCIDO" to MaterialTheme.colorScheme.outline
+        "sell" -> "VENTA" to colorResource(id = R.color.qvapay_purple_primary)
+        "buy" -> "COMPRA" to colorResource(id = R.color.qvapay_purple_dark)
+        else -> "DESCONOCIDO" to colorResource(id = R.color.qvapay_purple_text)
     }
     
     Surface(

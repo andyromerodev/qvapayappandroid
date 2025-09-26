@@ -23,6 +23,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDownward
@@ -53,7 +54,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.colorResource
 import androidx.navigation.NavController
+import com.example.qvapayappandroid.R
 import com.example.qvapayappandroid.data.model.P2POffer
 import com.example.qvapayappandroid.presentation.ui.home.components.LoadingMoreIndicator
 import com.example.qvapayappandroid.presentation.ui.p2p.components.ErrorRetryState
@@ -79,10 +82,12 @@ fun P2PScreen(
     }
 
     Scaffold(
-        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        modifier = Modifier
+            .nestedScroll(scrollBehavior.nestedScrollConnection)
+            .background(color = colorResource(R.color.qvapay_surface_light)),
         topBar = {
             TopAppBar(
-                title = { 
+                title = {
                     Text(
                         text = "Ofertas P2P",
                         style = MaterialTheme.typography.titleMedium
@@ -98,7 +103,8 @@ fun P2PScreen(
                 },
                 scrollBehavior = scrollBehavior,
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
+                    containerColor = colorResource(id = R.color.qvapay_surface_light),
+                    scrolledContainerColor = colorResource(id = R.color.qvapay_surface_light)
                 ),
                 windowInsets = WindowInsets(0, 0, 0, 0)
             )
@@ -117,6 +123,7 @@ fun P2PScreen(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(paddingValues)
+                        .background(color = colorResource(R.color.qvapay_surface_light))
                         .padding(16.dp)
                 ) {
                     P2PShimmerEffect()
@@ -128,7 +135,8 @@ fun P2PScreen(
                     uiState = uiState,
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(paddingValues),
+                        .padding(paddingValues)
+                        .background(color = colorResource(id = R.color.qvapay_surface_light)),
                     onNextPage = { viewModel.onNextPage() },
                     onRefresh = { viewModel.refresh() },
                     onOfferClick = onOfferClick,
@@ -172,7 +180,8 @@ private fun P2PContent(
             val lastVisibleIndex = layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1
 
             val hasContent = uiState.offers.isNotEmpty()
-            val atEnd = totalItems > 0 && lastVisibleIndex == totalItems - 1 // <- actual end of the list
+            val atEnd =
+                totalItems > 0 && lastVisibleIndex == totalItems - 1 // <- actual end of the list
             val notLastPage = uiState.totalPages > 0 && uiState.currentPage < uiState.totalPages
             val idle = !uiState.isLoading && !uiState.isLoadingMore && !uiState.isFiltering
             val noError = uiState.errorMessage == null
@@ -285,7 +294,7 @@ private fun P2PContent(
                     else -> uiState.offers
                 }
             }
-            
+
             // Offers, error, or empty-state message
             // Note: loading states (isFiltering, isRefreshing, isLoading) are handled in P2PScreen,
             // so here we only deal with errors, empty lists, or content
@@ -361,11 +370,11 @@ private fun AnimatedListItem(
     phoneNumber: String?
 ) {
     var isVisible by remember { mutableStateOf(false) }
-    
+
     LaunchedEffect(offer.uuid) {
         isVisible = true
     }
-    
+
     AnimatedVisibility(
         visible = isVisible,
         enter = fadeIn(

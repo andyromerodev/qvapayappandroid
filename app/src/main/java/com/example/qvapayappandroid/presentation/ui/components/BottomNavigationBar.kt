@@ -14,10 +14,15 @@ import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarDefaults
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.example.qvapayappandroid.R
 import com.example.qvapayappandroid.navigation.AppDestinations
 
 @Composable
@@ -33,7 +38,11 @@ fun BottomNavigationBar(
         BottomNavItem.Settings
     )
     
-    NavigationBar {
+    NavigationBar(
+        containerColor = colorResource(id = R.color.qvapay_surface_medium),
+        contentColor = colorResource(id = R.color.qvapay_purple_primary),
+        tonalElevation = 8.dp
+    ) {
         items.forEach { item ->
             val isSelected = currentRoute == item.route
             
@@ -46,6 +55,13 @@ fun BottomNavigationBar(
                 },
                 label = { Text(item.title) },
                 selected = isSelected,
+                colors = NavigationBarItemDefaults.colors(
+                    selectedIconColor = colorResource(id = R.color.qvapay_purple_primary),
+                    selectedTextColor = colorResource(id = R.color.qvapay_purple_primary),
+                    indicatorColor = colorResource(id = R.color.qvapay_background_primary),
+                    unselectedIconColor = colorResource(id = R.color.qvapay_purple_text),
+                    unselectedTextColor = colorResource(id = R.color.qvapay_purple_text)
+                ),
                 onClick = {
                     if (currentRoute != item.route) {
                         navController.navigate(item.route) {

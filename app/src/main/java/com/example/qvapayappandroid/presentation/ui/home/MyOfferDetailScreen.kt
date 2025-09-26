@@ -1,6 +1,7 @@
 package com.example.qvapayappandroid.presentation.ui.home
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -35,15 +36,21 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavController
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.colorResource
+import androidx.compose.foundation.layout.WindowInsets
 import coil.compose.AsyncImage
+import com.example.qvapayappandroid.R
 import com.example.qvapayappandroid.data.model.P2POffer
 import com.example.qvapayappandroid.presentation.ui.home.components.MyOfferStatusChip
 import com.example.qvapayappandroid.presentation.ui.p2p.components.MiniCardM3
@@ -68,8 +75,10 @@ fun MyOfferDetailScreen(
     onCancelOffer: (String, () -> Unit) -> Unit = { _, _ -> },
     navController: NavController? = null
 ) {
+    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
 
     Scaffold(
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             TopAppBar(
                 title = { Text("Detalles de mi Oferta") },
@@ -90,12 +99,20 @@ fun MyOfferDetailScreen(
                             contentDescription = "Compartir"
                         )
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = colorResource(id = R.color.qvapay_surface_light),
+                    scrolledContainerColor = colorResource(id = R.color.qvapay_surface_light)
+                ),
+                windowInsets = WindowInsets(0, 0, 0, 0),
+                scrollBehavior = scrollBehavior
             )
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { onEditOffer(offer) }
+                onClick = { onEditOffer(offer) },
+                containerColor = colorResource(id = R.color.qvapay_purple_dark),
+                contentColor = colorResource(id = R.color.white)
             ) {
                 Icon(
                     Icons.Default.Edit,
@@ -107,6 +124,7 @@ fun MyOfferDetailScreen(
         Column(
             modifier = modifier
                 .fillMaxSize()
+                .background(colorResource(id = R.color.qvapay_surface_light))
                 .padding(paddingValues)
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp),
@@ -153,8 +171,9 @@ private fun ParticipantsCard(
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        colors = CardDefaults.cardColors(containerColor = colorResource(id = R.color.qvapay_surface_light)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        border = BorderStroke(1.dp, colorResource(id = R.color.qvapay_purple_light))
     ) {
         Column(
             modifier = Modifier
@@ -200,13 +219,13 @@ private fun ParticipantsCard(
                             modifier = Modifier
                                 .size(48.dp)
                                 .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.primaryContainer),
+                                .background(colorResource(id = R.color.qvapay_purple_primary)),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Person,
                                 contentDescription = "Mi perfil",
-                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                tint = colorResource(id = R.color.white),
                                 modifier = Modifier.size(24.dp)
                             )
                         }
@@ -229,7 +248,7 @@ private fun ParticipantsCard(
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                     contentDescription = "hacia",
-                    tint = MaterialTheme.colorScheme.primary,
+                    tint = colorResource(id = R.color.qvapay_purple_primary),
                     modifier = Modifier.size(24.dp)
                 )
 
@@ -252,13 +271,13 @@ private fun ParticipantsCard(
                             modifier = Modifier
                                 .size(48.dp)
                                 .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.surfaceVariant),
+                                .background(colorResource(id = R.color.qvapay_purple_light)),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Person,
                                 contentDescription = "Usuario",
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                tint = colorResource(id = R.color.white),
                                 modifier = Modifier.size(24.dp)
                             )
                         }
@@ -287,8 +306,9 @@ private fun TransactionInfoCard(
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        colors = CardDefaults.cardColors(containerColor = colorResource(id = R.color.qvapay_surface_light)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        border = BorderStroke(1.dp, colorResource(id = R.color.qvapay_purple_light))
     ) {
         Column(
             modifier = Modifier
@@ -311,14 +331,14 @@ private fun TransactionInfoCard(
                     MiniCardM3(
                         label = "Monto",
                         value = offer.amount.toTwoDecimals(),
-                        color = MaterialTheme.colorScheme.primary
+                        color = colorResource(id = R.color.qvapay_purple_primary)
                     )
                 }
                 Box(modifier = Modifier.weight(1f)) {
                     MiniCardM3(
                         label = "Recibes",
                         value = offer.receive.toTwoDecimals(),
-                        color = MaterialTheme.colorScheme.primary
+                        color = colorResource(id = R.color.qvapay_purple_primary)
                     )
                 }
             }
@@ -335,7 +355,7 @@ private fun TransactionInfoCard(
                         value = offer.coinData?.tick
                             ?: offer.coinData?.name
                             ?: offer.coin ?: "N/A",
-                        color = MaterialTheme.colorScheme.secondary,
+                        color = colorResource(id = R.color.qvapay_purple_dark),
                         isTag = true
                     )
                 }
@@ -343,7 +363,7 @@ private fun TransactionInfoCard(
                     MiniCardM3(
                         label = "Ratio",
                         value = offer.getRatio() ?: "-",
-                        color = MaterialTheme.colorScheme.tertiary
+                        color = colorResource(id = R.color.qvapay_purple_light)
                     )
                 }
             }
@@ -358,8 +378,9 @@ private fun AdditionalDetailsCard(
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        colors = CardDefaults.cardColors(containerColor = colorResource(id = R.color.qvapay_surface_light)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        border = BorderStroke(1.dp, colorResource(id = R.color.qvapay_purple_light))
     ) {
         Column(
             modifier = Modifier
@@ -400,7 +421,7 @@ private fun AdditionalDetailsCard(
                         MiniCardM3(
                             label = "ID de Oferta",
                             value = offer.uuid.take(8) + "...",
-                            color = MaterialTheme.colorScheme.outline
+                            color = colorResource(id = R.color.qvapay_purple_text)
                         )
                     }
                 }
@@ -409,7 +430,7 @@ private fun AdditionalDetailsCard(
                         MiniCardM3(
                             label = "Válida",
                             value = if (offer.valid == 1) "Sí" else "No",
-                            color = if (offer.valid == 1) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+                            color = if (offer.valid == 1) colorResource(id = R.color.qvapay_purple_primary) else MaterialTheme.colorScheme.error
                         )
                     }
                 }
@@ -425,8 +446,9 @@ private fun MessageCard(
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        colors = CardDefaults.cardColors(containerColor = colorResource(id = R.color.qvapay_surface_light)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        border = BorderStroke(1.dp, colorResource(id = R.color.qvapay_purple_light))
     ) {
         Column(
             modifier = Modifier
@@ -457,8 +479,9 @@ private fun DateInfoCard(
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        colors = CardDefaults.cardColors(containerColor = colorResource(id = R.color.qvapay_surface_light)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        border = BorderStroke(1.dp, colorResource(id = R.color.qvapay_purple_light))
     ) {
         Column(
             modifier = Modifier
@@ -482,7 +505,7 @@ private fun DateInfoCard(
                         MiniCardM3(
                             label = "Creada",
                             value = formatDate(createdAt),
-                            color = MaterialTheme.colorScheme.outline
+                            color = colorResource(id = R.color.qvapay_purple_text)
                         )
                     }
                 }
@@ -491,7 +514,7 @@ private fun DateInfoCard(
                         MiniCardM3(
                             label = "Actualizada",
                             value = formatDate(updatedAt),
-                            color = MaterialTheme.colorScheme.outline
+                            color = colorResource(id = R.color.qvapay_purple_text)
                         )
                     }
                 }
@@ -554,7 +577,11 @@ private fun CancelOfferButton(
             } else {
                 OutlinedButton(
                     onClick = { onCancelOffer(offerId) },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error
+                    ),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.error)
                 ) {
                     Icon(
                         imageVector = Icons.Default.Cancel,
@@ -581,12 +608,12 @@ private fun CancelOfferButton(
 @Composable
 private fun VipChipMiniM3() {
     Surface(
-        color = MaterialTheme.colorScheme.secondaryContainer,
+        color = colorResource(id = R.color.qvapay_purple_light),
         shape = CircleShape
     ) {
         Text(
             text = "VIP",
-            color = MaterialTheme.colorScheme.onSecondaryContainer,
+            color = colorResource(id = R.color.white),
             fontWeight = FontWeight.Bold,
             fontSize = 10.sp,
             modifier = Modifier.padding(horizontal = 7.dp, vertical = 2.dp)
