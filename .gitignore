@@ -13,3 +13,10 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# Documentation and planning files
+CLAUDE.md
+PLAN_DATASTORE_SINGLE_SOURCE_OF_TRUTH.txt
+COMMIT_GUIDELINES.md
+FILTER_THROTTLING_FIX.md
+INSTRUCCIONES.md
